@@ -1,0 +1,16 @@
+{
+  "name": "DayMark — Productivity & Visual Year Calendar",
+  "short_name": "DayMark",
+  "description": "Full-year visual activity calendar, high-precision focus timer, habits tracker, task directives, and analytics.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#090D16",
+  "theme_color": "#6366F1",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}

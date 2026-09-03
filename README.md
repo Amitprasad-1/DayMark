@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DayMark ⚡
+
+> **Visual Full-Year Productivity & Time Mastery Suite**
+
+DayMark is a full-featured productivity ecosystem featuring an interactive full-year visual heatmap calendar, high-precision focus timer with ambient soundscapes, habits matrix, task directives, strategic goals, and daily reflection journals.
+
+## Architecture
+
+DayMark is cleanly separated into three modular services:
+
+```
+DayMark/
+├── frontend/          # Client App (React, Tailwind CSS, Lucide Icons, Recharts)
+├── backend/           # Express REST API Server (Node.js, TypeScript, Express)
+└── database/          # Prisma ORM Schema, SQLite / PostgreSQL models
+```
+
+---
 
 ## Getting Started
 
-First, run the development server:
-
+### 1. Frontend Client
 ```bash
+cd frontend
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+Runs the client at `http://localhost:3000`.
+
+### 2. Backend REST API
+```bash
+cd backend
+npm install
+npm run dev
+```
+Runs the API server at `http://localhost:5000`.
+
+### 3. Database Layer
+```bash
+cd database
+npx prisma generate
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Key Features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- 📅 **Full-Year Visual Calendar**: 12-month interactive heatmap centerpiece tracking daily focus hours & habit completions.
+- ⏱️ **Focus Timer**: Pomodoro, Stopwatch, and countdown modes with real-time Web Audio ambient sound synthesis (Rain, White Noise, Ocean Waves, Forest Wind) and bell completion chimes.
+- ⚡ **Habit Matrix**: 14-day interactive streak matrix with celebratory micro-interactions.
+- ✅ **Task Directives**: Prioritized task manager with due dates and tags.
+- 🎯 **Strategic Goals**: Quantified milestone tracking for hours, habits, and tasks.
+- 📊 **Productivity Analytics**: Visual charts powered by Recharts (Category breakdown, weekly focus trends).
+- 📝 **Daily Reflection**: Structured journaling for daily wins, obstacles, and productivity scoring.
+- 💾 **Data Portability**: Local persistence with full JSON export and backup restoration.
