@@ -231,8 +231,9 @@ export function generateSeedData(): {
   const reviews: DailyReview[] = [];
 
   const today = new Date();
-  // Generate random history over past 60 days
-  for (let i = 1; i <= 60; i++) {
+  // Generate realistic history across all past days of the current year!
+  const daysInYearPassed = Math.min(245, Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 1).getTime()) / 86400000));
+  for (let i = 1; i <= daysInYearPassed; i++) {
     const d = subDays(today, i);
     const dateStr = format(d, 'yyyy-MM-dd');
 
