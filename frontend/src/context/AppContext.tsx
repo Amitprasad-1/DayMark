@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import {
   Activity,
   StudySession,
@@ -23,6 +23,8 @@ import {
   INITIAL_COUNTDOWNS,
   generateSeedData,
 } from '@/lib/initialData';
+import { soundEngine } from '@/lib/audio';
+import confetti from 'canvas-confetti';
 import { format, parseISO } from 'date-fns';
 
 interface AppContextType {
@@ -67,7 +69,7 @@ interface AppContextType {
   reviews: DailyReview[];
   saveDailyReview: (review: Omit<DailyReview, 'id'>) => void;
 
-  // Active Focus Timer State
+  // Global Resilient Focus Timer Engine
   timerMode: TimerMode;
   setTimerMode: (mode: TimerMode) => void;
   timerStatus: 'IDLE' | 'RUNNING' | 'PAUSED';
@@ -78,6 +80,14 @@ interface AppContextType {
   setActiveActivityId: (id: string) => void;
   timerTotalDuration: number;
   setTimerTotalDuration: (sec: number) => void;
+  selectedPomodoroPhase: 'work' | 'shortBreak' | 'longBreak';
+  setSelectedPomodoroPhase: (phase: 'work' | 'shortBreak' | 'longBreak') => void;
+  stopwatchElapsed: number;
+  startTimer: () => void;
+  pauseTimer: () => void;
+  resetTimer: () => void;
+  switchPomodoroPhase: (phase: 'work' | 'shortBreak' | 'longBreak') => void;
+  finishStopwatch: (notes?: string) => void;
 
   // Analytics Helpers
   getDayActivityData: (dateStr: string) => DayActivityData;
@@ -97,7 +107,7 @@ const STORAGE_KEYS = {
   GOALS: 'daymark_goals',
   COUNTDOWNS: 'daymark_countdowns',
   REVIEWS: 'daymark_reviews',
-  TIMER: 'daymark_timer_state',
+  TIMER: 'daymark_timer_state_v2',
 };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -115,12 +125,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [countdowns, setCountdowns] = useState<CustomCountdown[]>(INITIAL_COUNTDOWNS);
   const [reviews, setReviews] = useState<DailyReview[]>([]);
 
-  // Focus Timer States
+  // Global Resilient Timer States
   const [timerMode, setTimerMode] = useState<TimerMode>('POMODORO');
   const [timerStatus, setTimerStatus] = useState<'IDLE' | 'RUNNING' | 'PAUSED'>('IDLE');
   const [timerSecondsRemaining, setTimerSecondsRemaining] = useState<number>(25 * 60);
   const [timerTotalDuration, setTimerTotalDuration] = useState<number>(25 * 60);
   const [activeActivityId, setActiveActivityId] = useState<string>(INITIAL_ACTIVITIES[0].id);
+  const [selectedPomodoroPhase, setSelectedPomodoroPhase] = useState<'work' | 'shortBreak' | 'longBreak'>('work');
+  const [stopwatchElapsed, setStopwatchElapsed] = useState<number>(0);
+
+  // Timestamp refs for background resilience
+  const timerTargetTimestampRef = useRef<number | null>(null);
+  const stopwatchStartTimestampRef = useRef<number | null>(null);
 
   const [isHydrated, setIsHydrated] = useState(false);
 
@@ -142,15 +158,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setHabits(JSON.parse(storedHabits));
         if (storedReviews) setReviews(JSON.parse(storedReviews));
       } else {
-        // Seed initial dummy data for spectacular first impression
         const seed = generateSeedData();
         setSessions(seed.sessions);
         setReviews(seed.reviews);
-        
-        setHabits(prevHabits => 
-          prevHabits.map(h => ({
+        setHabits((prev) =>
+          prev.map((h) => ({
             ...h,
-            logs: seed.habitLogs[h.id] || {}
+            logs: seed.habitLogs[h.id] || {},
           }))
         );
       }
@@ -164,6 +178,42 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const storedCountdowns = localStorage.getItem(STORAGE_KEYS.COUNTDOWNS);
       if (storedCountdowns) setCountdowns(JSON.parse(storedCountdowns));
 
+      // Restore Timer State with exact epoch timestamps
+      const storedTimer = localStorage.getItem(STORAGE_KEYS.TIMER);
+      if (storedTimer) {
+        const t = JSON.parse(storedTimer);
+        if (t.timerMode) setTimerMode(t.timerMode);
+        if (t.selectedPomodoroPhase) setSelectedPomodoroPhase(t.selectedPomodoroPhase);
+        if (t.activeActivityId) setActiveActivityId(t.activeActivityId);
+        if (t.timerTotalDuration) setTimerTotalDuration(t.timerTotalDuration);
+
+        if (t.timerStatus === 'RUNNING') {
+          const nowMs = Date.now();
+          if (t.timerMode === 'POMODORO' && t.targetTimestamp) {
+            if (nowMs < t.targetTimestamp) {
+              const diffSec = Math.round((t.targetTimestamp - nowMs) / 1000);
+              timerTargetTimestampRef.current = t.targetTimestamp;
+              setTimerSecondsRemaining(diffSec);
+              setTimerStatus('RUNNING');
+            } else {
+              setTimerSecondsRemaining(0);
+              setTimerStatus('IDLE');
+            }
+          } else if (t.timerMode === 'STOPWATCH' && t.stopwatchStartTimestamp) {
+            stopwatchStartTimestampRef.current = t.stopwatchStartTimestamp;
+            setStopwatchElapsed(Math.round((nowMs - t.stopwatchStartTimestamp) / 1000));
+            setTimerStatus('RUNNING');
+          }
+        } else {
+          if (typeof t.timerSecondsRemaining === 'number') {
+            setTimerSecondsRemaining(t.timerSecondsRemaining);
+          }
+          if (typeof t.stopwatchElapsed === 'number') {
+            setStopwatchElapsed(t.stopwatchElapsed);
+          }
+          setTimerStatus(t.timerStatus || 'IDLE');
+        }
+      }
     } catch (e) {
       console.error('Error hydrating state from localStorage:', e);
     } finally {
@@ -171,7 +221,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, []);
 
-  // Save changes to localStorage
+  // Persist App Data
   useEffect(() => {
     if (!isHydrated) return;
     try {
@@ -187,6 +237,172 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.error('Failed to save to localStorage:', e);
     }
   }, [settings, activities, sessions, habits, tasks, goals, countdowns, reviews, isHydrated]);
+
+  // Persist Timer State to localStorage
+  useEffect(() => {
+    if (!isHydrated) return;
+    try {
+      const timerPayload = {
+        timerMode,
+        timerStatus,
+        timerSecondsRemaining,
+        timerTotalDuration,
+        activeActivityId,
+        selectedPomodoroPhase,
+        stopwatchElapsed,
+        targetTimestamp: timerTargetTimestampRef.current,
+        stopwatchStartTimestamp: stopwatchStartTimestampRef.current,
+      };
+      localStorage.setItem(STORAGE_KEYS.TIMER, JSON.stringify(timerPayload));
+    } catch (e) {
+      console.error('Error saving timer state:', e);
+    }
+  }, [
+    timerMode,
+    timerStatus,
+    timerSecondsRemaining,
+    timerTotalDuration,
+    activeActivityId,
+    selectedPomodoroPhase,
+    stopwatchElapsed,
+    isHydrated,
+  ]);
+
+  // GLOBAL BACKGROUND TIMER INTERVAL ENGINE (Runs continuously across all views!)
+  useEffect(() => {
+    const handleTick = () => {
+      if (timerStatus !== 'RUNNING') return;
+
+      if (timerMode === 'POMODORO') {
+        if (timerTargetTimestampRef.current) {
+          const nowMs = Date.now();
+          const remainingSec = Math.max(
+            0,
+            Math.round((timerTargetTimestampRef.current - nowMs) / 1000)
+          );
+          setTimerSecondsRemaining(remainingSec);
+
+          if (remainingSec <= 0) {
+            // Completed!
+            setTimerStatus('IDLE');
+            timerTargetTimestampRef.current = null;
+            if (settings.soundEnabled) soundEngine.playCompletionChime();
+            confetti({ particleCount: 80, spread: 80, origin: { y: 0.6 } });
+
+            if (selectedPomodoroPhase === 'work') {
+              const duration = settings.workIntervalMinutes * 60;
+              const now = new Date();
+              addSession({
+                activityId: activeActivityId,
+                startTime: new Date(now.getTime() - duration * 1000).toISOString(),
+                endTime: now.toISOString(),
+                durationSeconds: duration,
+                notes: `Completed ${settings.workIntervalMinutes}m Focus Session`,
+                date: format(now, 'yyyy-MM-dd'),
+              });
+            }
+          }
+        }
+      } else if (timerMode === 'STOPWATCH') {
+        if (stopwatchStartTimestampRef.current) {
+          const nowMs = Date.now();
+          const elapsed = Math.round((nowMs - stopwatchStartTimestampRef.current) / 1000);
+          setStopwatchElapsed(elapsed);
+        }
+      }
+    };
+
+    const interval = setInterval(handleTick, 500);
+
+    // Sync immediately when tab becomes visible or phone screen unlocks
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        handleTick();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('focus', onVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('focus', onVisibilityChange);
+    };
+  }, [
+    timerStatus,
+    timerMode,
+    selectedPomodoroPhase,
+    settings,
+    activeActivityId,
+  ]);
+
+  // Global Timer Action Controls
+  const startTimer = () => {
+    if (timerMode === 'POMODORO') {
+      const nowMs = Date.now();
+      const currentRemaining =
+        timerSecondsRemaining > 0 ? timerSecondsRemaining : settings.workIntervalMinutes * 60;
+      timerTargetTimestampRef.current = nowMs + currentRemaining * 1000;
+      setTimerStatus('RUNNING');
+    } else {
+      const nowMs = Date.now();
+      stopwatchStartTimestampRef.current = nowMs - stopwatchElapsed * 1000;
+      setTimerStatus('RUNNING');
+    }
+  };
+
+  const pauseTimer = () => {
+    setTimerStatus('PAUSED');
+    timerTargetTimestampRef.current = null;
+    stopwatchStartTimestampRef.current = null;
+  };
+
+  const resetTimer = () => {
+    setTimerStatus('IDLE');
+    timerTargetTimestampRef.current = null;
+    stopwatchStartTimestampRef.current = null;
+    if (timerMode === 'STOPWATCH') {
+      setStopwatchElapsed(0);
+    } else {
+      let durationSec = settings.workIntervalMinutes * 60;
+      if (selectedPomodoroPhase === 'shortBreak') durationSec = settings.shortBreakMinutes * 60;
+      if (selectedPomodoroPhase === 'longBreak') durationSec = settings.longBreakMinutes * 60;
+      setTimerSecondsRemaining(durationSec);
+      setTimerTotalDuration(durationSec);
+    }
+  };
+
+  const switchPomodoroPhase = (phase: 'work' | 'shortBreak' | 'longBreak') => {
+    setSelectedPomodoroPhase(phase);
+    setTimerStatus('IDLE');
+    timerTargetTimestampRef.current = null;
+    let durationSec = settings.workIntervalMinutes * 60;
+    if (phase === 'shortBreak') durationSec = settings.shortBreakMinutes * 60;
+    if (phase === 'longBreak') durationSec = settings.longBreakMinutes * 60;
+    setTimerSecondsRemaining(durationSec);
+    setTimerTotalDuration(durationSec);
+  };
+
+  const finishStopwatch = (notes?: string) => {
+    if (stopwatchElapsed < 10) return;
+    setTimerStatus('IDLE');
+    timerTargetTimestampRef.current = null;
+    stopwatchStartTimestampRef.current = null;
+    if (settings.soundEnabled) soundEngine.playCompletionChime();
+    confetti({ particleCount: 60, spread: 70 });
+
+    const now = new Date();
+    addSession({
+      activityId: activeActivityId,
+      startTime: new Date(now.getTime() - stopwatchElapsed * 1000).toISOString(),
+      endTime: now.toISOString(),
+      durationSeconds: stopwatchElapsed,
+      notes: notes || `Stopwatch focus session (${Math.round(stopwatchElapsed / 60)}m)`,
+      date: format(now, 'yyyy-MM-dd'),
+    });
+
+    setStopwatchElapsed(0);
+  };
 
   // Actions
   const updateSettings = (newSettings: Partial<UserSettings>) => {
@@ -212,7 +428,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     setSessions((prev) => [newSession, ...prev]);
 
-    // Automatically update time goals
     const durationHours = Math.round(sessionData.durationSeconds / 3600);
     if (durationHours > 0) {
       setGoals((prevGoals) =>
@@ -273,7 +488,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (t.id !== taskId) return t;
         const isNowCompleted = !t.completed;
         if (isNowCompleted) {
-          // Increment Task Goals
           setGoals((prevGoals) =>
             prevGoals.map((g) =>
               g.type === 'TASK' ? { ...g, currentValue: g.currentValue + 1 } : g
@@ -305,7 +519,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateGoalProgress = (id: string, delta: number) => {
     setGoals((prev) =>
-      prev.map((g) => (g.id === id ? { ...g, currentValue: Math.max(0, g.currentValue + delta) } : g))
+      prev.map((g) =>
+        g.id === id ? { ...g, currentValue: Math.max(0, g.currentValue + delta) } : g
+      )
     );
   };
 
@@ -345,7 +561,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const activeHabits = habits.filter((h) => h.isActive);
     const completedHabitsCount = activeHabits.filter((h) => !!h.logs[dateStr]).length;
 
-    const completedTasksCount = tasks.filter((t) => t.completedAt && format(parseISO(t.completedAt), 'yyyy-MM-dd') === dateStr).length;
+    const completedTasksCount = tasks.filter(
+      (t) => t.completedAt && format(parseISO(t.completedAt), 'yyyy-MM-dd') === dateStr
+    ).length;
 
     const hasReview = reviews.some((r) => r.date === dateStr);
 
@@ -404,6 +622,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setTasks(INITIAL_TASKS);
     setGoals(INITIAL_GOALS);
     setCountdowns(INITIAL_COUNTDOWNS);
+    resetTimer();
   };
 
   return (
@@ -450,6 +669,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setActiveActivityId,
         timerTotalDuration,
         setTimerTotalDuration,
+        selectedPomodoroPhase,
+        setSelectedPomodoroPhase,
+        stopwatchElapsed,
+        startTimer,
+        pauseTimer,
+        resetTimer,
+        switchPomodoroPhase,
+        finishStopwatch,
         getDayActivityData,
         exportDataJSON,
         importDataJSON,

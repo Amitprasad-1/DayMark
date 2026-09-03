@@ -13,7 +13,17 @@ import {
 import { format, getDayOfYear, getDaysInYear } from 'date-fns';
 
 export const Header: React.FC = () => {
-  const { setActiveTab, setTimerStatus, setIsDayDetailOpen, setSelectedDate, sessions } = useApp();
+  const {
+    setActiveTab,
+    timerStatus,
+    timerMode,
+    timerSecondsRemaining,
+    stopwatchElapsed,
+    startTimer,
+    setIsDayDetailOpen,
+    setSelectedDate,
+    sessions,
+  } = useApp();
   const [time, setTime] = useState<string>('');
   const [dateStr, setDateStr] = useState<string>('');
 
@@ -91,6 +101,22 @@ export const Header: React.FC = () => {
 
         {/* Right: Quick Action Controls */}
         <div className="flex items-center gap-3">
+          {/* Live Timer Pill if running */}
+          {timerStatus === 'RUNNING' && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('timer')}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500/25 to-teal-500/25 border border-emerald-400/50 text-emerald-300 text-xs font-mono font-bold animate-pulse cursor-pointer shadow-lg shadow-emerald-500/20"
+              title="Focus Session Active — Click to View"
+            >
+              <Clock className="w-3.5 h-3.5 text-emerald-400 animate-spin" style={{ animationDuration: '6s' }} />
+              <span>
+                {Math.floor((timerMode === 'STOPWATCH' ? stopwatchElapsed : timerSecondsRemaining) / 60)}:
+                {String((timerMode === 'STOPWATCH' ? stopwatchElapsed : timerSecondsRemaining) % 60).padStart(2, '0')}
+              </span>
+            </button>
+          )}
+
           {/* Today's Focus Stat Pill */}
           <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-950/30 border border-amber-500/20 text-xs">
             <Flame className="w-4 h-4 text-amber-400 fill-amber-400" />
@@ -98,18 +124,20 @@ export const Header: React.FC = () => {
             <span className="font-bold text-amber-300 font-mono">{todayFocusMinutes}m</span>
           </div>
 
-          {/* Quick Focus Button */}
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('timer');
-              setTimerStatus('RUNNING');
-            }}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-400 via-teal-500 to-emerald-600 hover:from-emerald-300 hover:to-teal-500 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-[1.03] active:scale-[0.97] transition-all cursor-pointer"
-          >
-            <Play className="w-3.5 h-3.5 fill-slate-950" />
-            <span className="hidden sm:inline">Start Focus</span>
-          </button>
+          {/* Quick Focus Button (if not already running) */}
+          {timerStatus !== 'RUNNING' && (
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab('timer');
+                startTimer();
+              }}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-400 via-teal-500 to-emerald-600 hover:from-emerald-300 hover:to-teal-500 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-[1.03] active:scale-[0.97] transition-all cursor-pointer"
+            >
+              <Play className="w-3.5 h-3.5 fill-slate-950" />
+              <span className="hidden sm:inline">Start Focus</span>
+            </button>
+          )}
 
           {/* Log Today Modal Button */}
           <button
