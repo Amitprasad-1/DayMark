@@ -264,7 +264,7 @@ export const FocusTimer: React.FC = () => {
 
         {/* GIANT TIME DISPLAY */}
         <div className="relative group">
-          <div className="text-7xl sm:text-9xl font-bold font-mono tracking-tight text-white drop-shadow-2xl">
+          <div className="text-6xl sm:text-8xl md:text-9xl font-bold font-mono tracking-tight text-white drop-shadow-2xl">
             {formatSeconds(displaySeconds)}
           </div>
           <p className="text-xs font-medium uppercase tracking-widest text-indigo-400 mt-2">
