@@ -322,15 +322,16 @@ export const YearDashboard: React.FC = () => {
               {habits.filter((h) => h.isActive).map((h) => {
                 const isDone = !!h.logs[todayStr];
                 return (
-                  <div
+                  <button
                     key={h.id}
+                    type="button"
                     onClick={() => {
                       toggleHabit(h.id, todayStr);
                       if (!isDone) {
                         confetti({ particleCount: 30, spread: 60, origin: { y: 0.8 } });
                       }
                     }}
-                    className={`flex items-center justify-between p-2 rounded-lg text-xs cursor-pointer border transition-all ${
+                    className={`w-full flex items-center justify-between p-2 rounded-lg text-xs cursor-pointer border transition-all text-left ${
                       isDone
                         ? 'bg-emerald-950/40 border-emerald-800/40 text-emerald-200'
                         : 'bg-slate-900/50 border-white/5 text-slate-300 hover:border-white/10'
@@ -342,7 +343,7 @@ export const YearDashboard: React.FC = () => {
                     ) : (
                       <Circle className="w-4 h-4 text-slate-500 shrink-0" />
                     )}
-                  </div>
+                  </button>
                 );
               })}
             </div>

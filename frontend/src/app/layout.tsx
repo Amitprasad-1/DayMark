@@ -22,12 +22,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${jakarta.variable} dark`}>
+    <html lang="en" className={`${jakarta.variable} dark`} suppressHydrationWarning>
       <head>
         <meta name="theme-color" content="#090D16" />
         <link rel="apple-touch-icon" href="/icon-192x192.png" />
       </head>
-      <body className="antialiased font-sans bg-[#090D16] text-slate-100">
+      <body className="antialiased font-sans bg-[#090D16] text-slate-100" suppressHydrationWarning>
         <AppProvider>{children}</AppProvider>
       </body>
     </html>

@@ -45,8 +45,9 @@ export const MobileNav: React.FC = () => {
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
               <h3 className="text-sm font-bold text-white">More Modules</h3>
               <button
+                type="button"
                 onClick={() => setShowMoreMenu(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white"
+                className="p-1 rounded-lg text-slate-400 hover:text-white cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -59,11 +60,12 @@ export const MobileNav: React.FC = () => {
                 return (
                   <button
                     key={tab.id}
+                    type="button"
                     onClick={() => {
                       setActiveTab(tab.id);
                       setShowMoreMenu(false);
                     }}
-                    className={`flex flex-col items-start p-3 rounded-xl border text-left transition-all ${
+                    className={`flex flex-col items-start p-3 rounded-xl border text-left transition-all cursor-pointer ${
                       isCurrent
                         ? 'bg-indigo-600/30 border-indigo-500/50 shadow-md'
                         : 'bg-slate-900/60 border-white/5 hover:border-white/15'
@@ -89,8 +91,9 @@ export const MobileNav: React.FC = () => {
             return (
               <button
                 key={item.id}
+                type="button"
                 onClick={() => setActiveTab(item.id)}
-                className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-lg text-[10px] font-medium transition-all ${
+                className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-lg text-[10px] font-medium transition-all cursor-pointer ${
                   isActive ? 'text-indigo-400 font-bold scale-105' : 'text-slate-400'
                 }`}
               >
@@ -107,6 +110,7 @@ export const MobileNav: React.FC = () => {
 
           {/* More Button */}
           <button
+            type="button"
             onClick={() => setShowMoreMenu(true)}
             className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-lg text-[10px] font-medium transition-all ${
               isMoreTabActive ? 'text-indigo-400 font-bold' : 'text-slate-400'

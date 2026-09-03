@@ -47,9 +47,10 @@ export const Header: React.FC = () => {
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
         {/* Left: App Logo & Live Year Day Banner */}
         <div className="flex items-center gap-4">
-          <div
+          <button
+            type="button"
             onClick={() => setActiveTab('dashboard')}
-            className="flex items-center gap-2.5 cursor-pointer group"
+            className="flex items-center gap-2.5 cursor-pointer group text-left"
           >
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-emerald-400 p-0.5 shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform duration-200">
               <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
@@ -69,7 +70,7 @@ export const Header: React.FC = () => {
                 Day {dayOfYear} of {totalDaysInYear} ({yearProgress}%)
               </p>
             </div>
-          </div>
+          </button>
         </div>
 
         {/* Center: Live Clock & Date Badge */}
@@ -96,11 +97,12 @@ export const Header: React.FC = () => {
 
           {/* Quick Focus Button */}
           <button
+            type="button"
             onClick={() => {
               setActiveTab('timer');
               setTimerStatus('RUNNING');
             }}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-slate-950 font-semibold text-xs shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-slate-950 font-semibold text-xs shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
           >
             <Play className="w-4 h-4 fill-slate-950" />
             <span className="hidden sm:inline">Start Focus</span>
@@ -108,11 +110,12 @@ export const Header: React.FC = () => {
 
           {/* Log Today Modal Button */}
           <button
+            type="button"
             onClick={() => {
               setSelectedDate(format(new Date(), 'yyyy-MM-dd'));
               setIsDayDetailOpen(true);
             }}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-200 text-xs border border-white/10 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-200 text-xs border border-white/10 transition-colors cursor-pointer"
             title="Log Today's Activities"
           >
             <Plus className="w-4 h-4 text-indigo-400" />

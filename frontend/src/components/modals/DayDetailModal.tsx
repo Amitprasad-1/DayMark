@@ -267,10 +267,11 @@ export const DayDetailModal: React.FC = () => {
                 {habits.map((h) => {
                   const isDone = !!h.logs[selectedDate];
                   return (
-                    <div
+                    <button
                       key={h.id}
+                      type="button"
                       onClick={() => toggleHabit(h.id, selectedDate)}
-                      className={`flex items-center justify-between p-3 rounded-xl cursor-pointer border transition-all ${
+                      className={`w-full flex items-center justify-between p-3 rounded-xl cursor-pointer border transition-all text-left ${
                         isDone
                           ? 'bg-emerald-950/40 border-emerald-800/40 text-emerald-200'
                           : 'bg-slate-900/50 border-white/5 text-slate-300 hover:border-white/10'
@@ -285,7 +286,7 @@ export const DayDetailModal: React.FC = () => {
                           <div className="w-4 h-4 rounded-full border border-slate-600" />
                         )}
                       </div>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
