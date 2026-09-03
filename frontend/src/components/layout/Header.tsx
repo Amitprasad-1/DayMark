@@ -8,14 +8,12 @@ import {
   Flame,
   Plus,
   Play,
-  CheckCircle,
-  Zap,
   Sparkles,
 } from 'lucide-react';
 import { format, getDayOfYear, getDaysInYear } from 'date-fns';
 
 export const Header: React.FC = () => {
-  const { setActiveTab, setTimerStatus, setIsDayDetailOpen, setSelectedDate, sessions, habits, tasks } = useApp();
+  const { setActiveTab, setTimerStatus, setIsDayDetailOpen, setSelectedDate, sessions } = useApp();
   const [time, setTime] = useState<string>('');
   const [dateStr, setDateStr] = useState<string>('');
 
@@ -35,7 +33,7 @@ export const Header: React.FC = () => {
   const totalDaysInYear = getDaysInYear(now);
   const yearProgress = ((dayOfYear / totalDaysInYear) * 100).toFixed(1);
 
-  // Calculate current streak
+  // Calculate today's focus minutes
   const todayStr = format(now, 'yyyy-MM-dd');
   const todaySessions = sessions.filter((s) => s.date === todayStr);
   const todayFocusMinutes = Math.round(
@@ -43,45 +41,50 @@ export const Header: React.FC = () => {
   );
 
   return (
-    <header className="sticky top-0 z-30 w-full glass-panel border-b border-white/10 px-4 lg:px-8 py-3 backdrop-blur-xl bg-slate-950/80">
+    <header className="sticky top-0 z-40 w-full glass-panel border-b border-white/10 px-4 lg:px-8 py-3 backdrop-blur-2xl bg-slate-950/70 shadow-2xl">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-        {/* Left: App Logo & Live Year Day Banner */}
+        {/* Left: App Branding with Logo & Progress Pill */}
         <div className="flex items-center gap-4">
           <button
             type="button"
             onClick={() => setActiveTab('dashboard')}
             className="flex items-center gap-3 cursor-pointer group text-left"
           >
-            <img
-              src="/logo.png"
-              alt="DayMark Logo"
-              className="w-10 h-10 rounded-xl object-cover shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform border border-white/10"
-            />
+            <div className="relative">
+              <div className="absolute -inset-1 bg-gradient-to-r from-amber-500 via-orange-500 to-indigo-500 rounded-2xl blur-sm opacity-40 group-hover:opacity-75 transition duration-300" />
+              <img
+                src="/logo.png"
+                alt="DayMark Logo"
+                className="relative w-10 h-10 rounded-xl object-cover shadow-xl border border-white/20"
+              />
+            </div>
             <div>
-              <div className="flex items-center gap-1.5">
-                <h1 className="font-bold text-xl tracking-tight text-white font-sans">
-                  Day<span className="text-indigo-400">Mark</span>
+              <div className="flex items-center gap-2">
+                <h1 className="font-extrabold text-xl tracking-tight text-white font-sans">
+                  Day<span className="text-gradient-gold">Mark</span>
                 </h1>
-                <span className="text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                <span className="text-[10px] uppercase font-extrabold tracking-widest px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-300 border border-amber-500/30">
                   PRO
                 </span>
               </div>
-              <p className="text-xs text-slate-400 hidden sm:block">
-                Day {dayOfYear} of {totalDaysInYear} ({yearProgress}%)
+              <p className="text-[11px] text-slate-400 font-medium hidden sm:flex items-center gap-1.5">
+                <span>Day {dayOfYear} of {totalDaysInYear}</span>
+                <span className="w-1 h-1 rounded-full bg-slate-600" />
+                <span className="text-indigo-300 font-semibold">{yearProgress}% complete</span>
               </p>
             </div>
           </button>
         </div>
 
         {/* Center: Live Clock & Date Badge */}
-        <div className="hidden md:flex items-center gap-3 px-4 py-1.5 rounded-full bg-slate-900/60 border border-white/5 shadow-inner">
-          <div className="flex items-center gap-2 text-indigo-300 font-mono font-medium text-sm">
-            <Clock className="w-4 h-4 text-indigo-400 animate-pulse" />
+        <div className="hidden md:flex items-center gap-3 px-4 py-1.5 rounded-full bg-slate-900/70 border border-white/10 shadow-inner">
+          <div className="flex items-center gap-2 text-indigo-300 font-mono font-bold text-sm tracking-wide">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <span>{time}</span>
           </div>
-          <div className="h-3 w-px bg-slate-800" />
+          <div className="h-3.5 w-px bg-white/10" />
           <div className="flex items-center gap-1.5 text-xs text-slate-300 font-medium">
-            <Calendar className="w-3.5 h-3.5 text-emerald-400" />
+            <Calendar className="w-3.5 h-3.5 text-amber-400" />
             <span>{dateStr}</span>
           </div>
         </div>
@@ -89,10 +92,10 @@ export const Header: React.FC = () => {
         {/* Right: Quick Action Controls */}
         <div className="flex items-center gap-3">
           {/* Today's Focus Stat Pill */}
-          <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-950/40 border border-indigo-800/40 text-xs">
-            <Flame className="w-4 h-4 text-amber-400" />
-            <span className="text-slate-300">Today:</span>
-            <span className="font-bold text-indigo-300">{todayFocusMinutes}m</span>
+          <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-950/30 border border-amber-500/20 text-xs">
+            <Flame className="w-4 h-4 text-amber-400 fill-amber-400" />
+            <span className="text-slate-400">Today:</span>
+            <span className="font-bold text-amber-300 font-mono">{todayFocusMinutes}m</span>
           </div>
 
           {/* Quick Focus Button */}
@@ -102,9 +105,9 @@ export const Header: React.FC = () => {
               setActiveTab('timer');
               setTimerStatus('RUNNING');
             }}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-slate-950 font-semibold text-xs shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-400 via-teal-500 to-emerald-600 hover:from-emerald-300 hover:to-teal-500 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-[1.03] active:scale-[0.97] transition-all cursor-pointer"
           >
-            <Play className="w-4 h-4 fill-slate-950" />
+            <Play className="w-3.5 h-3.5 fill-slate-950" />
             <span className="hidden sm:inline">Start Focus</span>
           </button>
 
@@ -115,7 +118,7 @@ export const Header: React.FC = () => {
               setSelectedDate(format(new Date(), 'yyyy-MM-dd'));
               setIsDayDetailOpen(true);
             }}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-200 text-xs border border-white/10 transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-200 text-xs font-semibold border border-white/10 hover:border-white/20 transition-all cursor-pointer shadow-md"
             title="Log Today's Activities"
           >
             <Plus className="w-4 h-4 text-indigo-400" />
