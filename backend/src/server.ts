@@ -110,10 +110,14 @@ app.post('/api/habits', (req: Request, res: Response) => {
 app.post('/api/habits/:id/toggle', (req: Request, res: Response) => {
   const { date } = req.body;
   const habit = dataStore.habits.find((h) => h.id === req.params.id);
-  if (!habit) return res.status(404).json({ error: 'Habit not found' });
+  if (!habit) {
+    res.status(404).json({ error: 'Habit not found' });
+    return;
+  }
 
-  const current = !!habit.logs[date];
-  habit.logs[date] = !current;
+  const logs = habit.logs as Record<string, boolean>;
+  const current = !!logs[date];
+  logs[date] = !current;
   res.json(habit);
 });
 
