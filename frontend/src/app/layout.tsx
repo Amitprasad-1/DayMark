@@ -25,7 +25,11 @@ export default function RootLayout({
     <html lang="en" className={`${jakarta.variable} dark`} suppressHydrationWarning>
       <head>
         <meta name="theme-color" content="#090D16" />
-        <link rel="apple-touch-icon" href="/icon-192x192.png" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="DayMark" />
+        <link rel="icon" type="image/png" href="/logo.png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       <body className="antialiased font-sans bg-[#090D16] text-slate-100" suppressHydrationWarning>
         <AppProvider>{children}</AppProvider>

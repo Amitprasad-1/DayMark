@@ -50,13 +50,13 @@ export const Header: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveTab('dashboard')}
-            className="flex items-center gap-2.5 cursor-pointer group text-left"
+            className="flex items-center gap-3 cursor-pointer group text-left"
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-emerald-400 p-0.5 shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform duration-200">
-              <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-indigo-400 group-hover:rotate-12 transition-transform duration-300" />
-              </div>
-            </div>
+            <img
+              src="/logo.png"
+              alt="DayMark Logo"
+              className="w-10 h-10 rounded-xl object-cover shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform border border-white/10"
+            />
             <div>
               <div className="flex items-center gap-1.5">
                 <h1 className="font-bold text-xl tracking-tight text-white font-sans">
