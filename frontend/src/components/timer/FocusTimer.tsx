@@ -323,13 +323,13 @@ export const FocusTimer: React.FC = () => {
             </motion.button>
           ) : (
             <motion.button
-              whileHover={{ scale: 1.04, boxShadow: '0 0 35px rgba(16, 185, 129, 0.45)' }}
+              whileHover={{ scale: 1.04, boxShadow: '0 0 35px rgba(99, 102, 241, 0.5)' }}
               whileTap={{ scale: 0.95 }}
               type="button"
               onClick={startTimer}
-              className="flex items-center gap-3 px-10 py-4 rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500 text-slate-950 font-black text-base shadow-2xl transition-all cursor-pointer border border-emerald-300/40"
+              className="flex items-center gap-3 px-10 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-indigo-600 hover:from-indigo-500 hover:to-indigo-400 text-white font-black text-base shadow-[0_4px_25px_rgba(99,102,241,0.4),inset_0_1px_0_rgba(255,255,255,0.25)] transition-all cursor-pointer border border-indigo-400/40"
             >
-              <Play className="w-5 h-5 fill-slate-950" />
+              <Play className="w-5 h-5 fill-white text-white" />
               <span>Start Focus</span>
             </motion.button>
           )}

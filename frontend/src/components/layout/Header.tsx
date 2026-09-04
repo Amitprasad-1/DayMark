@@ -35,7 +35,7 @@ export const Header: React.FC = () => {
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
-      setTime(format(now, 'HH:mm:ss'));
+      setTime(format(now, 'hh:mm:ss a'));
       setDateStr(format(now, 'EEEE, MMMM d, yyyy'));
     };
     updateTime();
@@ -80,9 +80,6 @@ export const Header: React.FC = () => {
                 <h1 className="font-black text-xl tracking-tight text-white font-sans flex items-center">
                   Day<span className="text-gradient-gold">Mark</span>
                 </h1>
-                <span className="text-[9px] uppercase font-black tracking-widest px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500/25 to-orange-500/20 text-amber-300 border border-amber-500/40 shadow-[0_0_12px_rgba(245,158,11,0.2)]">
-                  ULTRA
-                </span>
               </div>
               <p className="text-[11px] text-slate-400 font-medium hidden sm:flex items-center gap-1.5">
                 <span>Day <strong className="text-slate-200 font-mono">{dayOfYear}</strong> of {totalDaysInYear}</span>
@@ -138,20 +135,20 @@ export const Header: React.FC = () => {
             <span className="font-extrabold text-amber-300 font-mono tracking-tight">{todayFocusMinutes}m</span>
           </div>
 
-          {/* Quick Focus Button (if not already running) */}
+          {/* Quick Focus Button (harmonized luxury design) */}
           {timerStatus !== 'RUNNING' && (
             <motion.button
-              whileHover={{ scale: 1.03, boxShadow: '0 0 25px rgba(16, 185, 129, 0.45)' }}
+              whileHover={{ scale: 1.03, boxShadow: '0 0 25px rgba(99, 102, 241, 0.45)' }}
               whileTap={{ scale: 0.96 }}
               type="button"
               onClick={() => {
                 setActiveTab('timer');
                 startTimer();
               }}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500 text-slate-950 font-black text-xs shadow-[0_4px_16px_rgba(16,185,129,0.3)] cursor-pointer transition-all border border-emerald-300/40"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-indigo-600 hover:from-indigo-500 hover:to-indigo-400 text-white font-black text-xs shadow-[0_4px_16px_rgba(99,102,241,0.35),inset_0_1px_0_rgba(255,255,255,0.25)] cursor-pointer transition-all border border-indigo-400/40"
             >
-              <Play className="w-3.5 h-3.5 fill-slate-950" />
-              <span className="hidden sm:inline tracking-wide uppercase">Focus</span>
+              <Play className="w-3.5 h-3.5 fill-white text-white" />
+              <span className="hidden sm:inline tracking-wide uppercase">Start Focus</span>
             </motion.button>
           )}
 

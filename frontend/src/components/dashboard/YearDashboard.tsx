@@ -478,16 +478,16 @@ export const YearDashboard: React.FC = () => {
           {/* Bottom Action Triggers */}
           <div className="grid grid-cols-2 gap-3 pt-2 relative z-10">
             <motion.button
-              whileHover={{ scale: 1.02 }}
+              whileHover={{ scale: 1.02, boxShadow: '0 0 25px rgba(99, 102, 241, 0.45)' }}
               whileTap={{ scale: 0.97 }}
               type="button"
               onClick={() => {
                 setActiveTab('timer');
                 startTimer();
               }}
-              className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-extrabold text-xs shadow-xl shadow-indigo-600/30 cursor-pointer transition-all border border-indigo-400/30"
+              className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-indigo-600 hover:from-indigo-500 hover:to-indigo-400 text-white font-extrabold text-xs shadow-[0_4px_16px_rgba(99,102,241,0.35),inset_0_1px_0_rgba(255,255,255,0.25)] cursor-pointer transition-all border border-indigo-400/40"
             >
-              <Play className="w-3.5 h-3.5 fill-white" />
+              <Play className="w-3.5 h-3.5 fill-white text-white" />
               <span>Start Timer</span>
             </motion.button>
             <motion.button
