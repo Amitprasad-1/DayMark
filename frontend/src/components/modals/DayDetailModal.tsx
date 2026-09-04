@@ -9,9 +9,14 @@ import {
   Plus,
   Trash2,
   Calendar as CalendarIcon,
+  Sparkles,
+  Edit3,
+  List,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
+
+const ACTIVITY_PALETTE = ['#6366F1', '#8B5CF6', '#EC4899', '#F43F5E', '#F59E0B', '#10B981', '#06B6D4', '#3B82F6'];
 
 export const DayDetailModal: React.FC = () => {
   const {
@@ -22,6 +27,7 @@ export const DayDetailModal: React.FC = () => {
     addSession,
     deleteSession,
     activities,
+    addActivity,
     habits,
     toggleHabit,
     reviews,
@@ -34,6 +40,10 @@ export const DayDetailModal: React.FC = () => {
   const [selectedActivityId, setSelectedActivityId] = useState<string>(
     activities[0]?.id || ''
   );
+  const [isManualActivity, setIsManualActivity] = useState<boolean>(false);
+  const [manualActivityName, setManualActivityName] = useState<string>('');
+  const [manualCategory, setManualCategory] = useState<string>('Deep Work');
+  const [manualColor, setManualColor] = useState<string>(ACTIVITY_PALETTE[0]);
   const [durationMinutes, setDurationMinutes] = useState<number>(30);
   const [sessionNotes, setSessionNotes] = useState<string>('');
 
@@ -67,13 +77,40 @@ export const DayDetailModal: React.FC = () => {
 
   const handleAddManualSession = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedActivityId || durationMinutes <= 0) return;
+    if (durationMinutes <= 0) return;
+
+    let targetActivityId = selectedActivityId;
+
+    if (isManualActivity) {
+      const trimmedName = manualActivityName.trim();
+      if (!trimmedName) return;
+
+      const existing = activities.find(
+        (a) => a.name.toLowerCase() === trimmedName.toLowerCase()
+      );
+
+      if (existing) {
+        targetActivityId = existing.id;
+      } else {
+        const newAct = addActivity({
+          name: trimmedName,
+          category: manualCategory.trim() || 'Custom',
+          color: manualColor,
+          icon: 'Zap',
+          dailyTargetMinutes: 60,
+          isActive: true,
+        });
+        targetActivityId = newAct.id;
+      }
+    }
+
+    if (!targetActivityId) return;
 
     const durationSeconds = durationMinutes * 60;
     const nowISO = new Date().toISOString();
 
     addSession({
-      activityId: selectedActivityId,
+      activityId: targetActivityId,
       startTime: nowISO,
       endTime: nowISO,
       durationSeconds,
@@ -82,6 +119,11 @@ export const DayDetailModal: React.FC = () => {
     });
 
     setSessionNotes('');
+    if (isManualActivity) {
+      setManualActivityName('');
+      setIsManualActivity(false);
+      setSelectedActivityId(targetActivityId);
+    }
   };
 
   const handleSaveReview = (e: React.FormEvent) => {
@@ -203,18 +245,91 @@ export const DayDetailModal: React.FC = () => {
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Track Activity</label>
-                    <select
-                      value={selectedActivityId}
-                      onChange={(e) => setSelectedActivityId(e.target.value)}
-                      className="w-full px-3.5 py-2 text-xs rounded-xl glass-input bg-slate-900 font-medium"
-                    >
-                      {activities.map((a) => (
-                        <option key={a.id} value={a.id}>
-                          {a.name} ({a.category})
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                        {isManualActivity ? 'Type Custom Activity' : 'Track Activity'}
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsManualActivity(!isManualActivity);
+                          if (!isManualActivity) {
+                            setManualActivityName('');
+                          }
+                        }}
+                        className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 transition-all flex items-center gap-1 cursor-pointer bg-indigo-500/10 hover:bg-indigo-500/20 px-2 py-0.5 rounded-lg border border-indigo-500/30"
+                      >
+                        {isManualActivity ? (
+                          <>
+                            <List className="w-3 h-3" />
+                            <span>Select Preset</span>
+                          </>
+                        ) : (
+                          <>
+                            <Edit3 className="w-3 h-3" />
+                            <span>Type Manually</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    {isManualActivity ? (
+                      <div className="space-y-2">
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. DSA Practice, Physics, Client Work..."
+                          value={manualActivityName}
+                          onChange={(e) => setManualActivityName(e.target.value)}
+                          className="w-full px-3.5 py-2 text-xs rounded-xl glass-input bg-slate-900/90 font-medium border border-indigo-500/40 focus:border-indigo-400 text-white placeholder:text-slate-500"
+                          autoFocus
+                        />
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            placeholder="Category (e.g. Study, Work)"
+                            value={manualCategory}
+                            onChange={(e) => setManualCategory(e.target.value)}
+                            className="flex-1 px-3 py-1.5 text-[11px] rounded-lg glass-input bg-slate-900/70 font-medium text-slate-300 placeholder:text-slate-500"
+                          />
+                          <div className="flex items-center gap-1 bg-slate-900/90 p-1 rounded-lg border border-white/5">
+                            {ACTIVITY_PALETTE.map((c) => (
+                              <button
+                                key={c}
+                                type="button"
+                                onClick={() => setManualColor(c)}
+                                className={`w-3.5 h-3.5 rounded-full cursor-pointer transition-transform ${
+                                  manualColor === c ? 'scale-125 ring-2 ring-white' : 'opacity-60 hover:opacity-100'
+                                }`}
+                                style={{ backgroundColor: c }}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <select
+                        value={selectedActivityId}
+                        onChange={(e) => {
+                          if (e.target.value === '__custom__') {
+                            setIsManualActivity(true);
+                            setManualActivityName('');
+                          } else {
+                            setSelectedActivityId(e.target.value);
+                          }
+                        }}
+                        className="w-full px-3.5 py-2 text-xs rounded-xl glass-input bg-slate-900 font-medium cursor-pointer"
+                      >
+                        {activities.map((a) => (
+                          <option key={a.id} value={a.id}>
+                            {a.name} ({a.category})
+                          </option>
+                        ))}
+                        <option value="__custom__" className="text-indigo-400 font-bold bg-slate-800">
+                          ➕ + Type Custom Activity...
                         </option>
-                      ))}
-                    </select>
+                      </select>
+                    )}
                   </div>
                   <div>
                     <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Duration (Minutes)</label>

@@ -50,7 +50,7 @@ interface AppContextType {
   settings: UserSettings;
   updateSettings: (newSettings: Partial<UserSettings>) => void;
   activities: Activity[];
-  addActivity: (activity: Omit<Activity, 'id'>) => void;
+  addActivity: (activity: Omit<Activity, 'id'>) => Activity;
   deleteActivity: (id: string) => void;
   
   sessions: StudySession[];
@@ -480,13 +480,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     daymarkApi.updateSettings(newSettings).catch(() => null);
   };
 
-  const addActivity = (activityData: Omit<Activity, 'id'>) => {
+  const addActivity = (activityData: Omit<Activity, 'id'>): Activity => {
     const newAct: Activity = {
       ...activityData,
       id: `act-${Date.now()}`,
     };
     setActivities((prev) => [...prev, newAct]);
     daymarkApi.createActivity(activityData).catch(() => null);
+    return newAct;
   };
 
   const deleteActivity = (id: string) => {

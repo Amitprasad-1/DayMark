@@ -26,6 +26,7 @@ export const FocusTimer: React.FC = () => {
     activeActivityId,
     setActiveActivityId,
     activities,
+    addActivity,
     settings,
     updateSettings,
     selectedPomodoroPhase,
@@ -39,6 +40,37 @@ export const FocusTimer: React.FC = () => {
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [sessionNotes, setSessionNotes] = useState('');
+  const [isAddingTrack, setIsAddingTrack] = useState(false);
+  const [newTrackName, setNewTrackName] = useState('');
+
+  const handleCreateTrack = (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = newTrackName.trim();
+    if (!name) return;
+
+    const existing = activities.find(
+      (a) => a.name.toLowerCase() === name.toLowerCase()
+    );
+
+    if (existing) {
+      setActiveActivityId(existing.id);
+    } else {
+      const palette = ['#6366F1', '#8B5CF6', '#EC4899', '#F43F5E', '#F59E0B', '#10B981', '#06B6D4', '#3B82F6'];
+      const color = palette[activities.length % palette.length];
+      const newAct = addActivity({
+        name,
+        category: 'Custom Track',
+        color,
+        icon: 'Zap',
+        dailyTargetMinutes: 60,
+        isActive: true,
+      });
+      setActiveActivityId(newAct.id);
+    }
+
+    setNewTrackName('');
+    setIsAddingTrack(false);
+  };
 
   const activeActivity = activities.find((a) => a.id === activeActivityId) || activities[0];
 
@@ -304,19 +336,67 @@ export const FocusTimer: React.FC = () => {
         )}
 
         {/* Target Activity Selector */}
-        <div className="flex items-center gap-3 relative z-10">
+        <div className="flex items-center gap-2.5 relative z-10 flex-wrap justify-center">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Target Track:</span>
-          <select
-            value={activeActivityId}
-            onChange={(e) => setActiveActivityId(e.target.value)}
-            className="px-4 py-2 text-xs font-black rounded-2xl glass-input bg-slate-900/90 text-indigo-300 border border-white/10 cursor-pointer shadow-md"
-          >
-            {activities.map((act) => (
-              <option key={act.id} value={act.id} className="bg-slate-900 text-white">
-                {act.name} ({act.category})
-              </option>
-            ))}
-          </select>
+          {isAddingTrack ? (
+            <form onSubmit={handleCreateTrack} className="flex items-center gap-1.5 animate-fadeIn">
+              <input
+                type="text"
+                value={newTrackName}
+                onChange={(e) => setNewTrackName(e.target.value)}
+                placeholder="Type custom track name..."
+                className="px-3.5 py-1.5 text-xs rounded-xl glass-input bg-slate-900 border border-indigo-500/50 text-white placeholder:text-slate-500 font-medium"
+                autoFocus
+              />
+              <button
+                type="submit"
+                className="px-3 py-1.5 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer shadow-md transition-all"
+              >
+                Add
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAddingTrack(false);
+                  setNewTrackName('');
+                }}
+                className="px-2.5 py-1.5 text-xs font-bold rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer transition-all border border-white/5"
+              >
+                Cancel
+              </button>
+            </form>
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <select
+                value={activeActivityId}
+                onChange={(e) => {
+                  if (e.target.value === '__custom__') {
+                    setIsAddingTrack(true);
+                  } else {
+                    setActiveActivityId(e.target.value);
+                  }
+                }}
+                className="px-4 py-2 text-xs font-black rounded-2xl glass-input bg-slate-900/90 text-indigo-300 border border-white/10 cursor-pointer shadow-md"
+              >
+                {activities.map((act) => (
+                  <option key={act.id} value={act.id} className="bg-slate-900 text-white">
+                    {act.name} ({act.category})
+                  </option>
+                ))}
+                <option value="__custom__" className="text-indigo-400 font-bold bg-slate-800">
+                  ➕ + Type Custom Track...
+                </option>
+              </select>
+              <button
+                type="button"
+                onClick={() => setIsAddingTrack(true)}
+                className="px-2.5 py-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 hover:text-indigo-300 text-xs font-bold cursor-pointer transition-all flex items-center gap-1"
+                title="Type new custom activity track"
+              >
+                <span>+ Type</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* CIRCULAR PROGRESS GAUGE + TIME DISPLAY */}
