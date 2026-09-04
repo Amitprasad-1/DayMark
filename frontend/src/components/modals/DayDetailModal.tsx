@@ -169,8 +169,16 @@ export const DayDetailModal: React.FC = () => {
 
         {/* Tab Body */}
         <div className="p-6 overflow-y-auto space-y-6 flex-1">
-          {/* TAB 1: SESSIONS */}
-          {activeTab === 'sessions' && (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+            >
+              {/* TAB 1: SESSIONS */}
+              {activeTab === 'sessions' && (
             <div className="space-y-6">
               {/* Form to log manual session */}
               <form onSubmit={handleAddManualSession} className="p-4 sm:p-5 rounded-2xl bg-slate-900/90 border border-white/[0.08] space-y-3.5 shadow-inner">
@@ -396,6 +404,8 @@ export const DayDetailModal: React.FC = () => {
               </motion.button>
             </form>
           )}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </motion.div>
     </div>

@@ -103,11 +103,12 @@ export const MobileNav: React.FC = () => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             return (
-              <button
+              <motion.button
+                whileTap={{ scale: 0.88 }}
                 key={item.id}
                 type="button"
                 onClick={() => setActiveTab(item.id)}
-                className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl text-[10px] font-semibold transition-all cursor-pointer relative ${
+                className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl text-[10px] font-semibold transition-all cursor-pointer relative outline-none ${
                   isActive ? 'text-indigo-400 font-bold scale-105' : 'text-slate-400'
                 }`}
               >
@@ -118,21 +119,22 @@ export const MobileNav: React.FC = () => {
                   )}
                 </div>
                 <span className="mt-1">{item.label}</span>
-              </button>
+              </motion.button>
             );
           })}
 
           {/* More Button */}
-          <button
+          <motion.button
+            whileTap={{ scale: 0.88 }}
             type="button"
             onClick={() => setShowMoreMenu(true)}
-            className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl text-[10px] font-semibold transition-all cursor-pointer ${
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl text-[10px] font-semibold transition-all cursor-pointer outline-none ${
               isMoreTabActive ? 'text-indigo-400 font-bold scale-105' : 'text-slate-400'
             }`}
           >
             <MoreHorizontal className="w-5 h-5" />
             <span className="mt-1">More</span>
-          </button>
+          </motion.button>
         </div>
       </nav>
     </>

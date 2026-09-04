@@ -262,9 +262,13 @@ export const FocusTimer: React.FC = () => {
 
           {/* Large Digital Digits inside dial */}
           <div className="absolute flex flex-col items-center justify-center text-center">
-            <div className="text-5xl sm:text-7xl md:text-8xl font-black font-mono tracking-tight text-white drop-shadow-[0_12px_24px_rgba(0,0,0,0.9)] select-none">
+            <motion.div
+              animate={timerStatus === 'RUNNING' ? { scale: [1, 1.018, 1] } : { scale: 1 }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+              className="text-5xl sm:text-7xl md:text-8xl font-black font-mono tracking-tight text-white drop-shadow-[0_12px_24px_rgba(0,0,0,0.9)] select-none"
+            >
               {formatSeconds(displaySeconds)}
-            </div>
+            </motion.div>
 
             <div className="mt-3 text-xs font-black uppercase tracking-widest text-indigo-400 flex items-center justify-center gap-2">
               {timerStatus === 'RUNNING' ? (

@@ -581,24 +581,29 @@ export const YearDashboard: React.FC = () => {
             </p>
           </div>
 
-          {/* Quarter Filters */}
+          {/* Quarter Filters with Sliding Active Pill */}
           <div className="flex flex-wrap items-center gap-2">
-            {(['ALL', 'Q1', 'Q2', 'Q3', 'Q4'] as const).map((q) => (
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                key={q}
-                type="button"
-                onClick={() => setSelectedQuarter(q)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-all ${
-                  selectedQuarter === q
-                    ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-lg shadow-indigo-600/35 scale-105 border border-indigo-400/40'
-                    : 'bg-slate-900/80 text-slate-400 hover:text-white border border-white/[0.06]'
-                }`}
-              >
-                {q === 'ALL' ? 'All 12 Months' : q}
-              </motion.button>
-            ))}
+            <div className="flex items-center gap-1 p-1 rounded-2xl bg-slate-950/80 border border-white/10 shadow-inner">
+              {(['ALL', 'Q1', 'Q2', 'Q3', 'Q4'] as const).map((q) => (
+                <button
+                  key={q}
+                  type="button"
+                  onClick={() => setSelectedQuarter(q)}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-colors relative outline-none ${
+                    selectedQuarter === q ? 'text-white font-black' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  {selectedQuarter === q && (
+                    <motion.div
+                      layoutId="quarterActivePill"
+                      transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+                      className="absolute inset-0 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.4)]"
+                    />
+                  )}
+                  <span className="relative z-10">{q === 'ALL' ? 'All 12 Months' : q}</span>
+                </button>
+              ))}
+            </div>
 
             {/* Jump to Today Button */}
             <motion.button
@@ -652,9 +657,11 @@ export const YearDashboard: React.FC = () => {
             const stats = getMonthStats(monthIdx);
 
             return (
-              <div
+              <motion.div
                 key={monthName}
-                className="p-5 rounded-3xl bg-gradient-to-b from-slate-900/90 to-slate-950/95 border border-white/[0.08] hover:border-indigo-500/40 space-y-3.5 transition-all shadow-xl group hover:shadow-indigo-500/10"
+                whileHover={{ y: -3 }}
+                transition={{ duration: 0.2 }}
+                className="p-5 rounded-3xl bg-gradient-to-b from-slate-900/90 to-slate-950/95 border border-white/[0.08] hover:border-indigo-500/40 space-y-3.5 transition-colors shadow-xl group hover:shadow-indigo-500/10"
               >
                 {/* Month Card Header with Live Stats */}
                 <div className="space-y-1">
@@ -700,7 +707,10 @@ export const YearDashboard: React.FC = () => {
                     const data = getDayActivityData(dateStr);
 
                     return (
-                      <button
+                      <motion.button
+                        whileHover={{ scale: 1.25, zIndex: 30 }}
+                        whileTap={{ scale: 0.85 }}
+                        transition={{ type: 'spring', stiffness: 500, damping: 25 }}
                         key={dateStr}
                         type="button"
                         onMouseEnter={() => handleCellHover(dateObj)}
@@ -708,7 +718,7 @@ export const YearDashboard: React.FC = () => {
                           setSelectedDate(dateStr);
                           setIsDayDetailOpen(true);
                         }}
-                        className={`heatmap-cell w-full aspect-square rounded-lg flex items-center justify-center text-[10px] border transition-all relative cursor-pointer outline-none ${intensityClass}`}
+                        className={`heatmap-cell w-full aspect-square rounded-lg flex items-center justify-center text-[10px] border transition-colors relative cursor-pointer outline-none ${intensityClass}`}
                       >
                         <span>{dayNum}</span>
 
@@ -716,11 +726,11 @@ export const YearDashboard: React.FC = () => {
                         {data.hasReview && (
                           <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-rose-400 shadow-[0_0_6px_rgba(244,63,94,0.8)]" />
                         )}
-                      </button>
+                      </motion.button>
                     );
                   })}
                 </div>
-              </div>
+              </motion.div>
             );
           })}
         </div>
