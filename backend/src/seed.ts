@@ -65,11 +65,16 @@ export async function seedDatabaseIfEmpty() {
     // 5. Ensure Default Tasks
     const taskCount = await prisma.task.count({ where: { userId: user.id } });
     if (taskCount === 0) {
+      const now = new Date();
+      const todayStr = now.toISOString().slice(0, 10);
+      const yesterday = new Date(now.getTime() - 86400000).toISOString().slice(0, 10);
+      const twoDaysAgo = new Date(now.getTime() - 2 * 86400000).toISOString().slice(0, 10);
+
       await prisma.task.createMany({
         data: [
-          { userId: user.id, title: 'Connect to GitHub Remote Repository', priority: 'HIGH', category: 'Git', completed: true, dueDate: '2026-09-03' },
-          { userId: user.id, title: 'Modularize Architecture into Frontend, Backend, Database', priority: 'HIGH', category: 'Architecture', completed: true, dueDate: '2026-09-03' },
-          { userId: user.id, title: 'Deploy 24/7 Cloud Architecture (Vercel, Render, Supabase)', priority: 'HIGH', category: 'DevOps', completed: false, dueDate: '2026-09-04' },
+          { userId: user.id, title: 'Connect to GitHub Remote Repository', priority: 'HIGH', category: 'Git', completed: true, dueDate: twoDaysAgo },
+          { userId: user.id, title: 'Modularize Architecture into Frontend, Backend, Database', priority: 'HIGH', category: 'Architecture', completed: true, dueDate: yesterday },
+          { userId: user.id, title: 'Deploy 24/7 Cloud Architecture (Vercel, Render, Supabase)', priority: 'HIGH', category: 'DevOps', completed: false, dueDate: todayStr },
         ],
       });
       console.log('✅ Default tasks seeded');
@@ -90,10 +95,11 @@ export async function seedDatabaseIfEmpty() {
     // 7. Ensure Default Countdowns
     const cdCount = await prisma.customCountdown.count();
     if (cdCount === 0) {
+      const launchDate = new Date(Date.now() + 45 * 86400000).toISOString().slice(0, 10);
       await prisma.customCountdown.create({
         data: {
           title: 'DayMark Production Launch',
-          targetDate: '2026-11-15',
+          targetDate: launchDate,
           category: 'Milestone',
           color: '#8B5CF6',
           icon: 'Rocket',
