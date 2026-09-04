@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
 import { soundEngine } from '@/lib/audio';
 import { TimerMode } from '@/types';
@@ -14,6 +14,7 @@ import {
   CheckCircle,
   Sparkles,
   Flame,
+  X,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -42,6 +43,56 @@ export const FocusTimer: React.FC = () => {
   const [sessionNotes, setSessionNotes] = useState('');
   const [isAddingTrack, setIsAddingTrack] = useState(false);
   const [newTrackName, setNewTrackName] = useState('');
+
+  const toggleFullscreen = () => {
+    const next = !isFullscreen;
+    setIsFullscreen(next);
+    if (next) {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => null);
+      }
+    } else {
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => null);
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement && isFullscreen) {
+        setIsFullscreen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isFullscreen) {
+        if (e.key === 'Escape') {
+          setIsFullscreen(false);
+          if (document.fullscreenElement) {
+            document.exitFullscreen().catch(() => null);
+          }
+        } else if (e.code === 'Space') {
+          const target = e.target as HTMLElement | null;
+          const isInput = target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName);
+          if (!isInput) {
+            e.preventDefault();
+            if (timerStatus === 'RUNNING') {
+              pauseTimer();
+            } else {
+              startTimer();
+            }
+          }
+        }
+      }
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isFullscreen, timerStatus, pauseTimer, startTimer]);
 
   const handleCreateTrack = (e: React.FormEvent) => {
     e.preventDefault();
@@ -201,631 +252,864 @@ export const FocusTimer: React.FC = () => {
     soundEngine.setAmbientSound(sound);
   };
 
-  return (
-    <div className={`space-y-8 ${isFullscreen ? 'fixed inset-0 z-50 bg-[#050811] p-6 lg:p-12 flex flex-col justify-between overflow-y-auto' : ''}`}>
-      {/* Top Timer Controls Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4 glass-panel-luxury p-4 lg:p-5 rounded-3xl border border-white/[0.09] shadow-2xl bg-[#090E1C]/80">
-        {/* Mode Selector */}
-        <div className="flex items-center gap-2 p-1 rounded-2xl bg-slate-950/80 border border-white/10">
-          {(['POMODORO', 'STOPWATCH'] as TimerMode[]).map((mode) => (
-            <button
-              key={mode}
-              type="button"
-              onClick={() => {
-                setTimerMode(mode);
-                resetTimer();
-              }}
-              className={`px-5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer relative ${
-                timerMode === mode
-                  ? 'text-white font-black'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              {timerMode === mode && (
-                <motion.div
-                  layoutId="timerModePill"
-                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                  className="absolute inset-0 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.4)]"
-                />
-              )}
-              <span className="relative z-10">{mode}</span>
-            </button>
-          ))}
-        </div>
+  // Reusable Electric Spark Dial SVG Renderer
+  const renderDialSvg = (isZen: boolean = false) => {
+    const svgClass = isZen
+      ? 'w-[310px] h-[310px] sm:w-[420px] sm:h-[420px] md:w-[500px] md:h-[500px] lg:w-[560px] lg:h-[560px] overflow-visible drop-shadow-[0_0_55px_rgba(0,0,0,0.95)]'
+      : 'w-72 h-72 sm:w-84 sm:h-84 md:w-[410px] md:h-[410px] overflow-visible drop-shadow-[0_0_35px_rgba(0,0,0,0.9)]';
 
-        {/* Ambient Soundscape & Fullscreen Controls */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-2xl bg-slate-900/90 border border-white/10 shadow-inner">
-            <Volume2 className="w-4 h-4 text-amber-400" />
-            
-            {/* Animated Sound Equalizer Bars when active */}
-            {settings.ambientSound !== 'none' && (
-              <div className="flex items-end gap-0.5 h-4 px-1">
-                <div className="w-1 bg-amber-400 rounded-full animate-wave-1" />
-                <div className="w-1 bg-amber-300 rounded-full animate-wave-2" />
-                <div className="w-1 bg-amber-500 rounded-full animate-wave-3" />
-                <div className="w-1 bg-amber-400 rounded-full animate-wave-4" />
-              </div>
-            )}
+    const digitsClass = isZen
+      ? 'text-6xl sm:text-8xl md:text-9xl lg:text-[112px] font-black font-mono tracking-tight text-white drop-shadow-[0_16px_36px_rgba(0,0,0,0.95)] select-none'
+      : 'text-5xl sm:text-7xl md:text-8xl font-black font-mono tracking-tight text-white drop-shadow-[0_12px_28px_rgba(0,0,0,0.95)] select-none';
 
-            <select
-              value={settings.ambientSound}
-              onChange={(e) => handleAmbientSoundToggle(e.target.value as any)}
-              className="text-xs bg-transparent text-slate-200 outline-none cursor-pointer font-bold pr-1"
-            >
-              <option value="none" className="bg-slate-900 text-slate-400">Mute Soundscape</option>
-              <option value="rain" className="bg-slate-900 text-white">🌧️ Rain Shower</option>
-              <option value="white-noise" className="bg-slate-900 text-white">📻 White Noise</option>
-              <option value="forest" className="bg-slate-900 text-white">🌲 Forest Wind</option>
-              <option value="waves" className="bg-slate-900 text-white">🌊 Ocean Waves</option>
-            </select>
-          </div>
+    return (
+      <div className="relative flex items-center justify-center z-10 select-none">
+        <svg viewBox="0 0 360 360" className={svgClass}>
+          <defs>
+            {/* Dynamic Theme Gradients */}
+            <linearGradient id={`${theme.gradId}-${isZen ? 'zen' : 'norm'}`} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor={theme.c1} />
+              <stop offset="50%" stopColor={theme.c2} />
+              <stop offset="100%" stopColor={theme.c3} />
+            </linearGradient>
 
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            type="button"
-            onClick={() => setIsFullscreen(!isFullscreen)}
-            className="p-2.5 rounded-2xl bg-slate-900/90 border border-white/10 text-slate-300 hover:text-white cursor-pointer transition-colors shadow-md"
-            title="Toggle Zen Fullscreen Mode"
-          >
-            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-          </motion.button>
-        </div>
-      </div>
+            {/* Electric Spark Lightning Gradient */}
+            <linearGradient id={`electricSparkGrad-${isZen ? 'zen' : 'norm'}`} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#FFFFFF" stopOpacity="1" />
+              <stop offset="25%" stopColor="#FEF08A" stopOpacity="0.95" />
+              <stop offset="60%" stopColor="#F59E0B" stopOpacity="0.8" />
+              <stop offset="100%" stopColor="#EF4444" stopOpacity="0" />
+            </linearGradient>
 
-      {/* CENTERPIECE TIME DISPLAY WITH CIRCULAR PROGRESS GAUGE */}
-      <div className="glass-panel-luxury p-8 sm:p-12 lg:p-16 rounded-3xl border border-white/[0.09] flex flex-col items-center justify-center text-center space-y-8 relative overflow-hidden shadow-2xl bg-[#090E1C]/80">
-        {/* Ambient Glowing Orb */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-gradient-to-tr from-amber-500/10 via-indigo-600/15 to-emerald-500/10 rounded-full blur-[100px] pointer-events-none" />
+            {/* Volumetric Bloom Filter */}
+            <filter id={`neonGlow-${isZen ? 'zen' : 'norm'}`} x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="5" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
 
-        {/* Pomodoro Phase Switcher */}
-        {timerMode === 'POMODORO' && (
-          <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-slate-950/80 border border-white/10 shadow-inner relative z-10">
-            <button
-              type="button"
-              onClick={() => switchPomodoroPhase('work')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer relative ${
-                selectedPomodoroPhase === 'work' ? 'text-slate-950 font-black' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              {selectedPomodoroPhase === 'work' && (
-                <motion.div
-                  layoutId="pomodoroPhasePill"
-                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                  className="absolute inset-0 rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 shadow-[0_0_15px_rgba(245,158,11,0.4)]"
-                />
-              )}
-              <span className="relative z-10">Focus ({settings.workIntervalMinutes}m)</span>
-            </button>
+            {/* High-intensity Spark Bloom Filter */}
+            <filter id={`sparkBloom-${isZen ? 'zen' : 'norm'}`} x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="3.5" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
 
-            <button
-              type="button"
-              onClick={() => switchPomodoroPhase('shortBreak')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer relative ${
-                selectedPomodoroPhase === 'shortBreak' ? 'text-slate-950 font-black' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              {selectedPomodoroPhase === 'shortBreak' && (
-                <motion.div
-                  layoutId="pomodoroPhasePill"
-                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                  className="absolute inset-0 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-400 shadow-[0_0_15px_rgba(16,185,129,0.4)]"
-                />
-              )}
-              <span className="relative z-10">Short Break ({settings.shortBreakMinutes}m)</span>
-            </button>
+          {/* 1. Outer Constellation Orbit Ring (rotates slowly) */}
+          <motion.circle
+            cx="180"
+            cy="180"
+            r={secOrbitRadius}
+            fill="none"
+            stroke="rgba(255, 255, 255, 0.07)"
+            strokeWidth="1"
+            strokeDasharray="3 7"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 120, repeat: Infinity, ease: 'linear' }}
+            style={{ originX: '180px', originY: '180px' }}
+          />
 
-            <button
-              type="button"
-              onClick={() => switchPomodoroPhase('longBreak')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer relative ${
-                selectedPomodoroPhase === 'longBreak' ? 'text-white font-black' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              {selectedPomodoroPhase === 'longBreak' && (
-                <motion.div
-                  layoutId="pomodoroPhasePill"
-                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                  className="absolute inset-0 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 shadow-[0_0_15px_rgba(99,102,241,0.4)]"
-                />
-              )}
-              <span className="relative z-10">Long Break ({settings.longBreakMinutes}m)</span>
-            </button>
-          </div>
-        )}
-
-        {/* Target Activity Selector */}
-        <div className="flex items-center gap-2.5 relative z-10 flex-wrap justify-center">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Target Track:</span>
-          {isAddingTrack ? (
-            <form onSubmit={handleCreateTrack} className="flex items-center gap-1.5 animate-fadeIn">
-              <input
-                type="text"
-                value={newTrackName}
-                onChange={(e) => setNewTrackName(e.target.value)}
-                placeholder="Type custom track name..."
-                className="px-3.5 py-1.5 text-xs rounded-xl glass-input bg-slate-900 border border-indigo-500/50 text-white placeholder:text-slate-500 font-medium"
-                autoFocus
-              />
-              <button
-                type="submit"
-                className="px-3 py-1.5 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer shadow-md transition-all"
-              >
-                Add
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsAddingTrack(false);
-                  setNewTrackName('');
-                }}
-                className="px-2.5 py-1.5 text-xs font-bold rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer transition-all border border-white/5"
-              >
-                Cancel
-              </button>
-            </form>
-          ) : (
-            <div className="flex items-center gap-1.5">
-              <select
-                value={activeActivityId}
-                onChange={(e) => {
-                  if (e.target.value === '__custom__') {
-                    setIsAddingTrack(true);
-                  } else {
-                    setActiveActivityId(e.target.value);
-                  }
-                }}
-                className="px-4 py-2 text-xs font-black rounded-2xl glass-input bg-slate-900/90 text-indigo-300 border border-white/10 cursor-pointer shadow-md"
-              >
-                {activities.map((act) => (
-                  <option key={act.id} value={act.id} className="bg-slate-900 text-white">
-                    {act.name} ({act.category})
-                  </option>
-                ))}
-                <option value="__custom__" className="text-indigo-400 font-bold bg-slate-800">
-                  ➕ + Type Custom Track...
-                </option>
-              </select>
-              <button
-                type="button"
-                onClick={() => setIsAddingTrack(true)}
-                className="px-2.5 py-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 hover:text-indigo-300 text-xs font-bold cursor-pointer transition-all flex items-center gap-1"
-                title="Type new custom activity track"
-              >
-                <span>+ Type</span>
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* CIRCULAR PROGRESS GAUGE + TIME DISPLAY */}
-        <div className="relative flex items-center justify-center z-10 my-4 select-none">
-          <svg
-            viewBox="0 0 360 360"
-            className="w-72 h-72 sm:w-84 sm:h-84 md:w-[410px] md:h-[410px] overflow-visible drop-shadow-[0_0_35px_rgba(0,0,0,0.9)]"
-          >
-            <defs>
-              {/* Dynamic Theme Gradients */}
-              <linearGradient id={theme.gradId} x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor={theme.c1} />
-                <stop offset="50%" stopColor={theme.c2} />
-                <stop offset="100%" stopColor={theme.c3} />
-              </linearGradient>
-
-              {/* Electric Spark Lightning Gradient */}
-              <linearGradient id="electricSparkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#FFFFFF" stopOpacity="1" />
-                <stop offset="25%" stopColor="#FEF08A" stopOpacity="0.95" />
-                <stop offset="60%" stopColor="#F59E0B" stopOpacity="0.8" />
-                <stop offset="100%" stopColor="#EF4444" stopOpacity="0" />
-              </linearGradient>
-
-              {/* Volumetric Bloom Filter */}
-              <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur stdDeviation="5" result="blur" />
-                <feMerge>
-                  <feMergeNode in="blur" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
-
-              {/* High-intensity Spark Bloom Filter */}
-              <filter id="sparkBloom" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="3.5" result="blur" />
-                <feMerge>
-                  <feMergeNode in="blur" />
-                  <feMergeNode in="blur" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
-
-              <filter id="beadGlow" x="-60%" y="-60%" width="220%" height="220%">
-                <feGaussianBlur stdDeviation="4" result="blur" />
-                <feMerge>
-                  <feMergeNode in="blur" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
-            </defs>
-
-            {/* 1. Outer Constellation Orbit Ring (rotates slowly) */}
-            <motion.circle
-              cx="180"
-              cy="180"
-              r={secOrbitRadius}
-              fill="none"
-              stroke="rgba(255, 255, 255, 0.06)"
-              strokeWidth="1"
-              strokeDasharray="3 7"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 120, repeat: Infinity, ease: 'linear' }}
-              style={{ originX: '180px', originY: '180px' }}
-            />
-
-            {/* 2. Active Pulsating Breathing Rings (when running) */}
-            {timerStatus === 'RUNNING' && (
-              <>
-                <motion.circle
-                  cx="180"
-                  cy="180"
-                  r={circleRadius}
-                  fill="none"
-                  stroke={theme.c1}
-                  strokeWidth="2"
-                  animate={{
-                    r: [circleRadius, circleRadius + 15, circleRadius],
-                    opacity: [0.4, 0, 0.4],
-                  }}
-                  transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
-                />
-                <motion.circle
-                  cx="180"
-                  cy="180"
-                  r={circleRadius - 10}
-                  fill="none"
-                  stroke={theme.c2}
-                  strokeWidth="1.5"
-                  animate={{
-                    r: [circleRadius - 10, circleRadius - 20, circleRadius - 10],
-                    opacity: [0.3, 0, 0.3],
-                  }}
-                  transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut', delay: 0.6 }}
-                />
-              </>
-            )}
-
-            {/* 3. 60 Precision Chronometer Dial Ticks */}
-            {ticks.map((t) => (
-              <line
-                key={t.i}
-                x1={t.x1}
-                y1={t.y1}
-                x2={t.x2}
-                y2={t.y2}
-                stroke={
-                  t.isLit
-                    ? theme.c1
-                    : t.isMajor
-                    ? 'rgba(255, 255, 255, 0.28)'
-                    : 'rgba(255, 255, 255, 0.08)'
-                }
-                strokeWidth={t.isMajor ? (t.isLit ? 2.5 : 2) : 1}
-                strokeLinecap="round"
-                className="transition-colors duration-300"
-              />
-            ))}
-
-            {/* 4. Underlying Dark Track Ring */}
-            <circle
-              cx="180"
-              cy="180"
-              r={circleRadius}
-              fill="none"
-              stroke="rgba(15, 23, 42, 0.9)"
-              strokeWidth="12"
-            />
-            <circle
-              cx="180"
-              cy="180"
-              r={circleRadius}
-              fill="none"
-              stroke="rgba(255, 255, 255, 0.04)"
-              strokeWidth="12"
-            />
-
-            {/* 5. Animated Luminous Progress Arc */}
-            <circle
-              cx="180"
-              cy="180"
-              r={circleRadius}
-              fill="none"
-              stroke={`url(#${theme.gradId})`}
-              strokeWidth="12"
-              strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
-              strokeLinecap="round"
-              transform="rotate(-90 180 180)"
-              filter="url(#neonGlow)"
-              className="transition-all duration-700 ease-out"
-            />
-
-            {/* 5b. Electric Spark Pulse streaming continuously along the active progress line */}
-            {timerStatus === 'RUNNING' && progressFraction > 0.01 && (
+          {/* 2. Active Pulsating Breathing Rings (when running) */}
+          {timerStatus === 'RUNNING' && (
+            <>
               <motion.circle
                 cx="180"
                 cy="180"
                 r={circleRadius}
                 fill="none"
-                stroke="url(#electricSparkGrad)"
-                strokeWidth="5"
-                strokeDasharray="50 250"
-                strokeLinecap="round"
-                transform="rotate(-90 180 180)"
+                stroke={theme.c1}
+                strokeWidth="2"
                 animate={{
-                  strokeDashoffset: [0, -circumference],
+                  r: [circleRadius, circleRadius + 15, circleRadius],
+                  opacity: [0.4, 0, 0.4],
                 }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: 'linear',
-                }}
-                filter="url(#sparkBloom)"
+                transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
               />
-            )}
-
-            {/* 5c. Twinkling Starlet Sparkles along the progress arc */}
-            {timerStatus === 'RUNNING' &&
-              lineSparkles.map(
-                (sp, idx) =>
-                  sp.visible && (
-                    <motion.g
-                      key={`sparkle-${idx}`}
-                      transform={`translate(${sp.x}, ${sp.y})`}
-                      animate={{
-                        scale: [0, 1.3, 0],
-                        opacity: [0, 1, 0],
-                        rotate: [0, 90],
-                      }}
-                      transition={{
-                        duration: 1.1,
-                        repeat: Infinity,
-                        delay: sp.delay,
-                        ease: 'easeInOut',
-                      }}
-                    >
-                      <path
-                        d="M 0,-4 Q 0,0 4,0 Q 0,0 0,4 Q 0,0 -4,0 Q 0,0 0,-4 Z"
-                        fill="#FFFFFF"
-                        filter="url(#sparkBloom)"
-                      />
-                    </motion.g>
-                  )
-              )}
-
-            {/* 6. Active Spark Head & Floating Embers */}
-            {progressFraction > 0 && (
-              <g>
-                {/* A. Floating Embers Flying Off the Tip */}
-                {timerStatus === 'RUNNING' &&
-                  sparkEmbers.map((ember, i) => {
-                    const ang = headAngle + ember.angleOffset;
-                    const baseX = 180 + circleRadius * Math.cos(ang);
-                    const baseY = 180 + circleRadius * Math.sin(ang);
-                    const targetX = 180 + (circleRadius + ember.driftR) * Math.cos(ang);
-                    const targetY = 180 + (circleRadius + ember.driftR) * Math.sin(ang);
-
-                    return (
-                      <motion.circle
-                        key={`ember-${i}`}
-                        cx={baseX}
-                        cy={baseY}
-                        r={ember.size}
-                        fill="#FEF08A"
-                        animate={{
-                          cx: [baseX, targetX],
-                          cy: [baseY, targetY],
-                          opacity: [1, 0],
-                          scale: [1.3, 0.2],
-                        }}
-                        transition={{
-                          duration: ember.duration,
-                          repeat: Infinity,
-                          delay: ember.delay,
-                          ease: 'easeOut',
-                        }}
-                        filter="url(#sparkBloom)"
-                      />
-                    );
-                  })}
-
-                {/* B. Crackling Jittering Spark Rays at the Tip */}
-                {timerStatus === 'RUNNING' &&
-                  sparkRays.map((ray, idx) => (
-                    <motion.line
-                      key={`ray-${idx}`}
-                      x1={headX}
-                      y1={headY}
-                      x2={headX + ray.dx}
-                      y2={headY + ray.dy}
-                      stroke={ray.color}
-                      strokeWidth={ray.width}
-                      strokeLinecap="round"
-                      animate={{
-                        x2: [headX, headX + ray.dx * 1.6, headX + ray.dx],
-                        y2: [headY, headY + ray.dy * 1.6, headY + ray.dy],
-                        opacity: [0.2, 1, 0.1],
-                      }}
-                      transition={{
-                        duration: 0.22 + (idx % 4) * 0.08,
-                        repeat: Infinity,
-                        repeatType: 'reverse',
-                      }}
-                      filter="url(#sparkBloom)"
-                    />
-                  ))}
-
-                {/* C. Rotating 4-Point Star Spark at the Core */}
-                <motion.g
-                  transform={`translate(${headX}, ${headY})`}
-                  animate={{
-                    rotate: [0, 180, 360],
-                    scale: timerStatus === 'RUNNING' ? [0.9, 1.4, 0.9] : 1,
-                  }}
-                  transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
-                >
-                  <path
-                    d="M 0,-8 Q 0,0 8,0 Q 0,0 0,8 Q 0,0 -8,0 Q 0,0 0,-8 Z"
-                    fill="#FFFFFF"
-                    filter="url(#sparkBloom)"
-                  />
-                  <path
-                    d="M 0,-5 Q 0,0 5,0 Q 0,0 0,5 Q 0,0 -5,0 Q 0,0 0,-5 Z"
-                    fill="#FEF08A"
-                  />
-                </motion.g>
-
-                {/* D. Expanding Sonar Ping Wave */}
-                {timerStatus === 'RUNNING' && (
-                  <motion.circle
-                    cx={headX}
-                    cy={headY}
-                    fill="none"
-                    stroke="#FEF08A"
-                    strokeWidth="1.5"
-                    animate={{ r: [6, 20], opacity: [0.9, 0] }}
-                    transition={{ duration: 1.4, repeat: Infinity, ease: 'easeOut' }}
-                  />
-                )}
-
-                {/* E. Solid Center Bead */}
-                <circle
-                  cx={headX}
-                  cy={headY}
-                  r="6.5"
-                  fill="#FFFFFF"
-                  stroke={theme.c1}
-                  strokeWidth="2.5"
-                  className="shadow-[0_0_15px_#FFFFFF]"
-                />
-              </g>
-            )}
-
-            {/* 7. Real-Time 60-Second Orbit Satellite Bead */}
-            {timerStatus === 'RUNNING' && (
-              <g>
-                <circle
-                  cx={secX}
-                  cy={secY}
-                  r="3.5"
-                  fill="#38BDF8"
-                  className="shadow-[0_0_10px_#38BDF8]"
-                />
-                <motion.circle
-                  cx={secX}
-                  cy={secY}
-                  fill="none"
-                  stroke="#38BDF8"
-                  strokeWidth="1"
-                  animate={{ r: [3.5, 9], opacity: [0.8, 0] }}
-                  transition={{ duration: 1, repeat: Infinity, ease: 'easeOut' }}
-                />
-              </g>
-            )}
-          </svg>
-
-          {/* Large Digital Digits inside dial */}
-          <div className="absolute flex flex-col items-center justify-center text-center pointer-events-none">
-            <motion.div
-              animate={
-                timerStatus === 'RUNNING'
-                  ? { scale: [1, 1.018, 1], filter: ['brightness(1)', 'brightness(1.12)', 'brightness(1)'] }
-                  : { scale: 1, filter: 'brightness(1)' }
-              }
-              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-              className="text-5xl sm:text-7xl md:text-8xl font-black font-mono tracking-tight text-white drop-shadow-[0_12px_28px_rgba(0,0,0,0.95)] select-none"
-            >
-              {formatSeconds(displaySeconds)}
-            </motion.div>
-
-            <div className="mt-3 text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2">
-              {timerStatus === 'RUNNING' ? (
-                <>
-                  <span className="relative flex h-2.5 w-2.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" />
-                  </span>
-                  <span className="text-emerald-300 font-sans tracking-wider">Active Focus Flow</span>
-                </>
-              ) : (
-                <span className="text-slate-400 font-sans tracking-wider">Ready / Paused</span>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Notes Input */}
-        <div className="w-full max-w-md relative z-10">
-          <input
-            type="text"
-            placeholder="Add session focus note (e.g. Deep Work on Database specs)..."
-            value={sessionNotes}
-            onChange={(e) => setSessionNotes(e.target.value)}
-            className="w-full px-4 py-3 text-xs text-center rounded-2xl glass-input shadow-inner font-medium"
-          />
-        </div>
-
-        {/* CONTROLS (START / PAUSE / RESET / SAVE) */}
-        <div className="flex items-center gap-4 pt-2 relative z-10">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            type="button"
-            onClick={resetTimer}
-            className="p-4 rounded-2xl bg-slate-900/80 border border-white/10 text-slate-400 hover:text-white hover:bg-slate-800 transition-all cursor-pointer shadow-xl"
-            title="Reset Timer"
-          >
-            <RotateCcw className="w-5 h-5" />
-          </motion.button>
-
-          {timerStatus === 'RUNNING' ? (
-            <motion.button
-              whileHover={{ scale: 1.04, boxShadow: '0 0 30px rgba(245, 158, 11, 0.4)' }}
-              whileTap={{ scale: 0.95 }}
-              type="button"
-              onClick={pauseTimer}
-              className="flex items-center gap-3 px-10 py-4 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-slate-950 font-black text-base shadow-2xl transition-all cursor-pointer border border-amber-300/40"
-            >
-              <Pause className="w-5 h-5 fill-slate-950" />
-              <span>Pause Focus</span>
-            </motion.button>
-          ) : (
-            <motion.button
-              whileHover={{ scale: 1.04, boxShadow: '0 0 35px rgba(99, 102, 241, 0.5)' }}
-              whileTap={{ scale: 0.95 }}
-              type="button"
-              onClick={startTimer}
-              className="flex items-center gap-3 px-10 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-indigo-600 hover:from-indigo-500 hover:to-indigo-400 text-white font-black text-base shadow-[0_4px_25px_rgba(99,102,241,0.4),inset_0_1px_0_rgba(255,255,255,0.25)] transition-all cursor-pointer border border-indigo-400/40"
-            >
-              <Play className="w-5 h-5 fill-white text-white" />
-              <span>Start Focus</span>
-            </motion.button>
+              <motion.circle
+                cx="180"
+                cy="180"
+                r={circleRadius - 10}
+                fill="none"
+                stroke={theme.c2}
+                strokeWidth="1.5"
+                animate={{
+                  r: [circleRadius - 10, circleRadius - 20, circleRadius - 10],
+                  opacity: [0.3, 0, 0.3],
+                }}
+                transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut', delay: 0.6 }}
+              />
+            </>
           )}
 
-          {timerMode === 'STOPWATCH' && stopwatchElapsed > 0 && (
+          {/* 3. 60 Precision Chronometer Dial Ticks */}
+          {ticks.map((t) => (
+            <line
+              key={t.i}
+              x1={t.x1}
+              y1={t.y1}
+              x2={t.x2}
+              y2={t.y2}
+              stroke={
+                t.isLit
+                  ? theme.c1
+                  : t.isMajor
+                  ? 'rgba(255, 255, 255, 0.3)'
+                  : 'rgba(255, 255, 255, 0.08)'
+              }
+              strokeWidth={t.isMajor ? (t.isLit ? 2.5 : 2) : 1}
+              strokeLinecap="round"
+              className="transition-colors duration-300"
+            />
+          ))}
+
+          {/* 4. Underlying Dark Track Ring */}
+          <circle
+            cx="180"
+            cy="180"
+            r={circleRadius}
+            fill="none"
+            stroke="rgba(15, 23, 42, 0.9)"
+            strokeWidth="12"
+          />
+          <circle
+            cx="180"
+            cy="180"
+            r={circleRadius}
+            fill="none"
+            stroke="rgba(255, 255, 255, 0.04)"
+            strokeWidth="12"
+          />
+
+          {/* 5. Animated Luminous Progress Arc */}
+          <circle
+            cx="180"
+            cy="180"
+            r={circleRadius}
+            fill="none"
+            stroke={`url(#${theme.gradId}-${isZen ? 'zen' : 'norm'})`}
+            strokeWidth="12"
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+            strokeLinecap="round"
+            transform="rotate(-90 180 180)"
+            filter={`url(#neonGlow-${isZen ? 'zen' : 'norm'})`}
+            className="transition-all duration-700 ease-out"
+          />
+
+          {/* 5b. Electric Spark Pulse streaming continuously along the active progress line */}
+          {timerStatus === 'RUNNING' && progressFraction > 0.01 && (
+            <motion.circle
+              cx="180"
+              cy="180"
+              r={circleRadius}
+              fill="none"
+              stroke={`url(#electricSparkGrad-${isZen ? 'zen' : 'norm'})`}
+              strokeWidth="5"
+              strokeDasharray="50 250"
+              strokeLinecap="round"
+              transform="rotate(-90 180 180)"
+              animate={{
+                strokeDashoffset: [0, -circumference],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: 'linear',
+              }}
+              filter={`url(#sparkBloom-${isZen ? 'zen' : 'norm'})`}
+            />
+          )}
+
+          {/* 5c. Twinkling Starlet Sparkles along the progress arc */}
+          {timerStatus === 'RUNNING' &&
+            lineSparkles.map(
+              (sp, idx) =>
+                sp.visible && (
+                  <motion.g
+                    key={`sparkle-${idx}`}
+                    transform={`translate(${sp.x}, ${sp.y})`}
+                    animate={{
+                      scale: [0, 1.3, 0],
+                      opacity: [0, 1, 0],
+                      rotate: [0, 90],
+                    }}
+                    transition={{
+                      duration: 1.1,
+                      repeat: Infinity,
+                      delay: sp.delay,
+                      ease: 'easeInOut',
+                    }}
+                  >
+                    <path
+                      d="M 0,-4 Q 0,0 4,0 Q 0,0 0,4 Q 0,0 -4,0 Q 0,0 0,-4 Z"
+                      fill="#FFFFFF"
+                      filter={`url(#sparkBloom-${isZen ? 'zen' : 'norm'})`}
+                    />
+                  </motion.g>
+                )
+            )}
+
+          {/* 6. Active Spark Head & Floating Embers */}
+          {progressFraction > 0 && (
+            <g>
+              {/* A. Floating Embers Flying Off the Tip */}
+              {timerStatus === 'RUNNING' &&
+                sparkEmbers.map((ember, i) => {
+                  const ang = headAngle + ember.angleOffset;
+                  const baseX = 180 + circleRadius * Math.cos(ang);
+                  const baseY = 180 + circleRadius * Math.sin(ang);
+                  const targetX = 180 + (circleRadius + ember.driftR) * Math.cos(ang);
+                  const targetY = 180 + (circleRadius + ember.driftR) * Math.sin(ang);
+
+                  return (
+                    <motion.circle
+                      key={`ember-${i}`}
+                      cx={baseX}
+                      cy={baseY}
+                      r={ember.size}
+                      fill="#FEF08A"
+                      animate={{
+                        cx: [baseX, targetX],
+                        cy: [baseY, targetY],
+                        opacity: [1, 0],
+                        scale: [1.3, 0.2],
+                      }}
+                      transition={{
+                        duration: ember.duration,
+                        repeat: Infinity,
+                        delay: ember.delay,
+                        ease: 'easeOut',
+                      }}
+                      filter={`url(#sparkBloom-${isZen ? 'zen' : 'norm'})`}
+                    />
+                  );
+                })}
+
+              {/* B. Crackling Jittering Spark Rays at the Tip */}
+              {timerStatus === 'RUNNING' &&
+                sparkRays.map((ray, idx) => (
+                  <motion.line
+                    key={`ray-${idx}`}
+                    x1={headX}
+                    y1={headY}
+                    x2={headX + ray.dx}
+                    y2={headY + ray.dy}
+                    stroke={ray.color}
+                    strokeWidth={ray.width}
+                    strokeLinecap="round"
+                    animate={{
+                      x2: [headX, headX + ray.dx * 1.6, headX + ray.dx],
+                      y2: [headY, headY + ray.dy * 1.6, headY + ray.dy],
+                      opacity: [0.2, 1, 0.1],
+                    }}
+                    transition={{
+                      duration: 0.22 + (idx % 4) * 0.08,
+                      repeat: Infinity,
+                      repeatType: 'reverse',
+                    }}
+                    filter={`url(#sparkBloom-${isZen ? 'zen' : 'norm'})`}
+                  />
+                ))}
+
+              {/* C. Rotating 4-Point Star Spark at the Core */}
+              <motion.g
+                transform={`translate(${headX}, ${headY})`}
+                animate={{
+                  rotate: [0, 180, 360],
+                  scale: timerStatus === 'RUNNING' ? [0.9, 1.4, 0.9] : 1,
+                }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+              >
+                <path
+                  d="M 0,-8 Q 0,0 8,0 Q 0,0 0,8 Q 0,0 -8,0 Q 0,0 0,-8 Z"
+                  fill="#FFFFFF"
+                  filter={`url(#sparkBloom-${isZen ? 'zen' : 'norm'})`}
+                />
+                <path
+                  d="M 0,-5 Q 0,0 5,0 Q 0,0 0,5 Q 0,0 -5,0 Q 0,0 0,-5 Z"
+                  fill="#FEF08A"
+                />
+              </motion.g>
+
+              {/* D. Expanding Sonar Ping Wave */}
+              {timerStatus === 'RUNNING' && (
+                <motion.circle
+                  cx={headX}
+                  cy={headY}
+                  fill="none"
+                  stroke="#FEF08A"
+                  strokeWidth="1.5"
+                  animate={{ r: [6, 20], opacity: [0.9, 0] }}
+                  transition={{ duration: 1.4, repeat: Infinity, ease: 'easeOut' }}
+                />
+              )}
+
+              {/* E. Solid Center Bead */}
+              <circle
+                cx={headX}
+                cy={headY}
+                r="6.5"
+                fill="#FFFFFF"
+                stroke={theme.c1}
+                strokeWidth="2.5"
+                className="shadow-[0_0_15px_#FFFFFF]"
+              />
+            </g>
+          )}
+
+          {/* 7. Real-Time 60-Second Orbit Satellite Bead */}
+          {timerStatus === 'RUNNING' && (
+            <g>
+              <circle
+                cx={secX}
+                cy={secY}
+                r="3.5"
+                fill="#38BDF8"
+                className="shadow-[0_0_10px_#38BDF8]"
+              />
+              <motion.circle
+                cx={secX}
+                cy={secY}
+                fill="none"
+                stroke="#38BDF8"
+                strokeWidth="1"
+                animate={{ r: [3.5, 9], opacity: [0.8, 0] }}
+                transition={{ duration: 1, repeat: Infinity, ease: 'easeOut' }}
+              />
+            </g>
+          )}
+        </svg>
+
+        {/* Large Digital Digits inside dial */}
+        <div className="absolute flex flex-col items-center justify-center text-center pointer-events-none">
+          <motion.div
+            animate={
+              timerStatus === 'RUNNING'
+                ? { scale: [1, 1.018, 1], filter: ['brightness(1)', 'brightness(1.15)', 'brightness(1)'] }
+                : { scale: 1, filter: 'brightness(1)' }
+            }
+            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            className={digitsClass}
+          >
+            {formatSeconds(displaySeconds)}
+          </motion.div>
+
+          <div className="mt-3 text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2">
+            {timerStatus === 'RUNNING' ? (
+              <>
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" />
+                </span>
+                <span className="text-emerald-300 font-sans tracking-wider">Active Focus Flow</span>
+              </>
+            ) : (
+              <span className="text-slate-400 font-sans tracking-wider">Ready / Paused</span>
+            )}
+          </div>
+
+          {isZen && sessionNotes && (
+            <motion.div
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-3 max-w-xs sm:max-w-md text-xs font-medium text-indigo-300/80 italic line-clamp-1 px-4"
+            >
+              &ldquo;{sessionNotes}&rdquo;
+            </motion.div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <>
+      <div className="space-y-8">
+        {/* Top Timer Controls Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-4 glass-panel-luxury p-4 lg:p-5 rounded-3xl border border-white/[0.09] shadow-2xl bg-[#090E1C]/80">
+          {/* Mode Selector */}
+          <div className="flex items-center gap-2 p-1 rounded-2xl bg-slate-950/80 border border-white/10">
+            {(['POMODORO', 'STOPWATCH'] as TimerMode[]).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => {
+                  setTimerMode(mode);
+                  resetTimer();
+                }}
+                className={`px-5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer relative ${
+                  timerMode === mode
+                    ? 'text-white font-black'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {timerMode === mode && (
+                  <motion.div
+                    layoutId="timerModePill"
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                    className="absolute inset-0 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.4)]"
+                  />
+                )}
+                <span className="relative z-10">{mode}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Ambient Soundscape & Fullscreen Controls */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-2xl bg-slate-900/90 border border-white/10 shadow-inner">
+              <Volume2 className="w-4 h-4 text-amber-400" />
+              
+              {/* Animated Sound Equalizer Bars when active */}
+              {settings.ambientSound !== 'none' && (
+                <div className="flex items-end gap-0.5 h-4 px-1">
+                  <div className="w-1 bg-amber-400 rounded-full animate-wave-1" />
+                  <div className="w-1 bg-amber-300 rounded-full animate-wave-2" />
+                  <div className="w-1 bg-amber-500 rounded-full animate-wave-3" />
+                  <div className="w-1 bg-amber-400 rounded-full animate-wave-4" />
+                </div>
+              )}
+
+              <select
+                value={settings.ambientSound}
+                onChange={(e) => handleAmbientSoundToggle(e.target.value as any)}
+                className="text-xs bg-transparent text-slate-200 outline-none cursor-pointer font-bold pr-1"
+              >
+                <option value="none" className="bg-slate-900 text-slate-400">Mute Soundscape</option>
+                <option value="rain" className="bg-slate-900 text-white">🌧️ Rain Shower</option>
+                <option value="white-noise" className="bg-slate-900 text-white">📻 White Noise</option>
+                <option value="forest" className="bg-slate-900 text-white">🌲 Forest Wind</option>
+                <option value="waves" className="bg-slate-900 text-white">🌊 Ocean Waves</option>
+              </select>
+            </div>
+
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               type="button"
-              onClick={() => finishStopwatch(sessionNotes)}
-              className="p-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all shadow-xl cursor-pointer border border-emerald-400/40"
-              title="Save Stopwatch Session"
+              onClick={toggleFullscreen}
+              className="p-2.5 rounded-2xl bg-slate-900/90 border border-white/10 text-slate-300 hover:text-white cursor-pointer transition-colors shadow-md"
+              title="Enter Zen Fullscreen Mode"
             >
-              <CheckCircle className="w-5 h-5" />
+              <Maximize2 className="w-4 h-4" />
             </motion.button>
+          </div>
+        </div>
+
+        {/* CENTERPIECE TIME DISPLAY WITH CIRCULAR PROGRESS GAUGE */}
+        <div className="glass-panel-luxury p-8 sm:p-12 lg:p-16 rounded-3xl border border-white/[0.09] flex flex-col items-center justify-center text-center space-y-8 relative overflow-hidden shadow-2xl bg-[#090E1C]/80">
+          {/* Ambient Glowing Orb */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-gradient-to-tr from-amber-500/10 via-indigo-600/15 to-emerald-500/10 rounded-full blur-[100px] pointer-events-none" />
+
+          {/* Pomodoro Phase Switcher */}
+          {timerMode === 'POMODORO' && (
+            <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-slate-950/80 border border-white/10 shadow-inner relative z-10">
+              <button
+                type="button"
+                onClick={() => switchPomodoroPhase('work')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer relative ${
+                  selectedPomodoroPhase === 'work' ? 'text-slate-950 font-black' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {selectedPomodoroPhase === 'work' && (
+                  <motion.div
+                    layoutId="pomodoroPhasePill"
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                    className="absolute inset-0 rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 shadow-[0_0_15px_rgba(245,158,11,0.4)]"
+                  />
+                )}
+                <span className="relative z-10">Focus ({settings.workIntervalMinutes}m)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => switchPomodoroPhase('shortBreak')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer relative ${
+                  selectedPomodoroPhase === 'shortBreak' ? 'text-slate-950 font-black' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {selectedPomodoroPhase === 'shortBreak' && (
+                  <motion.div
+                    layoutId="pomodoroPhasePill"
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                    className="absolute inset-0 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-400 shadow-[0_0_15px_rgba(16,185,129,0.4)]"
+                  />
+                )}
+                <span className="relative z-10">Short Break ({settings.shortBreakMinutes}m)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => switchPomodoroPhase('longBreak')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer relative ${
+                  selectedPomodoroPhase === 'longBreak' ? 'text-white font-black' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {selectedPomodoroPhase === 'longBreak' && (
+                  <motion.div
+                    layoutId="pomodoroPhasePill"
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                    className="absolute inset-0 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 shadow-[0_0_15px_rgba(99,102,241,0.4)]"
+                  />
+                )}
+                <span className="relative z-10">Long Break ({settings.longBreakMinutes}m)</span>
+              </button>
+            </div>
           )}
+
+          {/* Target Activity Selector */}
+          <div className="flex items-center gap-2.5 relative z-10 flex-wrap justify-center">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Target Track:</span>
+            {isAddingTrack ? (
+              <form onSubmit={handleCreateTrack} className="flex items-center gap-1.5 animate-fadeIn">
+                <input
+                  type="text"
+                  value={newTrackName}
+                  onChange={(e) => setNewTrackName(e.target.value)}
+                  placeholder="Type custom track name..."
+                  className="px-3.5 py-1.5 text-xs rounded-xl glass-input bg-slate-900 border border-indigo-500/50 text-white placeholder:text-slate-500 font-medium"
+                  autoFocus
+                />
+                <button
+                  type="submit"
+                  className="px-3 py-1.5 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer shadow-md transition-all"
+                >
+                  Add
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddingTrack(false);
+                    setNewTrackName('');
+                  }}
+                  className="px-2.5 py-1.5 text-xs font-bold rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer transition-all border border-white/5"
+                >
+                  Cancel
+                </button>
+              </form>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <select
+                  value={activeActivityId}
+                  onChange={(e) => {
+                    if (e.target.value === '__custom__') {
+                      setIsAddingTrack(true);
+                    } else {
+                      setActiveActivityId(e.target.value);
+                    }
+                  }}
+                  className="px-4 py-2 text-xs font-black rounded-2xl glass-input bg-slate-900/90 text-indigo-300 border border-white/10 cursor-pointer shadow-md"
+                >
+                  {activities.map((act) => (
+                    <option key={act.id} value={act.id} className="bg-slate-900 text-white">
+                      {act.name} ({act.category})
+                    </option>
+                  ))}
+                  <option value="__custom__" className="text-indigo-400 font-bold bg-slate-800">
+                    ➕ + Type Custom Track...
+                  </option>
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setIsAddingTrack(true)}
+                  className="px-2.5 py-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 hover:text-indigo-300 text-xs font-bold cursor-pointer transition-all flex items-center gap-1"
+                  title="Type new custom activity track"
+                >
+                  <span>+ Type</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* CIRCULAR PROGRESS GAUGE + TIME DISPLAY */}
+          {renderDialSvg(false)}
+
+          {/* Notes Input */}
+          <div className="w-full max-w-md relative z-10">
+            <input
+              type="text"
+              placeholder="Add session focus note (e.g. Deep Work on Database specs)..."
+              value={sessionNotes}
+              onChange={(e) => setSessionNotes(e.target.value)}
+              className="w-full px-4 py-3 text-xs text-center rounded-2xl glass-input shadow-inner font-medium"
+            />
+          </div>
+
+          {/* CONTROLS (START / PAUSE / RESET / SAVE) */}
+          <div className="flex items-center gap-4 pt-2 relative z-10">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              type="button"
+              onClick={resetTimer}
+              className="p-4 rounded-2xl bg-slate-900/80 border border-white/10 text-slate-400 hover:text-white hover:bg-slate-800 transition-all cursor-pointer shadow-xl"
+              title="Reset Timer"
+            >
+              <RotateCcw className="w-5 h-5" />
+            </motion.button>
+
+            {timerStatus === 'RUNNING' ? (
+              <motion.button
+                whileHover={{ scale: 1.04, boxShadow: '0 0 30px rgba(245, 158, 11, 0.4)' }}
+                whileTap={{ scale: 0.95 }}
+                type="button"
+                onClick={pauseTimer}
+                className="flex items-center gap-3 px-10 py-4 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-slate-950 font-black text-base shadow-2xl transition-all cursor-pointer border border-amber-300/40"
+              >
+                <Pause className="w-5 h-5 fill-slate-950" />
+                <span>Pause Focus</span>
+              </motion.button>
+            ) : (
+              <motion.button
+                whileHover={{ scale: 1.04, boxShadow: '0 0 35px rgba(99, 102, 241, 0.5)' }}
+                whileTap={{ scale: 0.95 }}
+                type="button"
+                onClick={startTimer}
+                className="flex items-center gap-3 px-10 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-indigo-600 hover:from-indigo-500 hover:to-indigo-400 text-white font-black text-base shadow-[0_4px_25px_rgba(99,102,241,0.4),inset_0_1px_0_rgba(255,255,255,0.25)] transition-all cursor-pointer border border-indigo-400/40"
+              >
+                <Play className="w-5 h-5 fill-white text-white" />
+                <span>Start Focus</span>
+              </motion.button>
+            )}
+
+            {timerMode === 'STOPWATCH' && stopwatchElapsed > 0 && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                type="button"
+                onClick={() => finishStopwatch(sessionNotes)}
+                className="p-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all shadow-xl cursor-pointer border border-emerald-400/40"
+                title="Save Stopwatch Session"
+              >
+                <CheckCircle className="w-5 h-5" />
+              </motion.button>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* DEDICATED IMMERSIVE ZEN FULLSCREEN MODE */}
+      <AnimatePresence>
+        {isFullscreen && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.99 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.99 }}
+            transition={{ duration: 0.25 }}
+            className="fixed inset-0 z-[100] bg-[#02050E] text-white flex flex-col justify-between p-6 sm:p-8 lg:p-12 select-none overflow-hidden"
+          >
+            {/* Cinematic Ambient Breathing Aura */}
+            <div
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[720px] h-[720px] lg:w-[900px] lg:h-[900px] rounded-full blur-[150px] pointer-events-none opacity-35 transition-all duration-1000"
+              style={{
+                background: `radial-gradient(circle, ${theme.c1} 0%, ${theme.c2} 45%, transparent 70%)`,
+              }}
+            />
+            {/* Subtle Starry Mesh Background */}
+            <div className="absolute inset-0 bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] [background-size:28px_28px] pointer-events-none" />
+
+            {/* Zen Header Bar */}
+            <div className="relative z-10 flex items-center justify-between gap-4 w-full">
+              {/* Left: Active Track & Phase Info */}
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-white/[0.06] border border-white/10 backdrop-blur-md shadow-lg">
+                  <span
+                    className="w-2.5 h-2.5 rounded-full shadow-[0_0_10px]"
+                    style={{ backgroundColor: activeActivity?.color || '#6366F1' }}
+                  />
+                  <span className="text-xs font-black text-white tracking-wide">
+                    {activeActivity?.name || 'Deep Work'}
+                  </span>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 bg-white/5 px-2 py-0.5 rounded-lg border border-white/5">
+                    {activeActivity?.category || 'Focus'}
+                  </span>
+                </div>
+
+                {timerMode === 'POMODORO' && (
+                  <div className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-white/[0.04] border border-white/10 backdrop-blur-sm">
+                    <span className="text-xs font-bold text-slate-300">
+                      {selectedPomodoroPhase === 'work'
+                        ? '🔥 Focus'
+                        : selectedPomodoroPhase === 'shortBreak'
+                        ? '☕ Short Break'
+                        : '🌴 Long Break'}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Center: Quick Pomodoro Phase Tabs in Fullscreen */}
+              {timerMode === 'POMODORO' && (
+                <div className="hidden md:flex items-center gap-1.5 p-1 rounded-2xl bg-black/40 border border-white/10 backdrop-blur-md">
+                  <button
+                    type="button"
+                    onClick={() => switchPomodoroPhase('work')}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      selectedPomodoroPhase === 'work'
+                        ? 'bg-amber-500 text-slate-950 font-black shadow-lg shadow-amber-500/30'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Focus ({settings.workIntervalMinutes}m)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => switchPomodoroPhase('shortBreak')}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      selectedPomodoroPhase === 'shortBreak'
+                        ? 'bg-emerald-500 text-slate-950 font-black shadow-lg shadow-emerald-500/30'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Break ({settings.shortBreakMinutes}m)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => switchPomodoroPhase('longBreak')}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      selectedPomodoroPhase === 'longBreak'
+                        ? 'bg-indigo-600 text-white font-black shadow-lg shadow-indigo-600/30'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Long ({settings.longBreakMinutes}m)
+                  </button>
+                </div>
+              )}
+
+              {/* Right: Soundscape + Exit Fullscreen */}
+              <div className="flex items-center gap-3">
+                {/* Soundscape Dropdown */}
+                <div className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/[0.06] border border-white/10 backdrop-blur-md shadow-lg">
+                  <Volume2 className="w-4 h-4 text-amber-400" />
+                  {settings.ambientSound !== 'none' && (
+                    <div className="flex items-end gap-0.5 h-3.5 px-0.5">
+                      <div className="w-1 bg-amber-400 rounded-full animate-wave-1" />
+                      <div className="w-1 bg-amber-300 rounded-full animate-wave-2" />
+                      <div className="w-1 bg-amber-500 rounded-full animate-wave-3" />
+                      <div className="w-1 bg-amber-400 rounded-full animate-wave-4" />
+                    </div>
+                  )}
+                  <select
+                    value={settings.ambientSound}
+                    onChange={(e) => handleAmbientSoundToggle(e.target.value as any)}
+                    className="text-xs bg-transparent text-slate-200 outline-none cursor-pointer font-bold pr-1"
+                  >
+                    <option value="none" className="bg-slate-950 text-slate-400">Mute Soundscape</option>
+                    <option value="rain" className="bg-slate-950 text-white">🌧️ Rain</option>
+                    <option value="white-noise" className="bg-slate-950 text-white">📻 White Noise</option>
+                    <option value="forest" className="bg-slate-950 text-white">🌲 Forest</option>
+                    <option value="waves" className="bg-slate-950 text-white">🌊 Waves</option>
+                  </select>
+                </div>
+
+                {/* Exit Button */}
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  type="button"
+                  onClick={toggleFullscreen}
+                  className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/[0.08] hover:bg-white/[0.16] border border-white/15 text-slate-200 hover:text-white text-xs font-bold transition-all cursor-pointer shadow-lg backdrop-blur-md"
+                  title="Exit Zen Fullscreen Mode (Esc)"
+                >
+                  <X className="w-4 h-4" />
+                  <span>Exit <kbd className="text-[10px] font-mono text-slate-400 bg-white/10 px-1.5 py-0.5 rounded ml-0.5">Esc</kbd></span>
+                </motion.button>
+              </div>
+            </div>
+
+            {/* Zen Centerpiece Dial */}
+            <div className="relative z-10 flex flex-col items-center justify-center my-auto py-2">
+              {renderDialSvg(true)}
+            </div>
+
+            {/* Zen Bottom Action Controls */}
+            <div className="relative z-10 flex flex-col items-center gap-3 pb-2 w-full">
+              <div className="flex items-center gap-5 p-2 rounded-3xl bg-white/[0.05] border border-white/10 backdrop-blur-xl shadow-2xl">
+                {/* Reset Button */}
+                <motion.button
+                  whileHover={{ scale: 1.06 }}
+                  whileTap={{ scale: 0.94 }}
+                  type="button"
+                  onClick={resetTimer}
+                  className="p-4 rounded-2xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-slate-400 hover:text-white transition-all cursor-pointer"
+                  title="Reset Timer"
+                >
+                  <RotateCcw className="w-5 h-5" />
+                </motion.button>
+
+                {/* Main Hero Play/Pause Button */}
+                {timerStatus === 'RUNNING' ? (
+                  <motion.button
+                    whileHover={{ scale: 1.04, boxShadow: '0 0 40px rgba(245, 158, 11, 0.45)' }}
+                    whileTap={{ scale: 0.95 }}
+                    type="button"
+                    onClick={pauseTimer}
+                    className="flex items-center gap-3.5 px-12 py-4 sm:px-14 sm:py-4.5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-slate-950 font-black text-lg shadow-2xl transition-all cursor-pointer border border-amber-300/50"
+                  >
+                    <Pause className="w-6 h-6 fill-slate-950" />
+                    <span>Pause Focus</span>
+                  </motion.button>
+                ) : (
+                  <motion.button
+                    whileHover={{ scale: 1.04, boxShadow: '0 0 45px rgba(99, 102, 241, 0.55)' }}
+                    whileTap={{ scale: 0.95 }}
+                    type="button"
+                    onClick={startTimer}
+                    className="flex items-center gap-3.5 px-12 py-4 sm:px-14 sm:py-4.5 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-indigo-600 hover:from-indigo-500 hover:to-indigo-400 text-white font-black text-lg shadow-[0_4px_30px_rgba(99,102,241,0.5),inset_0_1px_0_rgba(255,255,255,0.25)] transition-all cursor-pointer border border-indigo-400/50"
+                  >
+                    <Play className="w-6 h-6 fill-white text-white" />
+                    <span>Start Focus</span>
+                  </motion.button>
+                )}
+
+                {/* Save Stopwatch Session if applicable */}
+                {timerMode === 'STOPWATCH' && stopwatchElapsed > 0 && (
+                  <motion.button
+                    whileHover={{ scale: 1.06 }}
+                    whileTap={{ scale: 0.94 }}
+                    type="button"
+                    onClick={() => {
+                      finishStopwatch(sessionNotes);
+                      setIsFullscreen(false);
+                      if (document.fullscreenElement) {
+                        document.exitFullscreen().catch(() => null);
+                      }
+                    }}
+                    className="p-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition-all shadow-xl cursor-pointer border border-emerald-400/40"
+                    title="Save & Complete Session"
+                  >
+                    <CheckCircle className="w-5 h-5" />
+                  </motion.button>
+                )}
+              </div>
+
+              {/* Keyboard Shortcuts Hint */}
+              <div className="flex items-center gap-4 text-[11px] font-semibold text-slate-400/80 tracking-wider">
+                <span className="flex items-center gap-1.5">
+                  <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-slate-300 font-mono text-[10px] border border-white/15">
+                    Space
+                  </kbd>{' '}
+                  Play / Pause
+                </span>
+                <span>•</span>
+                <span className="flex items-center gap-1.5">
+                  <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-slate-300 font-mono text-[10px] border border-white/15">
+                    Esc
+                  </kbd>{' '}
+                  Exit Fullscreen
+                </span>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 };
