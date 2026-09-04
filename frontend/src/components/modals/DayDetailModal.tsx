@@ -74,6 +74,7 @@ export const DayDetailModal: React.FC = () => {
   const daySessions = sessions.filter((s) => s.date === selectedDate);
   const dayTotalSeconds = daySessions.reduce((acc, s) => acc + s.durationSeconds, 0);
   const dayTotalHours = (dayTotalSeconds / 3600).toFixed(1);
+  const dayTotalMinutes = Math.round(dayTotalSeconds / 60);
 
   const handleAddManualSession = (e: React.FormEvent) => {
     e.preventDefault();
@@ -160,7 +161,23 @@ export const DayDetailModal: React.FC = () => {
             <div>
               <h3 className="text-base font-black text-white tracking-tight">{formattedDate}</h3>
               <p className="text-xs text-slate-400 font-medium">
-                Logged <strong className="text-emerald-400 font-mono font-bold">{dayTotalHours} hrs</strong> of deep focus
+                Logged{' '}
+                {dayTotalSeconds >= 3600 ? (
+                  <strong className="text-emerald-400 font-mono font-bold">
+                    {dayTotalHours} hrs ({dayTotalMinutes}m)
+                  </strong>
+                ) : dayTotalSeconds >= 60 ? (
+                  <strong className="text-emerald-400 font-mono font-bold">
+                    {dayTotalMinutes} mins ({dayTotalHours} hrs)
+                  </strong>
+                ) : dayTotalSeconds > 0 ? (
+                  <strong className="text-emerald-400 font-mono font-bold">
+                    {dayTotalSeconds} secs
+                  </strong>
+                ) : (
+                  <strong className="text-slate-400 font-mono font-bold">0 mins</strong>
+                )}{' '}
+                of deep focus
               </p>
             </div>
           </div>
@@ -379,7 +396,12 @@ export const DayDetailModal: React.FC = () => {
                         name: 'Focus',
                         color: '#6366F1',
                       };
-                      const mins = Math.round(s.durationSeconds / 60);
+                      const durationLabel =
+                        s.durationSeconds >= 60
+                          ? `${Math.round(s.durationSeconds / 60)} mins`
+                          : s.durationSeconds > 0
+                          ? `${s.durationSeconds} secs`
+                          : '0 mins';
 
                       return (
                         <div
@@ -398,7 +420,7 @@ export const DayDetailModal: React.FC = () => {
                           </div>
                           <div className="flex items-center gap-3">
                             <span className="text-xs font-mono font-black text-indigo-300">
-                              {mins} mins
+                              {durationLabel}
                             </span>
                             <button
                               type="button"
