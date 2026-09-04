@@ -24,6 +24,7 @@ import {
   generateSeedData,
 } from '@/lib/initialData';
 import { soundEngine } from '@/lib/audio';
+import { daymarkApi } from '@/lib/api';
 import confetti from 'canvas-confetti';
 import { format, parseISO } from 'date-fns';
 
@@ -35,6 +36,11 @@ interface AppContextType {
   setSelectedDate: (date: string) => void;
   isDayDetailOpen: boolean;
   setIsDayDetailOpen: (open: boolean) => void;
+
+  // Cloud Synchronization State
+  cloudSyncStatus: 'synced' | 'syncing' | 'offline' | 'error';
+  lastSyncedAt: Date | null;
+  syncWithCloud: () => Promise<void>;
 
   // App Data
   settings: UserSettings;
@@ -138,6 +144,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const timerTargetTimestampRef = useRef<number | null>(null);
   const stopwatchStartTimestampRef = useRef<number | null>(null);
 
+  // Cloud Sync State
+  const [cloudSyncStatus, setCloudSyncStatus] = useState<'synced' | 'syncing' | 'offline' | 'error'>('synced');
+  const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
+
   const [isHydrated, setIsHydrated] = useState(false);
 
   // Hydrate from localStorage on mount
@@ -220,6 +230,60 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setIsHydrated(true);
     }
   }, []);
+
+  // Background Cloud Sync Function (Runs without blocking UI)
+  const syncWithCloud = async () => {
+    if (!process.env.NEXT_PUBLIC_API_URL) {
+      setCloudSyncStatus('offline');
+      return;
+    }
+
+    try {
+      setCloudSyncStatus('syncing');
+      const cloudData = await daymarkApi.syncFull();
+
+      if (!cloudData) {
+        setCloudSyncStatus('offline');
+        return;
+      }
+
+      // Merge Cloud updates if remote data exists
+      if (cloudData.settings) setSettings((prev) => ({ ...prev, ...cloudData.settings }));
+      if (cloudData.activities && cloudData.activities.length > 0) setActivities(cloudData.activities);
+      if (cloudData.sessions && cloudData.sessions.length > 0) setSessions(cloudData.sessions);
+      if (cloudData.habits && cloudData.habits.length > 0) setHabits(cloudData.habits);
+      if (cloudData.tasks && cloudData.tasks.length > 0) setTasks(cloudData.tasks);
+      if (cloudData.goals && cloudData.goals.length > 0) setGoals(cloudData.goals);
+      if (cloudData.countdowns && cloudData.countdowns.length > 0) setCountdowns(cloudData.countdowns);
+      if (cloudData.reviews && cloudData.reviews.length > 0) setReviews(cloudData.reviews);
+
+      setCloudSyncStatus('synced');
+      setLastSyncedAt(new Date());
+    } catch (err) {
+      console.warn('[DayMark] Cloud sync error:', err);
+      setCloudSyncStatus('error');
+    }
+  };
+
+  // Background Sync Effect: on hydration, every 60s, and when app focuses
+  useEffect(() => {
+    if (!isHydrated) return;
+    syncWithCloud();
+
+    const interval = setInterval(syncWithCloud, 60000);
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        syncWithCloud();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, [isHydrated]);
 
   // Persist App Data
   useEffect(() => {
@@ -404,9 +468,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setStopwatchElapsed(0);
   };
 
-  // Actions
+  // Actions (Immediate 0ms local update + background cloud push)
   const updateSettings = (newSettings: Partial<UserSettings>) => {
     setSettings((prev) => ({ ...prev, ...newSettings }));
+    daymarkApi.updateSettings(newSettings).catch(() => null);
   };
 
   const addActivity = (activityData: Omit<Activity, 'id'>) => {
@@ -415,10 +480,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: `act-${Date.now()}`,
     };
     setActivities((prev) => [...prev, newAct]);
+    daymarkApi.createActivity(activityData).catch(() => null);
   };
 
   const deleteActivity = (id: string) => {
     setActivities((prev) => prev.filter((a) => a.id !== id));
+    daymarkApi.deleteActivity(id).catch(() => null);
   };
 
   const addSession = (sessionData: Omit<StudySession, 'id'>) => {
@@ -427,6 +494,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: `sess-${Date.now()}`,
     };
     setSessions((prev) => [newSession, ...prev]);
+    daymarkApi.createSession(sessionData).catch(() => null);
 
     const durationHours = Math.round(sessionData.durationSeconds / 3600);
     if (durationHours > 0) {
@@ -443,6 +511,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const deleteSession = (id: string) => {
     setSessions((prev) => prev.filter((s) => s.id !== id));
+    daymarkApi.deleteSession(id).catch(() => null);
   };
 
   const addHabit = (habitData: Omit<Habit, 'id' | 'createdAt' | 'logs'>) => {
@@ -454,6 +523,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       logs: {},
     };
     setHabits((prev) => [...prev, newHabit]);
+    daymarkApi.createHabit(habitData).catch(() => null);
   };
 
   const toggleHabit = (habitId: string, dateStr?: string) => {
@@ -466,10 +536,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return { ...h, logs: updatedLogs };
       })
     );
+    daymarkApi.toggleHabit(habitId, targetDate).catch(() => null);
   };
 
   const deleteHabit = (id: string) => {
     setHabits((prev) => prev.filter((h) => h.id !== id));
+    daymarkApi.deleteHabit(id).catch(() => null);
   };
 
   const addTask = (taskData: Omit<Task, 'id' | 'createdAt' | 'completed'>) => {
@@ -480,6 +552,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       completed: false,
     };
     setTasks((prev) => [newTask, ...prev]);
+    daymarkApi.createTask(taskData).catch(() => null);
   };
 
   const toggleTask = (taskId: string) => {
@@ -501,10 +574,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         };
       })
     );
+    daymarkApi.toggleTask(taskId).catch(() => null);
   };
 
   const deleteTask = (id: string) => {
     setTasks((prev) => prev.filter((t) => t.id !== id));
+    daymarkApi.deleteTask(id).catch(() => null);
   };
 
   const addGoal = (goalData: Omit<Goal, 'id' | 'createdAt' | 'currentValue'>) => {
@@ -515,6 +590,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       currentValue: 0,
     };
     setGoals((prev) => [...prev, newGoal]);
+    daymarkApi.createGoal(goalData).catch(() => null);
   };
 
   const updateGoalProgress = (id: string, delta: number) => {
@@ -523,10 +599,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         g.id === id ? { ...g, currentValue: Math.max(0, g.currentValue + delta) } : g
       )
     );
+    daymarkApi.updateGoalProgress(id, delta).catch(() => null);
   };
 
   const deleteGoal = (id: string) => {
     setGoals((prev) => prev.filter((g) => g.id !== id));
+    daymarkApi.deleteGoal(id).catch(() => null);
   };
 
   const addCountdown = (cdData: Omit<CustomCountdown, 'id'>) => {
@@ -535,10 +613,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: `cd-${Date.now()}`,
     };
     setCountdowns((prev) => [...prev, newCd]);
+    daymarkApi.createCountdown(cdData).catch(() => null);
   };
 
   const deleteCountdown = (id: string) => {
     setCountdowns((prev) => prev.filter((cd) => cd.id !== id));
+    daymarkApi.deleteCountdown(id).catch(() => null);
   };
 
   const saveDailyReview = (reviewData: Omit<DailyReview, 'id'>) => {
@@ -551,6 +631,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       return [{ ...reviewData, id: `rev-${Date.now()}` }, ...prev];
     });
+    daymarkApi.saveReview(reviewData).catch(() => null);
   };
 
   // Helper for date stats
@@ -681,6 +762,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         exportDataJSON,
         importDataJSON,
         resetAllData,
+        cloudSyncStatus,
+        lastSyncedAt,
+        syncWithCloud,
       }}
     >
       {children}

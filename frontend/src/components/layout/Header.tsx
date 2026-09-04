@@ -9,6 +9,8 @@ import {
   Plus,
   Play,
   Sparkles,
+  Cloud,
+  RefreshCw,
 } from 'lucide-react';
 import { format, getDayOfYear, getDaysInYear } from 'date-fns';
 
@@ -23,6 +25,8 @@ export const Header: React.FC = () => {
     setIsDayDetailOpen,
     setSelectedDate,
     sessions,
+    cloudSyncStatus,
+    syncWithCloud,
   } = useApp();
   const [time, setTime] = useState<string>('');
   const [dateStr, setDateStr] = useState<string>('');
@@ -138,6 +142,35 @@ export const Header: React.FC = () => {
               <span className="hidden sm:inline">Start Focus</span>
             </button>
           )}
+
+          {/* Cloud Sync Status Indicator */}
+          <button
+            type="button"
+            onClick={() => syncWithCloud()}
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-white/10 hover:border-white/20 text-xs transition-all cursor-pointer shadow-md"
+            title={
+              cloudSyncStatus === 'synced'
+                ? 'Cloud Synced with PostgreSQL — Click to Re-sync'
+                : cloudSyncStatus === 'syncing'
+                ? 'Syncing with Supabase Cloud...'
+                : 'Local Storage Ready — Click to Sync Cloud'
+            }
+          >
+            {cloudSyncStatus === 'syncing' ? (
+              <RefreshCw className="w-3.5 h-3.5 text-indigo-400 animate-spin" />
+            ) : cloudSyncStatus === 'synced' ? (
+              <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400" />
+            ) : (
+              <span className="w-2 h-2 rounded-full bg-amber-400 shadow-sm shadow-amber-400" />
+            )}
+            <span className="hidden sm:inline text-slate-300 font-medium">
+              {cloudSyncStatus === 'synced'
+                ? 'Cloud Synced'
+                : cloudSyncStatus === 'syncing'
+                ? 'Syncing...'
+                : 'Local Cache'}
+            </span>
+          </button>
 
           {/* Log Today Modal Button */}
           <button
