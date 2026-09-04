@@ -16,7 +16,6 @@ import {
   Sparkles,
   Pin,
   PinOff,
-  ChevronRight,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -70,7 +69,6 @@ export const Sidebar: React.FC = () => {
     if (leaveTimerRef.current) {
       clearTimeout(leaveTimerRef.current);
     }
-    // Grace delay prevents abrupt flickers or accidental collapse
     leaveTimerRef.current = setTimeout(() => {
       setIsHovered(false);
     }, 220);
@@ -82,7 +80,7 @@ export const Sidebar: React.FC = () => {
   const coreNav: NavItem[] = [
     { id: 'dashboard', label: 'Year Calendar', icon: CalendarDays, color: 'text-amber-400', shortcut: '1' },
     { id: 'timer', label: 'Focus Timer', icon: Timer, badge: timerStatus === 'RUNNING' ? 1 : undefined, color: 'text-emerald-400', shortcut: '2' },
-    { id: 'tasks', label: 'Tasks & Directives', icon: CheckSquare, badge: pendingTasksCount > 0 ? pendingTasksCount : undefined, color: 'text-blue-400', shortcut: '3' },
+    { id: 'tasks', label: 'Tasks & Directives', icon: CheckSquare, badge: pendingTasksCount > 0 ? pendingTasksCount : undefined, color: 'text-sky-400', shortcut: '3' },
     { id: 'habits', label: 'Habits Matrix', icon: Zap, color: 'text-amber-400', shortcut: '4' },
   ];
 
@@ -95,7 +93,7 @@ export const Sidebar: React.FC = () => {
 
   const renderNavGroup = (title: string, items: NavItem[]) => (
     <div className="space-y-1 w-full">
-      {/* Group Header: Fixed height ensures zero vertical layout jumping */}
+      {/* Group Header: Constant height prevents any vertical jumping */}
       <div className="h-6 flex items-center px-1">
         {isExpanded ? (
           <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 font-sans flex items-center justify-between w-full">
@@ -103,11 +101,11 @@ export const Sidebar: React.FC = () => {
             <span className="w-1.5 h-1.5 rounded-full bg-slate-700/60" />
           </p>
         ) : (
-          <div className="w-5 h-0.5 rounded-full bg-white/10 mx-auto" />
+          <div className="w-5 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mx-auto" />
         )}
       </div>
 
-      <div className="space-y-1 w-full">
+      <div className="space-y-1.5 w-full">
         {items.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
@@ -116,36 +114,43 @@ export const Sidebar: React.FC = () => {
               key={item.id}
               type="button"
               onClick={() => setActiveTab(item.id)}
-              className={`w-full h-11 relative flex items-center px-2.5 rounded-2xl text-xs font-semibold transition-colors duration-150 cursor-pointer group outline-none select-none ${
+              className={`w-full h-11 relative flex items-center px-2.5 rounded-2xl text-xs font-semibold transition-all duration-200 cursor-pointer group outline-none select-none ${
                 isActive ? 'text-white font-bold' : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]'
               }`}
               title={!isExpanded ? `${item.label} (${item.shortcut})` : undefined}
             >
-              {/* Sliding Active Pill */}
+              {/* Single Unified Active Pill - No ugly nested boxes */}
               {isActive && (
                 <motion.div
                   layoutId="sidebarActivePill"
-                  transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                  className="absolute inset-0 rounded-2xl bg-gradient-to-r from-indigo-600/40 via-indigo-500/25 to-indigo-600/15 border border-indigo-500/50 shadow-[0_4px_20px_rgba(99,102,241,0.25)] pointer-events-none"
+                  transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+                  className="absolute inset-0 rounded-2xl bg-gradient-to-r from-indigo-500/25 via-indigo-600/15 to-transparent border border-indigo-400/40 shadow-[0_0_20px_rgba(99,102,241,0.25)] pointer-events-none"
                 />
               )}
 
-              {/* Icon Box: Position is 100% stable pixel-for-pixel */}
+              {/* Folded vertical accent glow bar */}
+              {isActive && !isExpanded && (
+                <span className="absolute left-0 top-2.5 bottom-2.5 w-1 rounded-r-full bg-gradient-to-b from-indigo-400 to-indigo-600 shadow-[0_0_10px_rgba(99,102,241,0.9)]" />
+              )}
+
+              {/* Icon Container: Clean, proportional, single-layer */}
               <div
-                className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 relative z-10 transition-all duration-200 ${
+                className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 relative z-10 transition-all duration-200 ${
                   isActive
-                    ? 'bg-indigo-500/30 ring-1 ring-indigo-400/40 shadow-sm'
-                    : 'group-hover:bg-white/5'
+                    ? 'text-white'
+                    : 'group-hover:bg-white/5 text-slate-400'
                 }`}
               >
                 <Icon
-                  className={`w-4 h-4 transition-transform duration-200 ${
-                    isActive ? item.color + ' scale-110' : 'text-slate-500 group-hover:text-slate-300'
+                  className={`w-5 h-5 transition-all duration-200 ${
+                    isActive
+                      ? item.color + ' scale-110 drop-shadow-[0_0_10px_currentColor]'
+                      : 'text-slate-400 group-hover:text-white group-hover:scale-110'
                   }`}
                 />
               </div>
 
-              {/* Label: Smooth width expansion with no horizontal icon shift */}
+              {/* Text Label: Expands smoothly without displacing icon */}
               <div
                 className={`overflow-hidden transition-all duration-200 flex items-center justify-between flex-1 relative z-10 ${
                   isExpanded ? 'max-w-[180px] opacity-100 ml-2.5' : 'max-w-0 opacity-0 ml-0 pointer-events-none'
@@ -204,12 +209,12 @@ export const Sidebar: React.FC = () => {
         onMouseLeave={handleMouseLeave}
         className="absolute top-0 left-0 bottom-0 flex flex-col glass-panel-luxury border-r border-white/[0.08] p-2.5 space-y-3 overflow-hidden bg-[#050811]/95 backdrop-blur-3xl h-full select-none"
       >
-        {/* Top Header Row with Pin / Lock Toggle */}
+        {/* Top Header Row with Pin / Expand Toggle */}
         <div className="h-9 flex items-center justify-between px-1 pb-1 border-b border-white/[0.06] shrink-0">
           {isExpanded ? (
             <div className="flex items-center justify-between w-full animate-fadeIn">
               <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-xl bg-indigo-500/20 text-indigo-400">
+                <div className="p-1.5 rounded-xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
                   <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                 </div>
                 <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">
@@ -233,10 +238,10 @@ export const Sidebar: React.FC = () => {
             <button
               type="button"
               onClick={togglePin}
-              className="w-full flex items-center justify-center p-1 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 cursor-pointer transition-colors"
-              title="Click to pin / expand sidebar"
+              className="w-9 h-8 mx-auto rounded-xl flex items-center justify-center bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/25 hover:border-indigo-500/50 transition-all cursor-pointer shadow-[0_0_10px_rgba(99,102,241,0.2)] group"
+              title="Click to pin navigation open"
             >
-              <ChevronRight className="w-4 h-4 text-indigo-400" />
+              <Sparkles className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
             </button>
           )}
         </div>
@@ -261,10 +266,10 @@ export const Sidebar: React.FC = () => {
         ) : (
           <div
             onClick={togglePin}
-            className="mt-auto w-10 h-10 mx-auto rounded-xl bg-gradient-to-tr from-amber-500/15 to-orange-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-md cursor-pointer hover:scale-105 transition-transform"
-            title="Excellence is not an act, but a habit. (Click to pin navigation)"
+            className="mt-auto w-10 h-10 mx-auto rounded-2xl bg-gradient-to-tr from-amber-500/20 via-orange-500/15 to-amber-950/40 border border-amber-500/35 flex items-center justify-center text-amber-400 shadow-[0_0_16px_rgba(245,158,11,0.25)] hover:scale-105 transition-all cursor-pointer group"
+            title="Daily Mindset (Click to pin navigation open)"
           >
-            <Flame className="w-4 h-4 fill-amber-400 animate-pulse" />
+            <Flame className="w-5 h-5 fill-amber-400 group-hover:scale-110 transition-transform animate-pulse" />
           </div>
         )}
       </motion.aside>
