@@ -10,10 +10,35 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://day-mark-one.vercel.app'),
   title: 'DayMark — Visual Year Productivity & Focus Tracker',
   description:
     'A high-performance personal productivity suite featuring a full-year visual calendar heatmap, focus timer, habits tracker, task manager, and daily reviews.',
   manifest: '/manifest.json',
+  openGraph: {
+    title: 'DayMark — Visual Year Productivity & Focus Tracker',
+    description:
+      'A high-performance personal productivity suite featuring a full-year visual calendar heatmap, focus timer, habits tracker, task manager, and daily reviews.',
+    url: 'https://day-mark-one.vercel.app',
+    siteName: 'DayMark',
+    images: [
+      {
+        url: '/logo.png',
+        width: 1024,
+        height: 1024,
+        alt: 'DayMark Productivity Suite',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'DayMark — Visual Year Productivity & Focus Tracker',
+    description:
+      'A high-performance personal productivity suite featuring a full-year visual calendar heatmap, focus timer, habits tracker, task manager, and daily reviews.',
+    images: ['/logo.png'],
+  },
 };
 
 export default function RootLayout({
