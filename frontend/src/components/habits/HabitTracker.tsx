@@ -140,13 +140,29 @@ export const HabitTracker: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Color Palette</label>
-                <input
-                  type="color"
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                  className="w-full h-10 rounded-xl glass-input p-1 cursor-pointer"
-                />
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">Color Accent</label>
+                <div className="flex items-center gap-2 pt-0.5">
+                  {['#10B981', '#06B6D4', '#6366F1', '#F59E0B', '#F43F5E', '#A855F7'].map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setColor(c)}
+                      className={`w-7 h-7 rounded-xl transition-all cursor-pointer relative flex items-center justify-center ${
+                        color === c ? 'scale-115 ring-2 ring-white shadow-lg' : 'opacity-70 hover:opacity-100 hover:scale-105'
+                      }`}
+                      style={{ backgroundColor: c }}
+                    />
+                  ))}
+                  <div className="relative overflow-hidden w-7 h-7 rounded-xl border border-white/20 flex items-center justify-center cursor-pointer bg-slate-800 hover:border-white/40 transition-colors" title="Custom color">
+                    <input
+                      type="color"
+                      value={color}
+                      onChange={(e) => setColor(e.target.value)}
+                      className="absolute -top-2 -left-2 w-12 h-12 cursor-pointer opacity-0"
+                    />
+                    <div className="w-3.5 h-3.5 rounded-full border border-white/50 shadow-sm" style={{ backgroundColor: color }} />
+                  </div>
+                </div>
               </div>
             </div>
 
