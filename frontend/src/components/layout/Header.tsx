@@ -86,27 +86,27 @@ export const Header: React.FC<HeaderProps> = ({ onOpenShortcuts }) => {
                   Day<span className="text-gradient-gold">Mark</span>
                 </h1>
               </div>
-              <p className="text-[11px] text-slate-400 font-medium hidden sm:flex items-center gap-1.5">
-                <span>Day <strong className="text-slate-200 font-mono">{dayOfYear}</strong> of {totalDaysInYear}</span>
-                <span className="w-1 h-1 rounded-full bg-slate-600" />
-                <span className="text-indigo-400 font-semibold font-mono">{yearProgress}% complete</span>
+              <p className="text-xs text-slate-300 font-medium hidden sm:flex items-center gap-1.5">
+                <span>Day <strong className="text-white font-mono font-bold">{dayOfYear}</strong> of {totalDaysInYear}</span>
+                <span className="w-1 h-1 rounded-full bg-slate-500" />
+                <span className="text-indigo-400 font-bold font-mono">{yearProgress}% complete</span>
               </p>
             </div>
           </motion.button>
         </div>
 
         {/* Center: Live Digital Atomic Clock & Date Capsule */}
-        <div className="hidden md:flex items-center gap-3.5 px-4 py-1.5 rounded-full bg-slate-900/80 border border-white/10 shadow-[inset_0_1px_2px_rgba(0,0,0,0.6),0_4px_12px_rgba(0,0,0,0.3)]">
-          <div className="flex items-center gap-2 text-indigo-300 font-mono font-bold text-xs tracking-wider">
-            <span className="relative flex h-2 w-2">
+        <div className="hidden md:flex items-center gap-4 px-5 py-2 rounded-full bg-slate-900/90 border border-white/[0.12] shadow-[inset_0_1px_2px_rgba(0,0,0,0.6),0_6px_16px_rgba(0,0,0,0.4)]">
+          <div className="flex items-center gap-2.5 text-white font-mono font-bold text-sm tracking-wide">
+            <span className="relative flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
             </span>
-            <span>{time}</span>
+            <span className="text-emerald-300 font-extrabold">{time}</span>
           </div>
-          <div className="h-3.5 w-px bg-white/10" />
-          <div className="flex items-center gap-1.5 text-xs text-slate-300 font-medium">
-            <Calendar className="w-3.5 h-3.5 text-amber-400" />
+          <div className="h-4 w-px bg-white/15" />
+          <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-200 font-semibold tracking-tight">
+            <Calendar className="w-4 h-4 text-amber-400 shrink-0" />
             <span>{dateStr}</span>
           </div>
         </div>
