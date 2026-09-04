@@ -132,6 +132,37 @@ export const FocusTimer: React.FC = () => {
     return { x1, y1, x2, y2, isMajor, isLit, i };
   });
 
+  // Crackling spark rays shooting outward from the burning tip
+  const sparkRays = [
+    { dx: 14, dy: -12, len: 14, width: 2, color: '#FFF' },
+    { dx: -12, dy: -16, len: 16, width: 1.5, color: '#FEF08A' },
+    { dx: 18, dy: 6, len: 18, width: 2.2, color: '#FDE047' },
+    { dx: -16, dy: 10, len: 15, width: 1.5, color: '#F59E0B' },
+    { dx: 6, dy: 18, len: 16, width: 2, color: '#FFF' },
+    { dx: 12, dy: 14, len: 14, width: 1.8, color: '#FEF08A' },
+    { dx: -14, dy: -8, len: 12, width: 1.5, color: '#FB923C' },
+    { dx: 8, dy: -18, len: 16, width: 2, color: '#FDE047' },
+  ];
+
+  // Floating spark embers trailing off the active progress line
+  const sparkEmbers = [
+    { angleOffset: -0.05, driftR: 12, size: 3, duration: 0.8, delay: 0 },
+    { angleOffset: -0.11, driftR: 18, size: 2.5, duration: 1.1, delay: 0.2 },
+    { angleOffset: -0.18, driftR: 15, size: 2, duration: 0.9, delay: 0.4 },
+    { angleOffset: -0.08, driftR: 22, size: 2.8, duration: 0.75, delay: 0.1 },
+    { angleOffset: -0.15, driftR: 10, size: 3.2, duration: 1.0, delay: 0.3 },
+    { angleOffset: -0.22, driftR: 19, size: 2.2, duration: 0.85, delay: 0.5 },
+  ];
+
+  // Points along active arc that twinkle with sparkling starlets
+  const lineSparkles = Array.from({ length: 6 }).map((_, i) => {
+    const f = progressFraction * (0.2 + i * 0.15);
+    const ang = -Math.PI / 2 + 2 * Math.PI * f;
+    const x = 180 + circleRadius * Math.cos(ang);
+    const y = 180 + circleRadius * Math.sin(ang);
+    return { x, y, visible: progressFraction > 0.05, delay: i * 0.25 };
+  });
+
   // Toggle ambient sound engine
   const handleAmbientSoundToggle = (sound: 'none' | 'rain' | 'white-noise' | 'forest' | 'waves') => {
     updateSettings({ ambientSound: sound });
@@ -302,10 +333,28 @@ export const FocusTimer: React.FC = () => {
                 <stop offset="100%" stopColor={theme.c3} />
               </linearGradient>
 
+              {/* Electric Spark Lightning Gradient */}
+              <linearGradient id="electricSparkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#FFFFFF" stopOpacity="1" />
+                <stop offset="25%" stopColor="#FEF08A" stopOpacity="0.95" />
+                <stop offset="60%" stopColor="#F59E0B" stopOpacity="0.8" />
+                <stop offset="100%" stopColor="#EF4444" stopOpacity="0" />
+              </linearGradient>
+
               {/* Volumetric Bloom Filter */}
               <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
                 <feGaussianBlur stdDeviation="5" result="blur" />
                 <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+
+              {/* High-intensity Spark Bloom Filter */}
+              <filter id="sparkBloom" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="3.5" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
                   <feMergeNode in="blur" />
                   <feMergeNode in="SourceGraphic" />
                 </feMerge>
@@ -421,29 +470,163 @@ export const FocusTimer: React.FC = () => {
               className="transition-all duration-700 ease-out"
             />
 
-            {/* 6. Glowing Comet Head Bead */}
+            {/* 5b. Electric Spark Pulse streaming continuously along the active progress line */}
+            {timerStatus === 'RUNNING' && progressFraction > 0.01 && (
+              <motion.circle
+                cx="180"
+                cy="180"
+                r={circleRadius}
+                fill="none"
+                stroke="url(#electricSparkGrad)"
+                strokeWidth="5"
+                strokeDasharray="50 250"
+                strokeLinecap="round"
+                transform="rotate(-90 180 180)"
+                animate={{
+                  strokeDashoffset: [0, -circumference],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: 'linear',
+                }}
+                filter="url(#sparkBloom)"
+              />
+            )}
+
+            {/* 5c. Twinkling Starlet Sparkles along the progress arc */}
+            {timerStatus === 'RUNNING' &&
+              lineSparkles.map(
+                (sp, idx) =>
+                  sp.visible && (
+                    <motion.g
+                      key={`sparkle-${idx}`}
+                      transform={`translate(${sp.x}, ${sp.y})`}
+                      animate={{
+                        scale: [0, 1.3, 0],
+                        opacity: [0, 1, 0],
+                        rotate: [0, 90],
+                      }}
+                      transition={{
+                        duration: 1.1,
+                        repeat: Infinity,
+                        delay: sp.delay,
+                        ease: 'easeInOut',
+                      }}
+                    >
+                      <path
+                        d="M 0,-4 Q 0,0 4,0 Q 0,0 0,4 Q 0,0 -4,0 Q 0,0 0,-4 Z"
+                        fill="#FFFFFF"
+                        filter="url(#sparkBloom)"
+                      />
+                    </motion.g>
+                  )
+              )}
+
+            {/* 6. Active Spark Head & Floating Embers */}
             {progressFraction > 0 && (
-              <g filter="url(#beadGlow)">
-                {/* Expanding sonar ripple when running */}
+              <g>
+                {/* A. Floating Embers Flying Off the Tip */}
+                {timerStatus === 'RUNNING' &&
+                  sparkEmbers.map((ember, i) => {
+                    const ang = headAngle + ember.angleOffset;
+                    const baseX = 180 + circleRadius * Math.cos(ang);
+                    const baseY = 180 + circleRadius * Math.sin(ang);
+                    const targetX = 180 + (circleRadius + ember.driftR) * Math.cos(ang);
+                    const targetY = 180 + (circleRadius + ember.driftR) * Math.sin(ang);
+
+                    return (
+                      <motion.circle
+                        key={`ember-${i}`}
+                        cx={baseX}
+                        cy={baseY}
+                        r={ember.size}
+                        fill="#FEF08A"
+                        animate={{
+                          cx: [baseX, targetX],
+                          cy: [baseY, targetY],
+                          opacity: [1, 0],
+                          scale: [1.3, 0.2],
+                        }}
+                        transition={{
+                          duration: ember.duration,
+                          repeat: Infinity,
+                          delay: ember.delay,
+                          ease: 'easeOut',
+                        }}
+                        filter="url(#sparkBloom)"
+                      />
+                    );
+                  })}
+
+                {/* B. Crackling Jittering Spark Rays at the Tip */}
+                {timerStatus === 'RUNNING' &&
+                  sparkRays.map((ray, idx) => (
+                    <motion.line
+                      key={`ray-${idx}`}
+                      x1={headX}
+                      y1={headY}
+                      x2={headX + ray.dx}
+                      y2={headY + ray.dy}
+                      stroke={ray.color}
+                      strokeWidth={ray.width}
+                      strokeLinecap="round"
+                      animate={{
+                        x2: [headX, headX + ray.dx * 1.6, headX + ray.dx],
+                        y2: [headY, headY + ray.dy * 1.6, headY + ray.dy],
+                        opacity: [0.2, 1, 0.1],
+                      }}
+                      transition={{
+                        duration: 0.22 + (idx % 4) * 0.08,
+                        repeat: Infinity,
+                        repeatType: 'reverse',
+                      }}
+                      filter="url(#sparkBloom)"
+                    />
+                  ))}
+
+                {/* C. Rotating 4-Point Star Spark at the Core */}
+                <motion.g
+                  transform={`translate(${headX}, ${headY})`}
+                  animate={{
+                    rotate: [0, 180, 360],
+                    scale: timerStatus === 'RUNNING' ? [0.9, 1.4, 0.9] : 1,
+                  }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+                >
+                  <path
+                    d="M 0,-8 Q 0,0 8,0 Q 0,0 0,8 Q 0,0 -8,0 Q 0,0 0,-8 Z"
+                    fill="#FFFFFF"
+                    filter="url(#sparkBloom)"
+                  />
+                  <path
+                    d="M 0,-5 Q 0,0 5,0 Q 0,0 0,5 Q 0,0 -5,0 Q 0,0 0,-5 Z"
+                    fill="#FEF08A"
+                  />
+                </motion.g>
+
+                {/* D. Expanding Sonar Ping Wave */}
                 {timerStatus === 'RUNNING' && (
                   <motion.circle
                     cx={headX}
                     cy={headY}
                     fill="none"
-                    stroke={theme.c1}
+                    stroke="#FEF08A"
                     strokeWidth="1.5"
-                    animate={{ r: [6, 18], opacity: [0.9, 0] }}
-                    transition={{ duration: 1.6, repeat: Infinity, ease: 'easeOut' }}
+                    animate={{ r: [6, 20], opacity: [0.9, 0] }}
+                    transition={{ duration: 1.4, repeat: Infinity, ease: 'easeOut' }}
                   />
                 )}
-                {/* Luminous Core Bead */}
+
+                {/* E. Solid Center Bead */}
                 <circle
                   cx={headX}
                   cy={headY}
-                  r="7"
+                  r="6.5"
                   fill="#FFFFFF"
                   stroke={theme.c1}
-                  strokeWidth="3"
+                  strokeWidth="2.5"
+                  className="shadow-[0_0_15px_#FFFFFF]"
                 />
               </g>
             )}
