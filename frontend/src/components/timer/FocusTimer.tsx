@@ -66,9 +66,71 @@ export const FocusTimer: React.FC = () => {
       ? (stopwatchElapsed % 3600) / 3600
       : Math.max(0, Math.min(1, (totalPhaseSeconds - timerSecondsRemaining) / totalPhaseSeconds));
 
-  const circleRadius = 150;
+  const circleRadius = 136;
   const circumference = 2 * Math.PI * circleRadius;
   const strokeDashoffset = circumference - progressFraction * circumference;
+
+  // Exact comet head position on circumference (starts at 12 o'clock = -PI/2)
+  const headAngle = -Math.PI / 2 + 2 * Math.PI * progressFraction;
+  const headX = 180 + circleRadius * Math.cos(headAngle);
+  const headY = 180 + circleRadius * Math.sin(headAngle);
+
+  // Real-time second beacon on outer orbit (rotates every 60s)
+  const secondFraction = (displaySeconds % 60) / 60;
+  const secAngle = -Math.PI / 2 + 2 * Math.PI * (1 - secondFraction);
+  const secOrbitRadius = 160;
+  const secX = 180 + secOrbitRadius * Math.cos(secAngle);
+  const secY = 180 + secOrbitRadius * Math.sin(secAngle);
+
+  // Dynamic theme colors by phase
+  const getPhaseTheme = () => {
+    if (selectedPomodoroPhase === 'shortBreak') {
+      return {
+        gradId: 'shortBreakGrad',
+        c1: '#10B981',
+        c2: '#06B6D4',
+        c3: '#34D399',
+        glow: 'rgba(16, 185, 129, 0.45)',
+        textAccent: 'text-emerald-400',
+      };
+    }
+    if (selectedPomodoroPhase === 'longBreak') {
+      return {
+        gradId: 'longBreakGrad',
+        c1: '#6366F1',
+        c2: '#A855F7',
+        c3: '#EC4899',
+        glow: 'rgba(99, 102, 241, 0.45)',
+        textAccent: 'text-indigo-400',
+      };
+    }
+    return {
+      gradId: 'workGrad',
+      c1: '#F59E0B',
+      c2: '#FB923C',
+      c3: '#FBBF24',
+      glow: 'rgba(245, 158, 11, 0.5)',
+      textAccent: 'text-amber-400',
+    };
+  };
+
+  const theme = getPhaseTheme();
+
+  // 60 radial chronometer tick markers
+  const ticks = Array.from({ length: 60 }).map((_, i) => {
+    const angle = (i * 6 - 90) * (Math.PI / 180);
+    const isMajor = i % 5 === 0;
+    const len = isMajor ? 8 : 4;
+    const outerR = 150;
+    const innerR = outerR - len;
+    const x1 = 180 + innerR * Math.cos(angle);
+    const y1 = 180 + innerR * Math.sin(angle);
+    const x2 = 180 + outerR * Math.cos(angle);
+    const y2 = 180 + outerR * Math.sin(angle);
+    const tickFraction = i / 60;
+    const isLit = tickFraction <= progressFraction;
+    return { x1, y1, x2, y2, isMajor, isLit, i };
+  });
 
   // Toggle ambient sound engine
   const handleAmbientSoundToggle = (sound: 'none' | 'rain' | 'white-noise' | 'forest' | 'waves') => {
@@ -227,60 +289,213 @@ export const FocusTimer: React.FC = () => {
         </div>
 
         {/* CIRCULAR PROGRESS GAUGE + TIME DISPLAY */}
-        <div className="relative flex items-center justify-center z-10 my-4">
-          <svg className="w-72 h-72 sm:w-84 sm:h-84 md:w-96 md:h-96 -rotate-90 transform drop-shadow-[0_0_25px_rgba(0,0,0,0.8)]">
-            {/* Background Track */}
-            <circle
-              cx="50%"
-              cy="50%"
-              r={circleRadius}
-              className="stroke-slate-900/80"
-              strokeWidth="10"
-              fill="transparent"
-            />
-            {/* Animated Luminous Gradient Progress Dial */}
+        <div className="relative flex items-center justify-center z-10 my-4 select-none">
+          <svg
+            viewBox="0 0 360 360"
+            className="w-72 h-72 sm:w-84 sm:h-84 md:w-[410px] md:h-[410px] overflow-visible drop-shadow-[0_0_35px_rgba(0,0,0,0.9)]"
+          >
             <defs>
-              <linearGradient id="timerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#F59E0B" />
-                <stop offset="50%" stopColor="#10B981" />
-                <stop offset="100%" stopColor="#6366F1" />
+              {/* Dynamic Theme Gradients */}
+              <linearGradient id={theme.gradId} x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor={theme.c1} />
+                <stop offset="50%" stopColor={theme.c2} />
+                <stop offset="100%" stopColor={theme.c3} />
               </linearGradient>
+
+              {/* Volumetric Bloom Filter */}
+              <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="5" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+
+              <filter id="beadGlow" x="-60%" y="-60%" width="220%" height="220%">
+                <feGaussianBlur stdDeviation="4" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
             </defs>
+
+            {/* 1. Outer Constellation Orbit Ring (rotates slowly) */}
+            <motion.circle
+              cx="180"
+              cy="180"
+              r={secOrbitRadius}
+              fill="none"
+              stroke="rgba(255, 255, 255, 0.06)"
+              strokeWidth="1"
+              strokeDasharray="3 7"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 120, repeat: Infinity, ease: 'linear' }}
+              style={{ originX: '180px', originY: '180px' }}
+            />
+
+            {/* 2. Active Pulsating Breathing Rings (when running) */}
+            {timerStatus === 'RUNNING' && (
+              <>
+                <motion.circle
+                  cx="180"
+                  cy="180"
+                  r={circleRadius}
+                  fill="none"
+                  stroke={theme.c1}
+                  strokeWidth="2"
+                  animate={{
+                    r: [circleRadius, circleRadius + 15, circleRadius],
+                    opacity: [0.4, 0, 0.4],
+                  }}
+                  transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
+                />
+                <motion.circle
+                  cx="180"
+                  cy="180"
+                  r={circleRadius - 10}
+                  fill="none"
+                  stroke={theme.c2}
+                  strokeWidth="1.5"
+                  animate={{
+                    r: [circleRadius - 10, circleRadius - 20, circleRadius - 10],
+                    opacity: [0.3, 0, 0.3],
+                  }}
+                  transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut', delay: 0.6 }}
+                />
+              </>
+            )}
+
+            {/* 3. 60 Precision Chronometer Dial Ticks */}
+            {ticks.map((t) => (
+              <line
+                key={t.i}
+                x1={t.x1}
+                y1={t.y1}
+                x2={t.x2}
+                y2={t.y2}
+                stroke={
+                  t.isLit
+                    ? theme.c1
+                    : t.isMajor
+                    ? 'rgba(255, 255, 255, 0.28)'
+                    : 'rgba(255, 255, 255, 0.08)'
+                }
+                strokeWidth={t.isMajor ? (t.isLit ? 2.5 : 2) : 1}
+                strokeLinecap="round"
+                className="transition-colors duration-300"
+              />
+            ))}
+
+            {/* 4. Underlying Dark Track Ring */}
             <circle
-              cx="50%"
-              cy="50%"
+              cx="180"
+              cy="180"
               r={circleRadius}
-              stroke="url(#timerGradient)"
-              strokeWidth="10"
+              fill="none"
+              stroke="rgba(15, 23, 42, 0.9)"
+              strokeWidth="12"
+            />
+            <circle
+              cx="180"
+              cy="180"
+              r={circleRadius}
+              fill="none"
+              stroke="rgba(255, 255, 255, 0.04)"
+              strokeWidth="12"
+            />
+
+            {/* 5. Animated Luminous Progress Arc */}
+            <circle
+              cx="180"
+              cy="180"
+              r={circleRadius}
+              fill="none"
+              stroke={`url(#${theme.gradId})`}
+              strokeWidth="12"
               strokeDasharray={circumference}
               strokeDashoffset={strokeDashoffset}
               strokeLinecap="round"
-              fill="transparent"
-              className="transition-all duration-700 ease-out shadow-2xl"
+              transform="rotate(-90 180 180)"
+              filter="url(#neonGlow)"
+              className="transition-all duration-700 ease-out"
             />
+
+            {/* 6. Glowing Comet Head Bead */}
+            {progressFraction > 0 && (
+              <g filter="url(#beadGlow)">
+                {/* Expanding sonar ripple when running */}
+                {timerStatus === 'RUNNING' && (
+                  <motion.circle
+                    cx={headX}
+                    cy={headY}
+                    fill="none"
+                    stroke={theme.c1}
+                    strokeWidth="1.5"
+                    animate={{ r: [6, 18], opacity: [0.9, 0] }}
+                    transition={{ duration: 1.6, repeat: Infinity, ease: 'easeOut' }}
+                  />
+                )}
+                {/* Luminous Core Bead */}
+                <circle
+                  cx={headX}
+                  cy={headY}
+                  r="7"
+                  fill="#FFFFFF"
+                  stroke={theme.c1}
+                  strokeWidth="3"
+                />
+              </g>
+            )}
+
+            {/* 7. Real-Time 60-Second Orbit Satellite Bead */}
+            {timerStatus === 'RUNNING' && (
+              <g>
+                <circle
+                  cx={secX}
+                  cy={secY}
+                  r="3.5"
+                  fill="#38BDF8"
+                  className="shadow-[0_0_10px_#38BDF8]"
+                />
+                <motion.circle
+                  cx={secX}
+                  cy={secY}
+                  fill="none"
+                  stroke="#38BDF8"
+                  strokeWidth="1"
+                  animate={{ r: [3.5, 9], opacity: [0.8, 0] }}
+                  transition={{ duration: 1, repeat: Infinity, ease: 'easeOut' }}
+                />
+              </g>
+            )}
           </svg>
 
           {/* Large Digital Digits inside dial */}
-          <div className="absolute flex flex-col items-center justify-center text-center">
+          <div className="absolute flex flex-col items-center justify-center text-center pointer-events-none">
             <motion.div
-              animate={timerStatus === 'RUNNING' ? { scale: [1, 1.018, 1] } : { scale: 1 }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-              className="text-5xl sm:text-7xl md:text-8xl font-black font-mono tracking-tight text-white drop-shadow-[0_12px_24px_rgba(0,0,0,0.9)] select-none"
+              animate={
+                timerStatus === 'RUNNING'
+                  ? { scale: [1, 1.018, 1], filter: ['brightness(1)', 'brightness(1.12)', 'brightness(1)'] }
+                  : { scale: 1, filter: 'brightness(1)' }
+              }
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+              className="text-5xl sm:text-7xl md:text-8xl font-black font-mono tracking-tight text-white drop-shadow-[0_12px_28px_rgba(0,0,0,0.95)] select-none"
             >
               {formatSeconds(displaySeconds)}
             </motion.div>
 
-            <div className="mt-3 text-xs font-black uppercase tracking-widest text-indigo-400 flex items-center justify-center gap-2">
+            <div className="mt-3 text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2">
               {timerStatus === 'RUNNING' ? (
                 <>
                   <span className="relative flex h-2.5 w-2.5">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                     <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" />
                   </span>
-                  <span className="text-emerald-300">Active Focus Interval</span>
+                  <span className="text-emerald-300 font-sans tracking-wider">Active Focus Flow</span>
                 </>
               ) : (
-                <span className="text-slate-400">Ready / Paused</span>
+                <span className="text-slate-400 font-sans tracking-wider">Ready / Paused</span>
               )}
             </div>
           </div>
