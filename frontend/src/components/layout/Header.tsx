@@ -12,6 +12,8 @@ import {
   RefreshCw,
   Zap,
   Command,
+  Menu,
+  ChevronDown,
 } from 'lucide-react';
 import { format, getDayOfYear, getDaysInYear } from 'date-fns';
 import { motion } from 'framer-motion';
@@ -33,6 +35,8 @@ export const Header: React.FC<HeaderProps> = ({ onOpenShortcuts }) => {
     sessions,
     cloudSyncStatus,
     syncWithCloud,
+    isSidebarOpen,
+    setIsSidebarOpen,
   } = useApp();
   const [time, setTime] = useState<string>('');
   const [dateStr, setDateStr] = useState<string>('');
@@ -93,6 +97,18 @@ export const Header: React.FC<HeaderProps> = ({ onOpenShortcuts }) => {
               </p>
             </div>
           </motion.button>
+
+          {/* Navigation Drawer Hover Trigger */}
+          <div
+            onMouseEnter={() => setIsSidebarOpen(true)}
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 hover:border-indigo-500/50 text-indigo-300 text-xs font-bold cursor-pointer transition-all shadow-[0_0_12px_rgba(99,102,241,0.15)] group select-none ml-1"
+            title="Hover to open navigation menu"
+          >
+            <Menu className="w-3.5 h-3.5 text-indigo-400 group-hover:scale-110 transition-transform duration-200" />
+            <span className="font-sans tracking-wide">Menu</span>
+            <ChevronDown className={`w-3 h-3 text-indigo-400 transition-transform duration-200 ${isSidebarOpen ? 'rotate-180' : ''}`} />
+          </div>
         </div>
 
         {/* Center: Live Digital Atomic Clock & Date Capsule */}

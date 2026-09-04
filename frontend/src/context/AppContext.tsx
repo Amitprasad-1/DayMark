@@ -36,6 +36,10 @@ interface AppContextType {
   setSelectedDate: (date: string) => void;
   isDayDetailOpen: boolean;
   setIsDayDetailOpen: (open: boolean) => void;
+  isSidebarOpen: boolean;
+  setIsSidebarOpen: (open: boolean) => void;
+  isSidebarPinned: boolean;
+  setIsSidebarPinned: (pinned: boolean) => void;
 
   // Cloud Synchronization State
   cloudSyncStatus: 'synced' | 'syncing' | 'offline' | 'error';
@@ -120,6 +124,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [selectedDate, setSelectedDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
   const [isDayDetailOpen, setIsDayDetailOpen] = useState<boolean>(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+  const [isSidebarPinned, setIsSidebarPinned] = useState<boolean>(false);
 
   // Core Data States
   const [settings, setSettings] = useState<UserSettings>(INITIAL_SETTINGS);
@@ -765,6 +771,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         cloudSyncStatus,
         lastSyncedAt,
         syncWithCloud,
+        isSidebarOpen,
+        setIsSidebarOpen,
+        isSidebarPinned,
+        setIsSidebarPinned,
       }}
     >
       {children}
