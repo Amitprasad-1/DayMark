@@ -8,13 +8,10 @@ import {
   CheckCircle,
   Plus,
   Trash2,
-  Sparkles,
-  BookOpen,
-  Zap,
   Calendar as CalendarIcon,
-  Star,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export const DayDetailModal: React.FC = () => {
   const {
@@ -27,7 +24,6 @@ export const DayDetailModal: React.FC = () => {
     activities,
     habits,
     toggleHabit,
-    tasks,
     reviews,
     saveDailyReview,
   } = useApp();
@@ -90,61 +86,84 @@ export const DayDetailModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
-      <div className="w-full max-w-2xl glass-panel rounded-2xl border border-white/10 overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050811]/85 backdrop-blur-xl animate-fadeIn">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 15 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 15 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        className="w-full max-w-2xl glass-panel-luxury rounded-3xl border border-white/[0.12] overflow-hidden shadow-2xl flex flex-col max-h-[90vh] bg-[#090E1C]/95"
+      >
         {/* Header */}
-        <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between bg-slate-900/60">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+        <div className="px-6 py-5 border-b border-white/[0.08] flex items-center justify-between bg-slate-900/70">
+          <div className="flex items-center gap-3.5">
+            <div className="p-2.5 rounded-2xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 shadow-md">
               <CalendarIcon className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white">{formattedDate}</h3>
-              <p className="text-xs text-slate-400">
-                Logged <span className="text-emerald-400 font-bold">{dayTotalHours} hrs</span> of focus
+              <h3 className="text-base font-black text-white tracking-tight">{formattedDate}</h3>
+              <p className="text-xs text-slate-400 font-medium">
+                Logged <strong className="text-emerald-400 font-mono font-bold">{dayTotalHours} hrs</strong> of deep focus
               </p>
             </div>
           </div>
 
-          <button
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            type="button"
             onClick={() => setIsDayDetailOpen(false)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-2 rounded-xl text-slate-400 hover:text-white bg-slate-800/80 hover:bg-slate-700 border border-white/10 transition-colors cursor-pointer"
           >
-            <X className="w-5 h-5" />
-          </button>
+            <X className="w-4 h-4" />
+          </motion.button>
         </div>
 
         {/* Tab Selector */}
-        <div className="flex items-center border-b border-white/10 px-6 bg-slate-900/40 text-xs">
+        <div className="flex items-center border-b border-white/[0.08] px-6 bg-slate-900/50 text-xs gap-2 py-1">
           <button
+            type="button"
             onClick={() => setActiveTab('sessions')}
-            className={`py-3 px-4 font-semibold border-b-2 transition-colors ${
-              activeTab === 'sessions'
-                ? 'border-indigo-500 text-indigo-400'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+            className={`py-3 px-4 font-black transition-all relative cursor-pointer ${
+              activeTab === 'sessions' ? 'text-indigo-400' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            Focus Sessions ({daySessions.length})
+            {activeTab === 'sessions' && (
+              <motion.div
+                layoutId="modalActiveTabPill"
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.8)]"
+              />
+            )}
+            <span>Focus Sessions ({daySessions.length})</span>
           </button>
           <button
+            type="button"
             onClick={() => setActiveTab('habits')}
-            className={`py-3 px-4 font-semibold border-b-2 transition-colors ${
-              activeTab === 'habits'
-                ? 'border-emerald-500 text-emerald-400'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+            className={`py-3 px-4 font-black transition-all relative cursor-pointer ${
+              activeTab === 'habits' ? 'text-emerald-400' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            Habit Records
+            {activeTab === 'habits' && (
+              <motion.div
+                layoutId="modalActiveTabPill"
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"
+              />
+            )}
+            <span>Habit Records</span>
           </button>
           <button
+            type="button"
             onClick={() => setActiveTab('review')}
-            className={`py-3 px-4 font-semibold border-b-2 transition-colors ${
-              activeTab === 'review'
-                ? 'border-rose-500 text-rose-400'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+            className={`py-3 px-4 font-black transition-all relative cursor-pointer ${
+              activeTab === 'review' ? 'text-rose-400' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            Daily Reflection {existingReview ? '✓' : ''}
+            {activeTab === 'review' && (
+              <motion.div
+                layoutId="modalActiveTabPill"
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]"
+              />
+            )}
+            <span>Daily Reflection {existingReview ? '✓' : ''}</span>
           </button>
         </div>
 
@@ -154,18 +173,18 @@ export const DayDetailModal: React.FC = () => {
           {activeTab === 'sessions' && (
             <div className="space-y-6">
               {/* Form to log manual session */}
-              <form onSubmit={handleAddManualSession} className="p-4 rounded-xl bg-slate-900/80 border border-white/5 space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-300 flex items-center gap-1.5">
+              <form onSubmit={handleAddManualSession} className="p-4 sm:p-5 rounded-2xl bg-slate-900/90 border border-white/[0.08] space-y-3.5 shadow-inner">
+                <h4 className="text-xs font-black uppercase tracking-wider text-indigo-300 flex items-center gap-2">
                   <Plus className="w-4 h-4" />
                   <span>Log Manual Focus Session</span>
                 </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div>
-                    <label className="text-[11px] text-slate-400 block mb-1">Activity</label>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Track Activity</label>
                     <select
                       value={selectedActivityId}
                       onChange={(e) => setSelectedActivityId(e.target.value)}
-                      className="w-full px-3 py-2 text-xs rounded-lg glass-input bg-slate-900"
+                      className="w-full px-3.5 py-2 text-xs rounded-xl glass-input bg-slate-900 font-medium"
                     >
                       {activities.map((a) => (
                         <option key={a.id} value={a.id}>
@@ -175,37 +194,39 @@ export const DayDetailModal: React.FC = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="text-[11px] text-slate-400 block mb-1">Duration (Minutes)</label>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Duration (Minutes)</label>
                     <input
                       type="number"
                       min="1"
                       max="720"
                       value={durationMinutes}
                       onChange={(e) => setDurationMinutes(parseInt(e.target.value) || 0)}
-                      className="w-full px-3 py-2 text-xs rounded-lg glass-input"
+                      className="w-full px-3.5 py-2 text-xs rounded-xl glass-input font-medium"
                     />
                   </div>
                 </div>
                 <div>
                   <input
                     type="text"
-                    placeholder="Session notes (e.g. Built database schemas, studied Chapter 4)"
+                    placeholder="Session context notes (e.g. Built database schemas, studied Chapter 4)..."
                     value={sessionNotes}
                     onChange={(e) => setSessionNotes(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-lg glass-input"
+                    className="w-full px-3.5 py-2.5 text-xs rounded-xl glass-input"
                   />
                 </div>
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.98 }}
                   type="submit"
-                  className="w-full py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/30 transition-all"
+                  className="w-full py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 text-white text-xs font-black shadow-lg cursor-pointer border border-indigo-400/40"
                 >
                   Save Focus Session
-                </button>
+                </motion.button>
               </form>
 
               {/* Logged Sessions List */}
               <div className="space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">
                   Logged Sessions ({daySessions.length})
                 </h4>
 
@@ -225,25 +246,26 @@ export const DayDetailModal: React.FC = () => {
                       return (
                         <div
                           key={s.id}
-                          className="flex items-center justify-between p-3 rounded-xl bg-slate-900/50 border border-white/5"
+                          className="flex items-center justify-between p-3 rounded-2xl bg-slate-900/60 border border-white/[0.06]"
                         >
                           <div className="flex items-center gap-3">
                             <div
-                              className="w-3 h-3 rounded-full"
+                              className="w-3 h-3 rounded-full shrink-0 ring-2 ring-white/10"
                               style={{ backgroundColor: act.color }}
                             />
                             <div>
-                              <h5 className="text-xs font-semibold text-white">{act.name}</h5>
+                              <h5 className="text-xs font-bold text-white">{act.name}</h5>
                               {s.notes && <p className="text-[11px] text-slate-400">{s.notes}</p>}
                             </div>
                           </div>
                           <div className="flex items-center gap-3">
-                            <span className="text-xs font-mono font-bold text-indigo-300">
+                            <span className="text-xs font-mono font-black text-indigo-300">
                               {mins} mins
                             </span>
                             <button
+                              type="button"
                               onClick={() => deleteSession(s.id)}
-                              className="text-slate-500 hover:text-rose-400 p-1"
+                              className="text-slate-500 hover:text-rose-400 p-1.5 cursor-pointer rounded-lg hover:bg-white/5 transition-colors"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -260,33 +282,40 @@ export const DayDetailModal: React.FC = () => {
           {/* TAB 2: HABITS */}
           {activeTab === 'habits' && (
             <div className="space-y-3">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Habit Completion Log for {selectedDate}
+              <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">
+                Habit Completion Matrix for {selectedDate}
               </h4>
               <div className="space-y-2">
                 {habits.map((h) => {
                   const isDone = !!h.logs[selectedDate];
                   return (
-                    <button
+                    <motion.button
+                      whileTap={{ scale: 0.98 }}
                       key={h.id}
                       type="button"
                       onClick={() => toggleHabit(h.id, selectedDate)}
-                      className={`w-full flex items-center justify-between p-3 rounded-xl cursor-pointer border transition-all text-left ${
+                      className={`w-full flex items-center justify-between p-3.5 rounded-2xl cursor-pointer border transition-all text-left ${
                         isDone
-                          ? 'bg-emerald-950/40 border-emerald-800/40 text-emerald-200'
-                          : 'bg-slate-900/50 border-white/5 text-slate-300 hover:border-white/10'
+                          ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-200 shadow-[0_0_12px_rgba(16,185,129,0.15)]'
+                          : 'bg-slate-900/60 border-white/[0.06] text-slate-300 hover:border-white/20'
                       }`}
                     >
-                      <span className="text-xs font-medium">{h.name}</span>
+                      <div className="flex items-center gap-2.5">
+                        <div
+                          className="w-2.5 h-2.5 rounded-full"
+                          style={{ backgroundColor: h.color }}
+                        />
+                        <span className="text-xs font-bold">{h.name}</span>
+                      </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-slate-400">{h.frequency}</span>
+                        <span className="text-[10px] text-slate-400 font-mono">{h.frequency}</span>
                         {isDone ? (
-                          <CheckCircle className="w-4 h-4 text-emerald-400" />
+                          <CheckCircle className="w-4 h-4 text-emerald-400 fill-emerald-950" />
                         ) : (
                           <div className="w-4 h-4 rounded-full border border-slate-600" />
                         )}
                       </div>
-                    </button>
+                    </motion.button>
                   );
                 })}
               </div>
@@ -297,47 +326,47 @@ export const DayDetailModal: React.FC = () => {
           {activeTab === 'review' && (
             <form onSubmit={handleSaveReview} className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-emerald-400 block mb-1">
-                  What Went Well Today?
+                <label className="text-xs font-black uppercase tracking-wider text-emerald-400 block mb-1.5">
+                  What Went Well?
                 </label>
                 <textarea
                   rows={2}
                   value={wentWell}
                   onChange={(e) => setWentWell(e.target.value)}
-                  placeholder="Wins, accomplishments, breakthrough focus..."
-                  className="w-full px-3 py-2 text-xs rounded-xl glass-input"
+                  placeholder="Key accomplishments, breakthroughs, smooth flow..."
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl glass-input"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-amber-400 block mb-1">
+                <label className="text-xs font-black uppercase tracking-wider text-amber-400 block mb-1.5">
                   What Can Be Improved?
                 </label>
                 <textarea
                   rows={2}
                   value={improve}
                   onChange={(e) => setImprove(e.target.value)}
-                  placeholder="Obstacles, distractions, energy dips..."
-                  className="w-full px-3 py-2 text-xs rounded-xl glass-input"
+                  placeholder="Distractions, energy friction, obstacles..."
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl glass-input"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-indigo-400 block mb-1">
+                <label className="text-xs font-black uppercase tracking-wider text-indigo-400 block mb-1.5">
                   Tomorrow&apos;s Primary Focus
                 </label>
                 <input
                   type="text"
                   value={tomorrowFocus}
                   onChange={(e) => setTomorrowFocus(e.target.value)}
-                  placeholder="Top #1 imperative task for tomorrow..."
-                  className="w-full px-3 py-2 text-xs rounded-xl glass-input"
+                  placeholder="Top #1 imperative directive..."
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl glass-input"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-300 block mb-2">
-                  Productivity Score (1 - 10): <span className="text-indigo-400">{score}</span>
+                <label className="text-xs font-black uppercase tracking-wider text-slate-300 block mb-2">
+                  Productivity Score (1 - 10): <span className="text-indigo-400 font-mono font-bold">{score}</span>
                 </label>
                 <div className="flex items-center gap-1.5">
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
@@ -345,7 +374,7 @@ export const DayDetailModal: React.FC = () => {
                       key={num}
                       type="button"
                       onClick={() => setScore(num)}
-                      className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      className={`flex-1 py-1.5 rounded-xl text-xs font-black font-mono transition-all cursor-pointer ${
                         score === num
                           ? 'bg-gradient-to-r from-indigo-500 to-emerald-400 text-slate-950 scale-105 shadow-md'
                           : 'bg-slate-900 text-slate-400 border border-white/5'
@@ -357,16 +386,18 @@ export const DayDetailModal: React.FC = () => {
                 </div>
               </div>
 
-              <button
+              <motion.button
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.98 }}
                 type="submit"
-                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-indigo-600 text-white font-semibold text-xs shadow-lg transition-all"
+                className="w-full py-3 rounded-2xl bg-gradient-to-r from-rose-500 to-indigo-600 text-white font-black text-xs tracking-wide uppercase shadow-xl transition-all cursor-pointer border border-rose-400/40"
               >
                 Save Daily Reflection
-              </button>
+              </motion.button>
             </form>
           )}
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

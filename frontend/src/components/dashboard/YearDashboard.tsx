@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
 import {
   Calendar as CalendarIcon,
@@ -18,7 +18,6 @@ import {
   Trash2,
   CalendarCheck,
   ChevronRight,
-  Filter,
   Eye,
   Award,
 } from 'lucide-react';
@@ -36,6 +35,7 @@ import {
   isAfter,
 } from 'date-fns';
 import confetti from 'canvas-confetti';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const MONTH_NAMES = [
   'January',
@@ -154,28 +154,28 @@ export const YearDashboard: React.FC = () => {
     const isDateToday = dateStr === todayStr;
 
     if (isDateToday) {
-      return 'bg-gradient-to-tr from-amber-500 to-orange-500 border-amber-300 text-slate-950 font-black ring-4 ring-amber-400/40 shadow-xl shadow-amber-500/50 scale-105 z-10';
+      return 'bg-gradient-to-tr from-amber-400 via-orange-500 to-amber-500 border-amber-300 text-slate-950 font-black ring-2 ring-amber-300 shadow-[0_0_16px_rgba(245,158,11,0.6)] scale-105 z-10';
     }
 
     if (isFutureDate) {
-      return 'bg-slate-950/40 border-white/5 text-slate-600 hover:border-white/20 hover:text-slate-400';
+      return 'bg-slate-950/30 border-white/[0.04] text-slate-600 hover:border-white/20 hover:text-slate-300';
     }
 
     if (hours >= 4 || data.completedHabitsCount >= 3) {
-      return 'bg-gradient-to-tr from-emerald-500 via-teal-400 to-emerald-400 border-emerald-300 text-slate-950 font-bold shadow-md shadow-emerald-500/40';
+      return 'bg-gradient-to-tr from-emerald-500 via-teal-400 to-emerald-400 border-emerald-300/80 text-slate-950 font-black shadow-[0_0_12px_rgba(16,185,129,0.35)]';
     }
     if (hours >= 2 || data.completedHabitsCount >= 2) {
-      return 'bg-gradient-to-tr from-indigo-600 to-indigo-500 border-indigo-400 text-white font-bold shadow-sm shadow-indigo-500/25';
+      return 'bg-gradient-to-tr from-indigo-600 to-indigo-500 border-indigo-400/80 text-white font-bold shadow-[0_0_10px_rgba(99,102,241,0.25)]';
     }
     if (hours >= 0.5 || data.completedHabitsCount >= 1) {
-      return 'bg-indigo-900/80 border-indigo-700/70 text-indigo-200 font-semibold';
+      return 'bg-indigo-950/90 border-indigo-800/80 text-indigo-200 font-semibold';
     }
     if (hours > 0) {
-      return 'bg-indigo-950/60 border-indigo-800/40 text-indigo-300';
+      return 'bg-indigo-950/50 border-indigo-900/50 text-indigo-300';
     }
 
     // Past day with 0 activity
-    return 'bg-slate-900/50 border-white/5 text-slate-400 hover:border-indigo-400/60 hover:bg-slate-800/80 hover:text-white';
+    return 'bg-slate-900/40 border-white/[0.05] text-slate-400 hover:border-indigo-400/60 hover:bg-slate-850 hover:text-white';
   };
 
   const handleCellHover = (dateObj: Date) => {
@@ -228,115 +228,129 @@ export const YearDashboard: React.FC = () => {
       {/* 1. TOP HERO SECTION */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left 2 Cols: Year Progress & Real-Time Countdown */}
-        <div className="lg:col-span-2 glass-panel p-6 lg:p-7 rounded-3xl border border-white/10 space-y-6 relative overflow-hidden shadow-2xl">
+        <div className="lg:col-span-2 glass-panel-luxury p-6 lg:p-8 rounded-3xl border border-white/[0.09] space-y-6 relative overflow-hidden shadow-2xl bg-[#090E1C]/80">
           {/* Ambient Lighting */}
-          <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-amber-500/15 to-orange-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-10 -left-10 w-72 h-72 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -top-12 -right-12 w-96 h-96 bg-gradient-to-br from-amber-500/15 via-orange-500/10 to-transparent rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-16 -left-16 w-80 h-80 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
 
           {/* Header Row */}
           <div className="flex flex-wrap items-center justify-between gap-4 relative z-10">
             <div className="space-y-1">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-amber-500/25 to-orange-500/15 border border-amber-500/30 text-amber-400 shadow-md">
+              <div className="flex items-center gap-3.5">
+                <div className="p-3 rounded-2xl bg-gradient-to-tr from-amber-500/20 to-orange-500/15 border border-amber-500/30 text-amber-400 shadow-lg shadow-amber-500/10">
                   <CalendarIcon className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-extrabold text-white tracking-tight">
+                  <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
                     Year {currentYear} Trajectory
                   </h2>
-                  <p className="text-xs text-slate-400 font-medium">
-                    Day <span className="text-amber-400 font-bold">{dayOfYear}</span> of {totalDaysInYear} &bull; <span className="text-slate-300">{daysLeftInYear} days remaining</span>
+                  <p className="text-xs text-slate-400 font-medium mt-0.5">
+                    Day <strong className="text-amber-400 font-mono font-bold">{dayOfYear}</strong> of {totalDaysInYear} &bull; <span className="text-slate-300 font-mono">{daysLeftInYear} days remaining</span>
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Countdown Badge Pill */}
-            <div className="flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-gradient-to-r from-slate-900/90 to-indigo-950/70 border border-indigo-500/30 shadow-xl">
+            {/* Real-time Countdown Capsule */}
+            <div className="flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-slate-900/90 border border-indigo-500/30 shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
               <Sparkles className="w-4 h-4 text-amber-400 animate-spin" style={{ animationDuration: '8s' }} />
-              <div className="text-xs font-mono text-slate-200 flex items-center gap-1.5">
-                <span className="font-bold text-amber-400 font-sans">{timeToNewYear.days}d</span>
-                <span className="text-slate-500">:</span>
-                <span>{String(timeToNewYear.hours).padStart(2, '0')}h</span>
-                <span className="text-slate-500">:</span>
-                <span>{String(timeToNewYear.minutes).padStart(2, '0')}m</span>
-                <span className="text-slate-500">:</span>
-                <span className="text-indigo-400 font-bold">{String(timeToNewYear.seconds).padStart(2, '0')}s</span>
-                <span className="text-[11px] text-slate-400 font-sans ml-1">to {currentYear + 1}</span>
+              <div className="text-xs font-mono text-slate-200 flex items-center gap-2">
+                <span className="font-extrabold text-amber-400 font-sans tracking-tight">{timeToNewYear.days}d</span>
+                <span className="text-slate-600">:</span>
+                <span className="font-semibold">{String(timeToNewYear.hours).padStart(2, '0')}h</span>
+                <span className="text-slate-600">:</span>
+                <span className="font-semibold">{String(timeToNewYear.minutes).padStart(2, '0')}m</span>
+                <span className="text-slate-600">:</span>
+                <span className="text-indigo-400 font-extrabold">{String(timeToNewYear.seconds).padStart(2, '0')}s</span>
+                <span className="text-[11px] text-slate-400 font-sans font-medium ml-1">to {currentYear + 1}</span>
               </div>
             </div>
           </div>
 
           {/* Glowing Year Progress Bar */}
-          <div className="space-y-2.5 relative z-10">
+          <div className="space-y-3 relative z-10">
             <div className="flex justify-between text-xs font-semibold">
-              <span className="text-gradient-gold flex items-center gap-1.5 font-bold">
+              <span className="text-gradient-gold flex items-center gap-1.5 font-extrabold tracking-wide">
                 <TrendingUp className="w-4 h-4 text-amber-400" />
-                <span>{yearProgressPercent}% Year Completed</span>
+                <span>{yearProgressPercent}% Year Trajectory Completed</span>
               </span>
-              <span className="text-slate-400 font-mono font-medium">{daysLeftInYear} Days to New Year</span>
+              <span className="text-slate-400 font-mono font-medium">{daysLeftInYear} Days Remaining</span>
             </div>
 
-            <div className="w-full h-4 rounded-full bg-slate-950/90 border border-white/10 p-0.5 overflow-hidden shadow-inner relative">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-amber-500 via-orange-500 to-indigo-500 transition-all duration-1000 shadow-md shadow-orange-500/40 relative"
-                style={{ width: `${yearProgressPercent}%` }}
+            <div className="w-full h-4 rounded-full bg-slate-950/95 border border-white/10 p-0.5 overflow-hidden shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] relative">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${yearProgressPercent}%` }}
+                transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+                className="h-full rounded-full bg-gradient-to-r from-amber-500 via-orange-500 to-indigo-500 relative shadow-[0_0_16px_rgba(245,158,11,0.5)]"
               >
-                <div className="absolute right-0 top-0 bottom-0 w-2 bg-white rounded-full shadow-[0_0_12px_#FFF]" />
-              </div>
+                <div className="absolute right-0 top-0 bottom-0 w-2.5 bg-white rounded-full shadow-[0_0_12px_#FFF]" />
+              </motion.div>
             </div>
 
             {/* Quarter Milestones */}
             <div className="flex justify-between text-[10px] text-slate-500 font-mono px-1">
               <span>Q1 (25%)</span>
               <span>Q2 (50%)</span>
-              <span className="text-amber-400 font-bold">Q3 (75% - Current)</span>
+              <span className="text-amber-400 font-bold">Q3 (75% - Active)</span>
               <span>Q4 (100%)</span>
             </div>
           </div>
 
           {/* Custom Countdown Milestones */}
-          <div className="space-y-3 pt-2 relative z-10 border-t border-white/5">
+          <div className="space-y-3.5 pt-3 relative z-10 border-t border-white/[0.07]">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                <Target className="w-3.5 h-3.5 text-indigo-400" />
-                <span>Target Milestones &amp; Countdowns</span>
+              <span className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                <Target className="w-4 h-4 text-indigo-400" />
+                <span>Strategic Target Milestones</span>
               </span>
-              <button
+              <motion.button
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
                 type="button"
                 onClick={() => setShowAddCountdown(!showAddCountdown)}
-                className="flex items-center gap-1 text-xs text-amber-400 hover:text-amber-300 font-bold cursor-pointer transition-colors"
+                className="flex items-center gap-1.5 text-xs text-amber-400 hover:text-amber-300 font-bold cursor-pointer transition-colors"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Add Target</span>
-              </button>
+              </motion.button>
             </div>
 
-            {showAddCountdown && (
-              <form onSubmit={handleCreateCountdown} className="p-4 rounded-2xl bg-slate-900/95 border border-amber-500/30 flex flex-wrap gap-2.5 items-center shadow-2xl animate-fadeIn">
-                <input
-                  type="text"
-                  placeholder="Target Name (e.g. Exam, Launch)"
-                  value={newCdTitle}
-                  onChange={(e) => setNewCdTitle(e.target.value)}
-                  className="flex-1 min-w-[200px] px-3.5 py-2 text-xs rounded-xl glass-input"
-                  required
-                />
-                <input
-                  type="date"
-                  value={newCdDate}
-                  onChange={(e) => setNewCdDate(e.target.value)}
-                  className="px-3.5 py-2 text-xs rounded-xl glass-input"
-                  required
-                />
-                <button
-                  type="submit"
-                  className="px-4 py-2 text-xs rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-bold shadow-md cursor-pointer hover:scale-105 transition-all"
+            <AnimatePresence>
+              {showAddCountdown && (
+                <motion.form
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  onSubmit={handleCreateCountdown}
+                  className="p-4 rounded-2xl bg-slate-900/95 border border-amber-500/30 flex flex-wrap gap-2.5 items-center shadow-2xl"
                 >
-                  Save Milestone
-                </button>
-              </form>
-            )}
+                  <input
+                    type="text"
+                    placeholder="Milestone Name (e.g. App Launch, Marathon)"
+                    value={newCdTitle}
+                    onChange={(e) => setNewCdTitle(e.target.value)}
+                    className="flex-1 min-w-[200px] px-3.5 py-2 text-xs rounded-xl glass-input"
+                    required
+                  />
+                  <input
+                    type="date"
+                    value={newCdDate}
+                    onChange={(e) => setNewCdDate(e.target.value)}
+                    className="px-3.5 py-2 text-xs rounded-xl glass-input"
+                    required
+                  />
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                    type="submit"
+                    className="px-4 py-2 text-xs rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black shadow-md cursor-pointer"
+                  >
+                    Save Target
+                  </motion.button>
+                </motion.form>
+              )}
+            </AnimatePresence>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {countdowns.map((cd) => {
@@ -345,20 +359,21 @@ export const YearDashboard: React.FC = () => {
                 const isPassed = daysRemaining < 0;
 
                 return (
-                  <div
+                  <motion.div
                     key={cd.id}
-                    className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-900/60 border border-white/5 hover:border-amber-500/30 transition-all group shadow-md"
+                    whileHover={{ scale: 1.01 }}
+                    className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-900/60 border border-white/[0.06] hover:border-amber-500/30 transition-all group shadow-md"
                   >
                     <div>
                       <h4 className="text-xs font-bold text-white tracking-wide">{cd.title}</h4>
-                      <p className="text-[10px] text-slate-400 mt-0.5">{format(target, 'MMM d, yyyy')}</p>
+                      <p className="text-[10px] text-slate-400 mt-0.5 font-mono">{format(target, 'MMM d, yyyy')}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <span
-                        className={`text-xs font-extrabold font-mono px-2.5 py-1 rounded-xl ${
+                        className={`text-xs font-black font-mono px-2.5 py-1 rounded-xl ${
                           isPassed
                             ? 'bg-slate-800 text-slate-500'
-                            : 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                            : 'bg-amber-500/15 text-amber-300 border border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.15)]'
                         }`}
                       >
                         {isPassed ? 'Passed' : `${daysRemaining}d left`}
@@ -371,7 +386,7 @@ export const YearDashboard: React.FC = () => {
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
             </div>
@@ -379,44 +394,46 @@ export const YearDashboard: React.FC = () => {
         </div>
 
         {/* Right Col: Today's Action Card */}
-        <div className="glass-panel p-6 lg:p-7 rounded-3xl border border-white/10 flex flex-col justify-between space-y-5 relative overflow-hidden shadow-2xl">
+        <div className="glass-panel-luxury p-6 lg:p-8 rounded-3xl border border-white/[0.09] flex flex-col justify-between space-y-6 relative overflow-hidden shadow-2xl bg-[#090E1C]/80">
           <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
           {/* Goal Progress Ring / Header */}
-          <div className="space-y-3 relative z-10">
+          <div className="space-y-3.5 relative z-10">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 shadow-md">
-                  <Flame className="w-4 h-4 fill-amber-400" />
+                  <Flame className="w-4 h-4 fill-amber-400 animate-pulse" />
                 </div>
                 <div>
                   <h3 className="font-extrabold text-white text-base">Today&apos;s Focus Goal</h3>
                   <p className="text-[11px] text-slate-400 font-medium">{todayFocusMinutes}m of {targetMinutes}m target</p>
                 </div>
               </div>
-              <span className="text-sm font-extrabold font-mono text-emerald-400 bg-emerald-950/50 px-3 py-1 rounded-xl border border-emerald-800/50 shadow-inner">
+              <span className="text-sm font-black font-mono text-emerald-400 bg-emerald-950/60 px-3 py-1 rounded-xl border border-emerald-700/50 shadow-[0_0_12px_rgba(16,185,129,0.25)]">
                 {focusGoalPercent}%
               </span>
             </div>
 
             <div className="space-y-1 pt-1">
-              <div className="w-full h-3 rounded-full bg-slate-950/90 border border-white/10 overflow-hidden p-0.5 shadow-inner">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-amber-400 via-emerald-400 to-teal-400 transition-all duration-700 shadow-md shadow-emerald-500/30"
-                  style={{ width: `${focusGoalPercent}%` }}
+              <div className="w-full h-3.5 rounded-full bg-slate-950/95 border border-white/10 overflow-hidden p-0.5 shadow-inner">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${focusGoalPercent}%` }}
+                  transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                  className="h-full rounded-full bg-gradient-to-r from-amber-400 via-emerald-400 to-teal-400 shadow-[0_0_12px_rgba(16,185,129,0.4)]"
                 />
               </div>
             </div>
           </div>
 
           {/* Today's Habits Checklist */}
-          <div className="space-y-2.5 relative z-10 flex-1">
+          <div className="space-y-3 relative z-10 flex-1">
             <div className="flex items-center justify-between">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                 Habit Streak Routines
               </p>
               <span className="text-[11px] font-mono text-emerald-400 font-bold">
-                {todayData.completedHabitsCount} / {todayData.totalHabitsCount} done
+                {todayData.completedHabitsCount} / {todayData.totalHabitsCount} completed
               </span>
             </div>
 
@@ -424,7 +441,8 @@ export const YearDashboard: React.FC = () => {
               {habits.filter((h) => h.isActive).map((h) => {
                 const isDone = !!h.logs[todayStr];
                 return (
-                  <button
+                  <motion.button
+                    whileTap={{ scale: 0.98 }}
                     key={h.id}
                     type="button"
                     onClick={() => {
@@ -433,10 +451,10 @@ export const YearDashboard: React.FC = () => {
                         confetti({ particleCount: 35, spread: 60, origin: { y: 0.8 } });
                       }
                     }}
-                    className={`w-full flex items-center justify-between p-2.5 rounded-xl text-xs cursor-pointer border transition-all text-left group ${
+                    className={`w-full flex items-center justify-between p-3 rounded-2xl text-xs cursor-pointer border transition-all text-left group ${
                       isDone
-                        ? 'bg-emerald-950/40 border-emerald-600/40 text-emerald-200 shadow-sm'
-                        : 'bg-slate-900/60 border-white/5 text-slate-300 hover:border-white/20 hover:bg-slate-850'
+                        ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-200 shadow-[0_0_12px_rgba(16,185,129,0.15)]'
+                        : 'bg-slate-900/60 border-white/[0.06] text-slate-300 hover:border-white/20 hover:bg-slate-850'
                     }`}
                   >
                     <div className="flex items-center gap-2.5 truncate">
@@ -444,14 +462,14 @@ export const YearDashboard: React.FC = () => {
                         className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm"
                         style={{ backgroundColor: h.color }}
                       />
-                      <span className="truncate font-medium">{h.name}</span>
+                      <span className="truncate font-semibold">{h.name}</span>
                     </div>
                     {isDone ? (
-                      <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0 fill-emerald-950" />
+                      <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0 fill-emerald-950 shadow-sm" />
                     ) : (
                       <Circle className="w-4 h-4 text-slate-600 group-hover:text-amber-400 transition-colors shrink-0" />
                     )}
-                  </button>
+                  </motion.button>
                 );
               })}
             </div>
@@ -459,142 +477,159 @@ export const YearDashboard: React.FC = () => {
 
           {/* Bottom Action Triggers */}
           <div className="grid grid-cols-2 gap-3 pt-2 relative z-10">
-            <button
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
               type="button"
               onClick={() => {
                 setActiveTab('timer');
                 startTimer();
               }}
-              className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-extrabold text-xs shadow-xl shadow-indigo-600/30 cursor-pointer transition-all border border-indigo-400/30"
             >
               <Play className="w-3.5 h-3.5 fill-white" />
               <span>Start Timer</span>
-            </button>
-            <button
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
               type="button"
               onClick={() => {
                 setSelectedDate(todayStr);
                 setIsDayDetailOpen(true);
               }}
-              className="flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 font-semibold text-xs border border-white/10 hover:border-white/20 cursor-pointer transition-all shadow-md"
+              className="flex items-center justify-center gap-1.5 py-3 px-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-slate-200 font-bold text-xs border border-white/10 hover:border-white/20 cursor-pointer transition-all shadow-md"
             >
               <Plus className="w-3.5 h-3.5 text-amber-400" />
               <span>Log Day</span>
-            </button>
+            </motion.button>
           </div>
         </div>
       </div>
 
       {/* 2. CENTERPIECE: FULL-YEAR VISUAL CALENDAR (12-MONTH MATRIX) */}
-      <div className="glass-panel p-6 lg:p-8 rounded-3xl border border-white/10 space-y-6 relative overflow-hidden shadow-2xl">
+      <div className="glass-panel-luxury p-6 lg:p-8 rounded-3xl border border-white/[0.09] space-y-6 relative overflow-hidden shadow-2xl bg-[#090E1C]/80">
         {/* Floating Interactive Day Popover */}
-        {hoveredDay && (
-          <div className="p-4 rounded-2xl bg-slate-900/95 border border-indigo-500/40 shadow-2xl backdrop-blur-xl flex flex-wrap items-center justify-between gap-4 animate-fadeIn">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-extrabold text-white">{hoveredDay.formattedDate}</span>
-                {hoveredDay.isToday && (
-                  <span className="px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 text-[10px] font-black uppercase tracking-wider">
-                    Today
-                  </span>
-                )}
-                {hoveredDay.hasReview && (
-                  <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10px] font-bold">
-                    Daily Reflection Logged
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-slate-400">
-                {hoveredDay.isFuture ? (
-                  <span className="text-slate-500 italic">Upcoming date &bull; Click to schedule tasks or milestones</span>
-                ) : (
-                  <span>
-                    Focus Duration:{' '}
-                    <strong className="text-emerald-400 font-mono font-bold text-sm">
-                      {hoveredDay.totalHours} hrs
-                    </strong>{' '}
-                    across {hoveredDay.sessionCount} sessions &bull;{' '}
-                    <strong className="text-amber-400">
-                      {hoveredDay.completedHabitsCount} / {hoveredDay.totalHabitsCount} habits completed
-                    </strong>
-                  </span>
-                )}
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedDate(hoveredDay.dateStr);
-                setIsDayDetailOpen(true);
-              }}
-              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md cursor-pointer transition-all flex items-center gap-1.5"
+        <AnimatePresence>
+          {hoveredDay && (
+            <motion.div
+              initial={{ opacity: 0, y: 10, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 5, scale: 0.98 }}
+              className="p-4 rounded-2xl bg-slate-900/95 border border-indigo-500/40 shadow-2xl backdrop-blur-2xl flex flex-wrap items-center justify-between gap-4"
             >
-              <Eye className="w-3.5 h-3.5" />
-              <span>Open Day Details</span>
-            </button>
-          </div>
-        )}
+              <div className="space-y-1">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-sm font-extrabold text-white">{hoveredDay.formattedDate}</span>
+                  {hoveredDay.isToday && (
+                    <span className="px-2.5 py-0.5 rounded-full bg-amber-500 text-slate-950 text-[10px] font-black uppercase tracking-wider shadow-sm">
+                      Today
+                    </span>
+                  )}
+                  {hoveredDay.hasReview && (
+                    <span className="px-2.5 py-0.5 rounded-full bg-rose-500/25 text-rose-300 border border-rose-500/40 text-[10px] font-bold">
+                      Reflection Logged
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-slate-400">
+                  {hoveredDay.isFuture ? (
+                    <span className="text-slate-500 italic">Upcoming date &bull; Click to plan future tasks or goals</span>
+                  ) : (
+                    <span>
+                      Focus Duration:{' '}
+                      <strong className="text-emerald-400 font-mono font-bold text-sm">
+                        {hoveredDay.totalHours} hrs
+                      </strong>{' '}
+                      across {hoveredDay.sessionCount} sessions &bull;{' '}
+                      <strong className="text-amber-400">
+                        {hoveredDay.completedHabitsCount} / {hoveredDay.totalHabitsCount} habits completed
+                      </strong>
+                    </span>
+                  )}
+                </p>
+              </div>
+
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                type="button"
+                onClick={() => {
+                  setSelectedDate(hoveredDay.dateStr);
+                  setIsDayDetailOpen(true);
+                }}
+                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg cursor-pointer transition-all flex items-center gap-1.5 border border-indigo-400/40"
+              >
+                <Eye className="w-3.5 h-3.5" />
+                <span>Open Day Details</span>
+              </motion.button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Calendar Controls & Filters */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-1">
-            <h2 className="text-xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
+            <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-3">
               <div className="p-2.5 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-md">
                 <CalendarCheck className="w-5 h-5" />
               </div>
               <span>{currentYear} Visual Activity Calendar</span>
             </h2>
             <p className="text-xs text-slate-400">
-              Hover over any day to preview productivity stats. Click any date cell to log focus time, mark habits, or write reflections.
+              Hover over any date cell to inspect productivity data. Click any cell to log focus time, mark habits, or write reflections.
             </p>
           </div>
 
           {/* Quarter Filters */}
           <div className="flex flex-wrap items-center gap-2">
             {(['ALL', 'Q1', 'Q2', 'Q3', 'Q4'] as const).map((q) => (
-              <button
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
                 key={q}
                 type="button"
                 onClick={() => setSelectedQuarter(q)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-all ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-all ${
                   selectedQuarter === q
-                    ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-lg shadow-indigo-600/30 scale-105'
-                    : 'bg-slate-900/80 text-slate-400 hover:text-white border border-white/5'
+                    ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-lg shadow-indigo-600/35 scale-105 border border-indigo-400/40'
+                    : 'bg-slate-900/80 text-slate-400 hover:text-white border border-white/[0.06]'
                 }`}
               >
                 {q === 'ALL' ? 'All 12 Months' : q}
-              </button>
+              </motion.button>
             ))}
 
             {/* Jump to Today Button */}
-            <button
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
               type="button"
               onClick={() => {
                 setSelectedDate(todayStr);
                 setIsDayDetailOpen(true);
               }}
-              className="px-3.5 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/40 text-xs font-bold cursor-pointer transition-all flex items-center gap-1"
+              className="px-3.5 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/40 text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5 shadow-[0_0_12px_rgba(245,158,11,0.15)]"
             >
               <Flame className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
               <span>Today ({format(now, 'MMM d')})</span>
-            </button>
+            </motion.button>
           </div>
         </div>
 
         {/* Legend */}
         <div className="flex flex-wrap items-center justify-end gap-3 text-xs text-slate-400 pt-1">
-          <span className="text-[11px] font-medium">Activity Intensity:</span>
+          <span className="text-[11px] font-semibold text-slate-400">Activity Level:</span>
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-md bg-slate-900 border border-white/5" />
             <span className="text-[10px]">None (0h)</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-md bg-indigo-950 border border-indigo-800" />
+            <div className="w-3 h-3 rounded-md bg-indigo-950 border border-indigo-900" />
             <span className="text-[10px]">&lt;0.5h</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-md bg-indigo-900 border border-indigo-700" />
+            <div className="w-3 h-3 rounded-md bg-indigo-900 border border-indigo-800" />
             <span className="text-[10px]">0.5h - 2h</span>
           </div>
           <div className="flex items-center gap-1.5">
@@ -603,7 +638,7 @@ export const YearDashboard: React.FC = () => {
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-md bg-gradient-to-tr from-emerald-500 to-teal-400 border border-emerald-300" />
-            <span className="text-[10px]">&gt;4h Focus</span>
+            <span className="text-[10px] font-bold text-emerald-300">&gt;4h Deep Work</span>
           </div>
         </div>
 
@@ -619,26 +654,26 @@ export const YearDashboard: React.FC = () => {
             return (
               <div
                 key={monthName}
-                className="p-5 rounded-2xl bg-gradient-to-b from-slate-900/80 to-slate-950/90 border border-white/10 hover:border-indigo-500/40 space-y-3.5 transition-all shadow-lg group hover:shadow-indigo-500/10"
+                className="p-5 rounded-3xl bg-gradient-to-b from-slate-900/90 to-slate-950/95 border border-white/[0.08] hover:border-indigo-500/40 space-y-3.5 transition-all shadow-xl group hover:shadow-indigo-500/10"
               >
                 {/* Month Card Header with Live Stats */}
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-white tracking-wide group-hover:text-indigo-300 transition-colors">
+                    <h3 className="text-sm font-black text-white tracking-wide group-hover:text-indigo-300 transition-colors font-sans">
                       {monthName}
                     </h3>
-                    <span className="text-[10px] font-mono text-emerald-400 font-bold bg-emerald-950/40 px-2 py-0.5 rounded-lg border border-emerald-800/40">
+                    <span className="text-[10px] font-mono text-emerald-400 font-extrabold bg-emerald-950/50 px-2 py-0.5 rounded-lg border border-emerald-800/40 shadow-inner">
                       {stats.totalHours}h
                     </span>
                   </div>
-                  <p className="text-[10px] text-slate-500 flex items-center justify-between">
+                  <p className="text-[10px] text-slate-500 flex items-center justify-between font-mono">
                     <span>{daysInMonthCount} days</span>
                     <span>{stats.activeDays} active days</span>
                   </p>
                 </div>
 
                 {/* Day of Week Headers */}
-                <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-extrabold text-slate-500 font-mono border-t border-white/5 pt-2">
+                <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-black text-slate-500/80 font-mono border-t border-white/[0.06] pt-2">
                   <span>S</span>
                   <span>M</span>
                   <span>T</span>
@@ -673,13 +708,13 @@ export const YearDashboard: React.FC = () => {
                           setSelectedDate(dateStr);
                           setIsDayDetailOpen(true);
                         }}
-                        className={`heatmap-cell w-full aspect-square rounded-lg flex items-center justify-center text-[10px] border transition-all relative cursor-pointer ${intensityClass}`}
+                        className={`heatmap-cell w-full aspect-square rounded-lg flex items-center justify-center text-[10px] border transition-all relative cursor-pointer outline-none ${intensityClass}`}
                       >
                         <span>{dayNum}</span>
 
-                        {/* Review Dot */}
+                        {/* Review Indicator Dot */}
                         {data.hasReview && (
-                          <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-rose-400 shadow-sm" />
+                          <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-rose-400 shadow-[0_0_6px_rgba(244,63,94,0.8)]" />
                         )}
                       </button>
                     );

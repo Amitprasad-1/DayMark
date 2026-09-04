@@ -9,10 +9,11 @@ import {
   Plus,
   Play,
   Sparkles,
-  Cloud,
   RefreshCw,
+  Zap,
 } from 'lucide-react';
 import { format, getDayOfYear, getDaysInYear } from 'date-fns';
+import { motion } from 'framer-motion';
 
 export const Header: React.FC = () => {
   const {
@@ -55,45 +56,50 @@ export const Header: React.FC = () => {
   );
 
   return (
-    <header className="sticky top-0 z-40 w-full glass-panel border-b border-white/10 px-4 lg:px-8 py-3 backdrop-blur-2xl bg-slate-950/70 shadow-2xl">
-      <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-        {/* Left: App Branding with Logo & Progress Pill */}
+    <header className="sticky top-0 z-40 w-full glass-panel-luxury border-b border-white/[0.08] px-4 lg:px-8 py-3.5 backdrop-blur-3xl bg-[#050811]/80 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.8)]">
+      <div className="max-w-[1680px] mx-auto flex items-center justify-between gap-4">
+        {/* Left: App Branding with Logo & Trajectory Progress Pill */}
         <div className="flex items-center gap-4">
-          <button
+          <motion.button
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.98 }}
             type="button"
             onClick={() => setActiveTab('dashboard')}
-            className="flex items-center gap-3 cursor-pointer group text-left"
+            className="flex items-center gap-3 cursor-pointer group text-left outline-none"
           >
             <div className="relative">
-              <div className="absolute -inset-1 bg-gradient-to-r from-amber-500 via-orange-500 to-indigo-500 rounded-2xl blur-sm opacity-40 group-hover:opacity-75 transition duration-300" />
+              <div className="absolute -inset-1 bg-gradient-to-r from-amber-500 via-orange-500 to-indigo-500 rounded-2xl blur-md opacity-40 group-hover:opacity-85 transition duration-500" />
               <img
                 src="/logo.png"
                 alt="DayMark Logo"
-                className="relative w-10 h-10 rounded-xl object-cover shadow-xl border border-white/20"
+                className="relative w-10 h-10 rounded-xl object-cover shadow-2xl border border-white/25 ring-1 ring-white/10"
               />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="font-extrabold text-xl tracking-tight text-white font-sans">
+                <h1 className="font-black text-xl tracking-tight text-white font-sans flex items-center">
                   Day<span className="text-gradient-gold">Mark</span>
                 </h1>
-                <span className="text-[10px] uppercase font-extrabold tracking-widest px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-300 border border-amber-500/30">
-                  PRO
+                <span className="text-[9px] uppercase font-black tracking-widest px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500/25 to-orange-500/20 text-amber-300 border border-amber-500/40 shadow-[0_0_12px_rgba(245,158,11,0.2)]">
+                  ULTRA
                 </span>
               </div>
               <p className="text-[11px] text-slate-400 font-medium hidden sm:flex items-center gap-1.5">
-                <span>Day {dayOfYear} of {totalDaysInYear}</span>
+                <span>Day <strong className="text-slate-200 font-mono">{dayOfYear}</strong> of {totalDaysInYear}</span>
                 <span className="w-1 h-1 rounded-full bg-slate-600" />
-                <span className="text-indigo-300 font-semibold">{yearProgress}% complete</span>
+                <span className="text-indigo-400 font-semibold font-mono">{yearProgress}% complete</span>
               </p>
             </div>
-          </button>
+          </motion.button>
         </div>
 
-        {/* Center: Live Clock & Date Badge */}
-        <div className="hidden md:flex items-center gap-3 px-4 py-1.5 rounded-full bg-slate-900/70 border border-white/10 shadow-inner">
-          <div className="flex items-center gap-2 text-indigo-300 font-mono font-bold text-sm tracking-wide">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+        {/* Center: Live Digital Atomic Clock & Date Capsule */}
+        <div className="hidden md:flex items-center gap-3.5 px-4 py-1.5 rounded-full bg-slate-900/80 border border-white/10 shadow-[inset_0_1px_2px_rgba(0,0,0,0.6),0_4px_12px_rgba(0,0,0,0.3)]">
+          <div className="flex items-center gap-2 text-indigo-300 font-mono font-bold text-xs tracking-wider">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+            </span>
             <span>{time}</span>
           </div>
           <div className="h-3.5 w-px bg-white/10" />
@@ -104,87 +110,97 @@ export const Header: React.FC = () => {
         </div>
 
         {/* Right: Quick Action Controls */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 sm:gap-3">
           {/* Live Timer Pill if running */}
           {timerStatus === 'RUNNING' && (
-            <button
+            <motion.button
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
               type="button"
               onClick={() => setActiveTab('timer')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500/25 to-teal-500/25 border border-emerald-400/50 text-emerald-300 text-xs font-mono font-bold animate-pulse cursor-pointer shadow-lg shadow-emerald-500/20"
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500/25 via-teal-500/20 to-emerald-500/25 border border-emerald-400/50 text-emerald-300 text-xs font-mono font-bold cursor-pointer shadow-[0_0_20px_rgba(16,185,129,0.3)]"
               title="Focus Session Active — Click to View"
             >
-              <Clock className="w-3.5 h-3.5 text-emerald-400 animate-spin" style={{ animationDuration: '6s' }} />
-              <span>
+              <Clock className="w-3.5 h-3.5 text-emerald-400 animate-spin" style={{ animationDuration: '4s' }} />
+              <span className="tracking-wider">
                 {Math.floor((timerMode === 'STOPWATCH' ? stopwatchElapsed : timerSecondsRemaining) / 60)}:
                 {String((timerMode === 'STOPWATCH' ? stopwatchElapsed : timerSecondsRemaining) % 60).padStart(2, '0')}
               </span>
-            </button>
+            </motion.button>
           )}
 
           {/* Today's Focus Stat Pill */}
-          <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-950/30 border border-amber-500/20 text-xs">
-            <Flame className="w-4 h-4 text-amber-400 fill-amber-400" />
+          <div className="hidden lg:flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-amber-950/30 border border-amber-500/20 text-xs shadow-inner">
+            <Flame className="w-4 h-4 text-amber-400 fill-amber-400 animate-pulse" />
             <span className="text-slate-400">Today:</span>
-            <span className="font-bold text-amber-300 font-mono">{todayFocusMinutes}m</span>
+            <span className="font-extrabold text-amber-300 font-mono tracking-tight">{todayFocusMinutes}m</span>
           </div>
 
           {/* Quick Focus Button (if not already running) */}
           {timerStatus !== 'RUNNING' && (
-            <button
+            <motion.button
+              whileHover={{ scale: 1.03, boxShadow: '0 0 25px rgba(16, 185, 129, 0.45)' }}
+              whileTap={{ scale: 0.96 }}
               type="button"
               onClick={() => {
                 setActiveTab('timer');
                 startTimer();
               }}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-400 via-teal-500 to-emerald-600 hover:from-emerald-300 hover:to-teal-500 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-[1.03] active:scale-[0.97] transition-all cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500 text-slate-950 font-black text-xs shadow-[0_4px_16px_rgba(16,185,129,0.3)] cursor-pointer transition-all border border-emerald-300/40"
             >
               <Play className="w-3.5 h-3.5 fill-slate-950" />
-              <span className="hidden sm:inline">Start Focus</span>
-            </button>
+              <span className="hidden sm:inline tracking-wide uppercase">Focus</span>
+            </motion.button>
           )}
 
           {/* Cloud Sync Status Indicator */}
-          <button
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
             type="button"
             onClick={() => syncWithCloud()}
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-white/10 hover:border-white/20 text-xs transition-all cursor-pointer shadow-md"
+            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-900/85 hover:bg-slate-800/90 border border-white/10 hover:border-white/20 text-xs transition-all cursor-pointer shadow-md"
             title={
               cloudSyncStatus === 'synced'
                 ? 'Cloud Synced with PostgreSQL — Click to Re-sync'
                 : cloudSyncStatus === 'syncing'
                 ? 'Syncing with Supabase Cloud...'
-                : 'Local Storage Ready — Click to Sync Cloud'
+                : 'Local Cache Ready — Click to Sync Cloud'
             }
           >
             {cloudSyncStatus === 'syncing' ? (
               <RefreshCw className="w-3.5 h-3.5 text-indigo-400 animate-spin" />
             ) : cloudSyncStatus === 'synced' ? (
-              <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400" />
+              <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
             ) : (
-              <span className="w-2 h-2 rounded-full bg-amber-400 shadow-sm shadow-amber-400" />
+              <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.8)]" />
             )}
             <span className="hidden sm:inline text-slate-300 font-medium">
               {cloudSyncStatus === 'synced'
-                ? 'Cloud Synced'
+                ? 'Synced'
                 : cloudSyncStatus === 'syncing'
-                ? 'Syncing...'
-                : 'Local Cache'}
+                ? 'Syncing'
+                : 'Local'}
             </span>
-          </button>
+          </motion.button>
 
           {/* Log Today Modal Button */}
-          <button
+          <motion.button
+            whileHover={{ scale: 1.02, backgroundColor: 'rgba(30, 41, 59, 0.9)' }}
+            whileTap={{ scale: 0.97 }}
             type="button"
             onClick={() => {
               setSelectedDate(format(new Date(), 'yyyy-MM-dd'));
               setIsDayDetailOpen(true);
             }}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-200 text-xs font-semibold border border-white/10 hover:border-white/20 transition-all cursor-pointer shadow-md"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-slate-200 text-xs font-bold border border-white/10 hover:border-indigo-500/40 transition-all cursor-pointer shadow-md"
             title="Log Today's Activities"
           >
             <Plus className="w-4 h-4 text-indigo-400" />
             <span className="hidden sm:inline">Log Day</span>
-          </button>
+          </motion.button>
         </div>
       </div>
     </header>
