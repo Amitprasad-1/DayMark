@@ -23,6 +23,7 @@ interface NavItem {
   icon: React.ElementType;
   badge?: number;
   color: string;
+  shortcut?: string;
 }
 
 export const Sidebar: React.FC = () => {
@@ -31,17 +32,17 @@ export const Sidebar: React.FC = () => {
   const pendingTasksCount = tasks.filter((t) => !t.completed).length;
 
   const coreNav: NavItem[] = [
-    { id: 'dashboard', label: 'Year Calendar', icon: CalendarDays, color: 'text-amber-400' },
-    { id: 'timer', label: 'Focus Timer', icon: Timer, badge: timerStatus === 'RUNNING' ? 1 : undefined, color: 'text-emerald-400' },
-    { id: 'tasks', label: 'Tasks & Directives', icon: CheckSquare, badge: pendingTasksCount > 0 ? pendingTasksCount : undefined, color: 'text-blue-400' },
-    { id: 'habits', label: 'Habits Matrix', icon: Zap, color: 'text-amber-400' },
+    { id: 'dashboard', label: 'Year Calendar', icon: CalendarDays, color: 'text-amber-400', shortcut: '1' },
+    { id: 'timer', label: 'Focus Timer', icon: Timer, badge: timerStatus === 'RUNNING' ? 1 : undefined, color: 'text-emerald-400', shortcut: '2' },
+    { id: 'tasks', label: 'Tasks & Directives', icon: CheckSquare, badge: pendingTasksCount > 0 ? pendingTasksCount : undefined, color: 'text-blue-400', shortcut: '3' },
+    { id: 'habits', label: 'Habits Matrix', icon: Zap, color: 'text-amber-400', shortcut: '4' },
   ];
 
   const secondaryNav: NavItem[] = [
-    { id: 'goals', label: 'Goals & Targets', icon: Target, color: 'text-purple-400' },
-    { id: 'analytics', label: 'Focus Analytics', icon: BarChart3, color: 'text-cyan-400' },
-    { id: 'review', label: 'Daily Reflection', icon: BookOpen, color: 'text-rose-400' },
-    { id: 'settings', label: 'Settings & Data', icon: Settings, color: 'text-slate-400' },
+    { id: 'goals', label: 'Goals & Targets', icon: Target, color: 'text-purple-400', shortcut: '5' },
+    { id: 'analytics', label: 'Focus Analytics', icon: BarChart3, color: 'text-cyan-400', shortcut: '6' },
+    { id: 'review', label: 'Daily Reflection', icon: BookOpen, color: 'text-rose-400', shortcut: '7' },
+    { id: 'settings', label: 'Settings & Data', icon: Settings, color: 'text-slate-400', shortcut: '8' },
   ];
 
   const renderNavGroup = (title: string, items: NavItem[]) => (
@@ -91,7 +92,7 @@ export const Sidebar: React.FC = () => {
                 <span className="tracking-tight transition-transform duration-200">{item.label}</span>
               </div>
 
-              {item.badge !== undefined && (
+              {item.badge !== undefined ? (
                 <motion.span
                   initial={{ scale: 0.8 }}
                   animate={{ scale: 1 }}
@@ -103,7 +104,11 @@ export const Sidebar: React.FC = () => {
                 >
                   {item.id === 'timer' && timerStatus === 'RUNNING' ? 'LIVE' : item.badge}
                 </motion.span>
-              )}
+              ) : item.shortcut ? (
+                <kbd className="relative z-10 hidden group-hover:inline-block px-1.5 py-0.5 text-[9px] font-mono text-slate-400 bg-white/[0.06] border border-white/10 rounded-md shadow-sm">
+                  {item.shortcut}
+                </kbd>
+              ) : null}
             </motion.button>
           );
         })}

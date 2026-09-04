@@ -158,7 +158,7 @@ export const YearDashboard: React.FC = () => {
     }
 
     if (isFutureDate) {
-      return 'bg-slate-950/30 border-white/[0.04] text-slate-600 hover:border-white/20 hover:text-slate-300';
+      return 'bg-slate-950/40 border-white/[0.04] text-slate-500 font-medium hover:border-white/20 hover:text-slate-300';
     }
 
     if (hours >= 4 || data.completedHabitsCount >= 3) {
@@ -168,14 +168,14 @@ export const YearDashboard: React.FC = () => {
       return 'bg-gradient-to-tr from-indigo-600 to-indigo-500 border-indigo-400/80 text-white font-bold shadow-[0_0_10px_rgba(99,102,241,0.25)]';
     }
     if (hours >= 0.5 || data.completedHabitsCount >= 1) {
-      return 'bg-indigo-950/90 border-indigo-800/80 text-indigo-200 font-semibold';
+      return 'bg-indigo-950/90 border-indigo-700/80 text-indigo-100 font-bold shadow-sm';
     }
     if (hours > 0) {
-      return 'bg-indigo-950/50 border-indigo-900/50 text-indigo-300';
+      return 'bg-indigo-950/60 border-indigo-800/60 text-indigo-200 font-semibold';
     }
 
-    // Past day with 0 activity
-    return 'bg-slate-900/40 border-white/[0.05] text-slate-400 hover:border-indigo-400/60 hover:bg-slate-850 hover:text-white';
+    // Past day with 0 activity: boosted text contrast & subtle border definition
+    return 'bg-slate-900/70 border-white/[0.07] text-slate-300 font-semibold hover:border-indigo-400/80 hover:bg-slate-800 hover:text-white';
   };
 
   const handleCellHover = (dateObj: Date) => {
@@ -252,17 +252,25 @@ export const YearDashboard: React.FC = () => {
             </div>
 
             {/* Real-time Countdown Capsule */}
-            <div className="flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-slate-900/90 border border-indigo-500/30 shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
+            <div className="flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-slate-900/90 border border-indigo-500/30 shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
               <Sparkles className="w-4 h-4 text-amber-400 animate-spin" style={{ animationDuration: '8s' }} />
-              <div className="text-xs font-mono text-slate-200 flex items-center gap-2">
-                <span className="font-extrabold text-amber-400 font-sans tracking-tight">{timeToNewYear.days}d</span>
-                <span className="text-slate-600">:</span>
-                <span className="font-semibold">{String(timeToNewYear.hours).padStart(2, '0')}h</span>
-                <span className="text-slate-600">:</span>
-                <span className="font-semibold">{String(timeToNewYear.minutes).padStart(2, '0')}m</span>
-                <span className="text-slate-600">:</span>
-                <span className="text-indigo-400 font-extrabold">{String(timeToNewYear.seconds).padStart(2, '0')}s</span>
-                <span className="text-[11px] text-slate-400 font-sans font-medium ml-1">to {currentYear + 1}</span>
+              <div className="flex items-center gap-1.5 font-mono text-xs text-slate-200">
+                <span className="px-2 py-0.5 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-300 font-extrabold shadow-sm font-sans tracking-tight">
+                  {timeToNewYear.days}d
+                </span>
+                <span className="text-slate-600 font-bold">:</span>
+                <span className="px-2 py-0.5 rounded-lg bg-slate-800/80 border border-white/10 font-bold text-slate-200">
+                  {String(timeToNewYear.hours).padStart(2, '0')}h
+                </span>
+                <span className="text-slate-600 font-bold">:</span>
+                <span className="px-2 py-0.5 rounded-lg bg-slate-800/80 border border-white/10 font-bold text-slate-200">
+                  {String(timeToNewYear.minutes).padStart(2, '0')}m
+                </span>
+                <span className="text-slate-600 font-bold">:</span>
+                <span className="px-2 py-0.5 rounded-lg bg-indigo-500/20 border border-indigo-500/40 font-black text-indigo-300 shadow-sm">
+                  {String(timeToNewYear.seconds).padStart(2, '0')}s
+                </span>
+                <span className="text-[11px] text-slate-400 font-sans font-medium ml-1.5">to {currentYear + 1}</span>
               </div>
             </div>
           </div>
@@ -550,19 +558,29 @@ export const YearDashboard: React.FC = () => {
                 </p>
               </div>
 
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                type="button"
-                onClick={() => {
-                  setSelectedDate(hoveredDay.dateStr);
-                  setIsDayDetailOpen(true);
-                }}
-                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg cursor-pointer transition-all flex items-center gap-1.5 border border-indigo-400/40"
-              >
-                <Eye className="w-3.5 h-3.5" />
-                <span>Open Day Details</span>
-              </motion.button>
+              <div className="flex items-center gap-2">
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  type="button"
+                  onClick={() => {
+                    setSelectedDate(hoveredDay.dateStr);
+                    setIsDayDetailOpen(true);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg cursor-pointer transition-all flex items-center gap-1.5 border border-indigo-400/40"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>Open Day Details</span>
+                </motion.button>
+                <button
+                  type="button"
+                  onClick={() => setHoveredDay(null)}
+                  className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
+                  title="Dismiss preview"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -648,7 +666,10 @@ export const YearDashboard: React.FC = () => {
         </div>
 
         {/* 12-Month Matrix Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div
+          onMouseLeave={() => setHoveredDay(null)}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+        >
           {visibleMonthIndices().map((monthIdx) => {
             const monthName = MONTH_NAMES[monthIdx];
             const monthStart = new Date(currentYear, monthIdx, 1);

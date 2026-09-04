@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
 import {
   X,
@@ -44,6 +44,17 @@ export const DayDetailModal: React.FC = () => {
   const [tomorrowFocus, setTomorrowFocus] = useState<string>(existingReview?.tomorrowFocus || '');
   const [score, setScore] = useState<number>(existingReview?.productivityScore || 8);
 
+  useEffect(() => {
+    if (!isDayDetailOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsDayDetailOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isDayDetailOpen, setIsDayDetailOpen]);
+
   if (!isDayDetailOpen) return null;
 
   const dateObj = parseISO(selectedDate);
@@ -86,8 +97,12 @@ export const DayDetailModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050811]/85 backdrop-blur-xl animate-fadeIn">
+    <div
+      onClick={() => setIsDayDetailOpen(false)}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050811]/85 backdrop-blur-xl animate-fadeIn"
+    >
       <motion.div
+        onClick={(e) => e.stopPropagation()}
         initial={{ opacity: 0, scale: 0.95, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 15 }}

@@ -11,11 +11,16 @@ import {
   Sparkles,
   RefreshCw,
   Zap,
+  Command,
 } from 'lucide-react';
 import { format, getDayOfYear, getDaysInYear } from 'date-fns';
 import { motion } from 'framer-motion';
 
-export const Header: React.FC = () => {
+interface HeaderProps {
+  onOpenShortcuts?: () => void;
+}
+
+export const Header: React.FC<HeaderProps> = ({ onOpenShortcuts }) => {
   const {
     setActiveTab,
     timerStatus,
@@ -182,6 +187,20 @@ export const Header: React.FC = () => {
                 : 'Local'}
             </span>
           </motion.button>
+
+          {/* Keyboard Shortcuts Trigger Button */}
+          {onOpenShortcuts && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              type="button"
+              onClick={onOpenShortcuts}
+              className="hidden lg:flex items-center justify-center p-2 rounded-xl bg-slate-900/85 hover:bg-slate-800 border border-white/10 hover:border-indigo-500/40 text-slate-400 hover:text-white transition-colors cursor-pointer shadow-md"
+              title="Keyboard Shortcuts (Press ?)"
+            >
+              <Command className="w-3.5 h-3.5" />
+            </motion.button>
+          )}
 
           {/* Log Today Modal Button */}
           <motion.button
