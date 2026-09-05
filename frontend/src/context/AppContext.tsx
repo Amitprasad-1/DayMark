@@ -303,11 +303,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       // Merge Cloud updates if remote data exists
       if (cloudData.settings) setSettings((prev) => ({ ...prev, ...cloudData.settings }));
-      if (cloudData.activities && cloudData.activities.length > 0) setActivities(cloudData.activities);
+      if (cloudData.activities && cloudData.activities.length > 0) {
+        const mergedActs = [
+          ...INITIAL_ACTIVITIES,
+          ...cloudData.activities.filter((ca) => !INITIAL_ACTIVITIES.some((ia) => ia.name.toLowerCase() === ca.name.toLowerCase())),
+        ];
+        setActivities(mergedActs);
+      }
       if (cloudData.sessions && cloudData.sessions.length > 0) setSessions(cloudData.sessions);
-      if (cloudData.habits && cloudData.habits.length > 0) setHabits(cloudData.habits);
-      if (cloudData.tasks && cloudData.tasks.length > 0) setTasks(cloudData.tasks);
-      if (cloudData.goals && cloudData.goals.length > 0) setGoals(cloudData.goals);
+      if (cloudData.habits && cloudData.habits.length > 0) {
+        const mergedHabits = [
+          ...INITIAL_HABITS,
+          ...cloudData.habits.filter((ch) => !INITIAL_HABITS.some((ih) => ih.name.toLowerCase() === ch.name.toLowerCase())),
+        ];
+        setHabits(mergedHabits);
+      }
+      if (cloudData.tasks && cloudData.tasks.length > 0) {
+        const mergedTasks = [
+          ...INITIAL_TASKS,
+          ...cloudData.tasks.filter((ct) => !INITIAL_TASKS.some((it) => it.title.toLowerCase() === ct.title.toLowerCase())),
+        ];
+        setTasks(mergedTasks);
+      }
+      if (cloudData.goals && cloudData.goals.length > 0) {
+        const mergedGoals = [
+          ...INITIAL_GOALS,
+          ...cloudData.goals.filter((cg) => !INITIAL_GOALS.some((ig) => ig.title.toLowerCase() === cg.title.toLowerCase())),
+        ];
+        setGoals(mergedGoals);
+      }
       if (cloudData.countdowns && cloudData.countdowns.length > 0) setCountdowns(cloudData.countdowns);
       if (cloudData.reviews && cloudData.reviews.length > 0) setReviews(cloudData.reviews);
 
