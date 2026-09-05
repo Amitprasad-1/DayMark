@@ -142,42 +142,48 @@ export const Header: React.FC<HeaderProps> = ({ onOpenShortcuts }) => {
               setSelectedDate(todayStr);
               setIsDayDetailOpen(true);
             }}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-amber-950/35 hover:bg-amber-950/55 border border-amber-500/30 hover:border-amber-400/60 text-xs shadow-inner cursor-pointer transition-all"
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-amber-950/30 hover:from-amber-500/30 hover:to-orange-500/25 border border-amber-400/60 hover:border-amber-300 text-xs shadow-[0_0_12px_rgba(245,158,11,0.2)] cursor-pointer transition-all"
             title="Today's Total Study Time — Click to View Session Log"
           >
             <Flame className="w-4 h-4 text-amber-400 fill-amber-400 animate-pulse" />
-            <span className="text-slate-400 hidden sm:inline font-medium">Today:</span>
-            <span className="font-black text-amber-300 font-mono tracking-tight text-xs sm:text-sm">
+            <span className="text-amber-200/80 hidden sm:inline font-bold">Today:</span>
+            <span className="font-black text-amber-300 font-mono tracking-tight text-xs sm:text-sm drop-shadow-sm">
               {todayFocusMinutes >= 60
                 ? `${(todayFocusMinutes / 60).toFixed(1)}h`
                 : `${todayFocusMinutes}m`}
             </span>
           </motion.button>
 
-          {/* Quick Focus Button (harmonized luxury design) */}
+          {/* Quick Focus Button (punchy luxury design) */}
           {timerStatus !== 'RUNNING' && (
             <motion.button
-              whileHover={{ scale: 1.03, boxShadow: '0 0 25px rgba(99, 102, 241, 0.45)' }}
+              whileHover={{ scale: 1.04, boxShadow: '0 0 25px rgba(99, 102, 241, 0.55)' }}
               whileTap={{ scale: 0.96 }}
               type="button"
               onClick={() => {
                 setActiveTab('timer');
                 startTimer();
               }}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-indigo-600 hover:from-indigo-500 hover:to-indigo-400 text-white font-black text-xs shadow-[0_4px_16px_rgba(99,102,241,0.35),inset_0_1px_0_rgba(255,255,255,0.25)] cursor-pointer transition-all border border-indigo-400/40"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 via-purple-600 to-indigo-500 hover:from-indigo-400 hover:to-purple-500 text-white font-black text-xs shadow-[0_4px_18px_rgba(99,102,241,0.45),inset_0_1px_0_rgba(255,255,255,0.3)] cursor-pointer transition-all border border-indigo-300/50"
             >
               <Play className="w-3.5 h-3.5 fill-white text-white" />
-              <span className="hidden sm:inline tracking-wide uppercase">Start Focus</span>
+              <span className="hidden sm:inline tracking-wide uppercase font-black">Start Focus</span>
             </motion.button>
           )}
 
           {/* Cloud Sync Status Indicator */}
           <motion.button
-            whileHover={{ scale: 1.02 }}
+            whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             type="button"
             onClick={() => syncWithCloud()}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-900/85 hover:bg-slate-800/90 border border-white/10 hover:border-white/20 text-xs transition-all cursor-pointer shadow-md"
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs transition-all cursor-pointer shadow-md ${
+              cloudSyncStatus === 'synced'
+                ? 'bg-emerald-950/60 border-emerald-500/50 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.25)]'
+                : cloudSyncStatus === 'syncing'
+                ? 'bg-indigo-950/60 border-indigo-500/50 text-indigo-300 shadow-[0_0_12px_rgba(99,102,241,0.25)]'
+                : 'bg-slate-900/85 border-white/10 text-slate-300 hover:border-white/20'
+            }`}
             title={
               cloudSyncStatus === 'synced'
                 ? 'Cloud Synced with PostgreSQL — Click to Re-sync'
@@ -189,11 +195,11 @@ export const Header: React.FC<HeaderProps> = ({ onOpenShortcuts }) => {
             {cloudSyncStatus === 'syncing' ? (
               <RefreshCw className="w-3.5 h-3.5 text-indigo-400 animate-spin" />
             ) : cloudSyncStatus === 'synced' ? (
-              <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+              <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_10px_#10B981]" />
             ) : (
-              <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.8)]" />
+              <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_10px_#F59E0B]" />
             )}
-            <span className="hidden sm:inline text-slate-300 font-medium">
+            <span className="hidden sm:inline font-bold">
               {cloudSyncStatus === 'synced'
                 ? 'Synced'
                 : cloudSyncStatus === 'syncing'

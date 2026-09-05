@@ -149,39 +149,41 @@ export const YearDashboard: React.FC = () => {
     };
   };
 
-  // Color helper for heatmap cells with luminous depth
+  // Color helper for heatmap cells with luminous depth & punchy contrast
   const getCellIntensityStyle = (dateStr: string, isFutureDate: boolean, hasMilestone: boolean = false) => {
     const data = getDayActivityData(dateStr);
     const hours = data.totalSeconds / 3600;
     const isDateToday = dateStr === todayStr;
 
+    // Today with or without milestone: vibrant neon flame
     if (isDateToday) {
-      return 'bg-gradient-to-tr from-amber-400 via-orange-500 to-amber-500 border-amber-300 text-slate-950 font-black ring-2 ring-amber-300 shadow-[0_0_16px_rgba(245,158,11,0.6)] scale-105 z-10';
+      return 'bg-gradient-to-tr from-amber-400 via-orange-500 to-amber-500 border-2 border-amber-200 text-slate-950 font-black ring-2 ring-amber-300 shadow-[0_0_20px_rgba(245,158,11,0.7)] scale-105 z-10';
     }
 
+    // Target Milestone day: punchy glowing amber/gold jewel cell
     if (hasMilestone) {
-      return 'bg-amber-950/60 border-amber-400/90 text-amber-300 font-black ring-1 ring-amber-400/80 shadow-[0_0_14px_rgba(245,158,11,0.5)] hover:bg-amber-900/70 hover:border-amber-300';
+      return 'bg-gradient-to-br from-amber-500/35 via-orange-600/30 to-amber-950/60 border-2 border-amber-400 text-amber-200 font-black ring-2 ring-amber-400/70 shadow-[0_0_18px_rgba(245,158,11,0.65)] hover:bg-amber-800/60 hover:border-amber-300 hover:text-white hover:scale-110 z-10';
     }
 
     if (isFutureDate) {
-      return 'bg-slate-950/40 border-white/[0.04] text-slate-500 font-medium hover:border-white/20 hover:text-slate-300';
+      return 'bg-slate-950/50 border border-white/[0.06] text-slate-500 font-medium hover:border-indigo-400/50 hover:text-slate-200 hover:bg-slate-900';
     }
 
     if (hours >= 4 || data.completedHabitsCount >= 3) {
-      return 'bg-gradient-to-tr from-emerald-500 via-teal-400 to-emerald-400 border-emerald-300/80 text-slate-950 font-black shadow-[0_0_12px_rgba(16,185,129,0.35)]';
+      return 'bg-gradient-to-tr from-emerald-400 via-teal-400 to-cyan-400 border-2 border-emerald-200 text-slate-950 font-black shadow-[0_0_16px_rgba(52,211,153,0.55)]';
     }
     if (hours >= 2 || data.completedHabitsCount >= 2) {
-      return 'bg-gradient-to-tr from-indigo-600 to-indigo-500 border-indigo-400/80 text-white font-bold shadow-[0_0_10px_rgba(99,102,241,0.25)]';
+      return 'bg-gradient-to-tr from-indigo-500 via-purple-500 to-indigo-600 border-2 border-indigo-300 text-white font-black shadow-[0_0_14px_rgba(99,102,241,0.45)]';
     }
     if (hours >= 0.5 || data.completedHabitsCount >= 1) {
-      return 'bg-indigo-950/90 border-indigo-700/80 text-indigo-100 font-bold shadow-sm';
+      return 'bg-indigo-900/90 border-2 border-indigo-500/80 text-indigo-100 font-bold shadow-[0_0_10px_rgba(99,102,241,0.3)]';
     }
     if (hours > 0) {
-      return 'bg-indigo-950/60 border-indigo-800/60 text-indigo-200 font-semibold';
+      return 'bg-indigo-950/90 border border-indigo-600/70 text-indigo-200 font-semibold';
     }
 
-    // Past day with 0 activity: boosted text contrast & subtle border definition
-    return 'bg-slate-900/70 border-white/[0.07] text-slate-300 font-semibold hover:border-indigo-400/80 hover:bg-slate-800 hover:text-white';
+    // Past day with 0 activity: boosted text contrast & crisp border definition
+    return 'bg-slate-900/80 border border-white/[0.09] text-slate-300 font-semibold hover:border-indigo-400 hover:bg-slate-800 hover:text-white';
   };
 
   const handleCellHover = (dateObj: Date) => {
@@ -382,19 +384,29 @@ export const YearDashboard: React.FC = () => {
                 return (
                   <motion.div
                     key={cd.id}
-                    whileHover={{ scale: 1.01 }}
-                    className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-900/60 border border-white/[0.06] hover:border-amber-500/30 transition-all group shadow-md"
+                    whileHover={{ scale: 1.02, y: -1 }}
+                    className="flex items-center justify-between p-3.5 rounded-2xl bg-gradient-to-r from-slate-900/90 via-slate-900/80 to-amber-950/20 border border-amber-500/30 hover:border-amber-400/80 transition-all group shadow-lg shadow-amber-500/5 hover:shadow-amber-500/20"
                   >
-                    <div>
-                      <h4 className="text-xs font-bold text-white tracking-wide">{cd.title}</h4>
-                      <p className="text-[10px] text-slate-400 mt-0.5 font-mono">{format(target, 'MMM d, yyyy')}</p>
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500/25 to-orange-500/20 text-amber-400 border border-amber-500/40 shadow-[0_0_12px_rgba(245,158,11,0.25)]">
+                        <Target className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-black text-white tracking-wide flex items-center gap-2">
+                          <span>{cd.title}</span>
+                          <span className="text-[9px] font-mono font-bold text-amber-300 bg-amber-500/20 px-1.5 py-0.5 rounded border border-amber-500/40">
+                            {cd.category || 'Target'}
+                          </span>
+                        </h4>
+                        <p className="text-[10px] text-slate-300 mt-0.5 font-mono font-semibold">{format(target, 'MMM d, yyyy')}</p>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <span
-                        className={`text-xs font-black font-mono px-2.5 py-1 rounded-xl ${
+                        className={`text-xs font-black font-mono px-3 py-1.5 rounded-xl shadow-md ${
                           isPassed
-                            ? 'bg-slate-800 text-slate-500'
-                            : 'bg-amber-500/15 text-amber-300 border border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.15)]'
+                            ? 'bg-slate-800 text-slate-400 border border-slate-700'
+                            : 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black border border-amber-300 shadow-[0_0_14px_rgba(245,158,11,0.45)]'
                         }`}
                       >
                         {isPassed ? 'Passed' : `${daysRemaining}d left`}
@@ -402,7 +414,8 @@ export const YearDashboard: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => deleteCountdown(cd.id)}
-                        className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-rose-400 transition-opacity p-1 cursor-pointer"
+                        className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-rose-400 transition-opacity p-1 cursor-pointer"
+                        title="Delete Milestone"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -659,34 +672,34 @@ export const YearDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Legend */}
+        {/* Legend with punchy vivid colors */}
         <div className="flex flex-wrap items-center justify-end gap-3 text-xs text-slate-400 pt-1">
-          <span className="text-[11px] font-semibold text-slate-400">Activity Level:</span>
+          <span className="text-[11px] font-bold text-slate-300">Activity Level:</span>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-md bg-slate-900 border border-white/5" />
-            <span className="text-[10px]">None (0h)</span>
+            <div className="w-3.5 h-3.5 rounded-md bg-slate-900 border border-white/10" />
+            <span className="text-[10px] text-slate-400 font-medium">None (0h)</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-md bg-indigo-950 border border-indigo-900" />
-            <span className="text-[10px]">&lt;0.5h</span>
+            <div className="w-3.5 h-3.5 rounded-md bg-indigo-950 border border-indigo-600/70" />
+            <span className="text-[10px] text-indigo-300 font-semibold">&lt;0.5h</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-md bg-indigo-900 border border-indigo-800" />
-            <span className="text-[10px]">0.5h - 2h</span>
+            <div className="w-3.5 h-3.5 rounded-md bg-indigo-900 border-2 border-indigo-500/80 shadow-[0_0_8px_rgba(99,102,241,0.3)]" />
+            <span className="text-[10px] text-indigo-200 font-bold">0.5h - 2h</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-md bg-indigo-600 border border-indigo-400" />
-            <span className="text-[10px]">2h - 4h</span>
+            <div className="w-3.5 h-3.5 rounded-md bg-gradient-to-tr from-indigo-500 via-purple-500 to-indigo-600 border-2 border-indigo-300 shadow-[0_0_12px_rgba(99,102,241,0.4)]" />
+            <span className="text-[10px] text-purple-200 font-black">2h - 4h</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-md bg-gradient-to-tr from-emerald-500 to-teal-400 border border-emerald-300" />
-            <span className="text-[10px] font-bold text-emerald-300">&gt;4h Deep Work</span>
+            <div className="w-3.5 h-3.5 rounded-md bg-gradient-to-tr from-emerald-400 via-teal-400 to-cyan-400 border-2 border-emerald-200 shadow-[0_0_14px_rgba(52,211,153,0.55)]" />
+            <span className="text-[10px] font-black text-emerald-300">&gt;4h Deep Work</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-md bg-amber-950/80 border border-amber-400/90 shadow-[0_0_8px_rgba(245,158,11,0.5)] relative">
-              <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-amber-400" />
+            <div className="w-3.5 h-3.5 rounded-md bg-gradient-to-br from-amber-500/40 to-orange-600/30 border-2 border-amber-400 shadow-[0_0_14px_rgba(245,158,11,0.65)] relative">
+              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-400 border border-slate-950 shadow-[0_0_6px_#F59E0B]" />
             </div>
-            <span className="text-[10px] font-bold text-amber-300">Target Milestone</span>
+            <span className="text-[10px] font-black text-amber-300">Target Milestone</span>
           </div>
         </div>
 

@@ -200,28 +200,28 @@ export const DayDetailModal: React.FC = () => {
           </motion.button>
         </div>
 
-        {/* Strategic Target Milestone Banner if present on selected date */}
+        {/* Strategic Target Milestone Banner with punchy neon gold glow */}
         {selectedDayMilestones.length > 0 && (
-          <div className="px-6 py-3.5 bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-transparent border-b border-amber-500/30 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-2xl bg-amber-500/25 text-amber-400 border border-amber-500/40 shadow-[0_0_12px_rgba(245,158,11,0.35)]">
-                <Target className="w-5 h-5" />
+          <div className="px-6 py-3.5 bg-gradient-to-r from-amber-500/30 via-orange-500/25 to-amber-950/40 border-b-2 border-amber-400/60 flex items-center justify-between gap-3 shadow-[0_4px_20px_rgba(245,158,11,0.25)]">
+            <div className="flex items-center gap-3.5">
+              <div className="p-2.5 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-slate-950 font-black border-2 border-amber-200 shadow-[0_0_16px_rgba(245,158,11,0.6)]">
+                <Target className="w-5 h-5 stroke-[2.5]" />
               </div>
               <div>
-                <span className="text-[10px] font-mono uppercase font-black tracking-wider text-amber-400 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                <span className="text-[10px] font-mono uppercase font-black tracking-wider text-amber-300 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_#F59E0B] animate-ping" />
                   <span>Strategic Target Milestone</span>
                 </span>
-                <h4 className="text-sm sm:text-base font-black text-white">
+                <h4 className="text-base sm:text-lg font-black text-white tracking-wide drop-shadow-sm">
                   {selectedDayMilestones.map((m) => m.title).join(', ')}
                 </h4>
               </div>
             </div>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               {selectedDayMilestones.map((m) => (
                 <span
                   key={m.id}
-                  className="text-[10px] font-mono font-bold text-amber-300 px-3 py-1 rounded-xl bg-amber-950/80 border border-amber-500/40 shadow-inner"
+                  className="text-xs font-mono font-black text-slate-950 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 border border-amber-200 shadow-[0_0_12px_rgba(245,158,11,0.4)]"
                 >
                   {m.category || 'Target'}
                 </span>
