@@ -138,7 +138,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [reviews, setReviews] = useState<DailyReview[]>([]);
 
   // Global Resilient Timer States
-  const [timerMode, setTimerMode] = useState<TimerMode>('POMODORO');
+  const [timerMode, setTimerModeState] = useState<TimerMode>('POMODORO');
   const [timerStatus, setTimerStatus] = useState<'IDLE' | 'RUNNING' | 'PAUSED'>('IDLE');
   const [timerSecondsRemaining, setTimerSecondsRemaining] = useState<number>(25 * 60);
   const [timerTotalDuration, setTimerTotalDuration] = useState<number>(25 * 60);
@@ -198,7 +198,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const storedTimer = localStorage.getItem(STORAGE_KEYS.TIMER);
       if (storedTimer) {
         const t = JSON.parse(storedTimer);
-        if (t.timerMode) setTimerMode(t.timerMode);
+        if (t.timerMode) setTimerModeState(t.timerMode);
         if (t.selectedPomodoroPhase) setSelectedPomodoroPhase(t.selectedPomodoroPhase);
         if (t.activeActivityId) setActiveActivityId(t.activeActivityId);
         if (t.timerTotalDuration) setTimerTotalDuration(t.timerTotalDuration);
@@ -407,6 +407,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   ]);
 
   // Global Timer Action Controls
+  const setTimerMode = (newMode: TimerMode) => {
+    setTimerModeState(newMode);
+    setTimerStatus('IDLE');
+    timerTargetTimestampRef.current = null;
+    stopwatchStartTimestampRef.current = null;
+    if (newMode === 'STOPWATCH') {
+      setStopwatchElapsed(0);
+    } else {
+      let durationSec = settings.workIntervalMinutes * 60;
+      if (selectedPomodoroPhase === 'shortBreak') durationSec = settings.shortBreakMinutes * 60;
+      if (selectedPomodoroPhase === 'longBreak') durationSec = settings.longBreakMinutes * 60;
+      setTimerSecondsRemaining(durationSec);
+      setTimerTotalDuration(durationSec);
+    }
+  };
+
   const startTimer = () => {
     if (timerMode === 'POMODORO') {
       const nowMs = Date.now();
@@ -454,20 +470,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const finishStopwatch = (notes?: string) => {
-    if (stopwatchElapsed < 10) return;
+    if (stopwatchElapsed <= 0) return;
+    const duration = stopwatchElapsed;
     setTimerStatus('IDLE');
     timerTargetTimestampRef.current = null;
     stopwatchStartTimestampRef.current = null;
     if (settings.soundEnabled) soundEngine.playCompletionChime();
     confetti({ particleCount: 60, spread: 70 });
 
+    const h = Math.floor(duration / 3600);
+    const m = Math.floor((duration % 3600) / 60);
+    const durationLabel = h > 0 ? `${h}h ${m}m` : `${Math.max(1, m)}m`;
+
     const now = new Date();
     addSession({
       activityId: activeActivityId,
-      startTime: new Date(now.getTime() - stopwatchElapsed * 1000).toISOString(),
+      startTime: new Date(now.getTime() - duration * 1000).toISOString(),
       endTime: now.toISOString(),
-      durationSeconds: stopwatchElapsed,
-      notes: notes || `Stopwatch focus session (${Math.round(stopwatchElapsed / 60)}m)`,
+      durationSeconds: duration,
+      notes: notes || `Stopwatch focus session (${durationLabel})`,
       date: format(now, 'yyyy-MM-dd'),
     });
 

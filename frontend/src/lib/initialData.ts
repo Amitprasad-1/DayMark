@@ -11,6 +11,8 @@ export const INITIAL_SETTINGS: UserSettings = {
   autoStartBreaks: false,
   soundEnabled: true,
   ambientSound: 'none',
+  clockStyle: 'digital',
+  vintageClockMode: 'focus',
 };
 
 export const INITIAL_ACTIVITIES: Activity[] = [

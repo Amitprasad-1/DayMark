@@ -10,6 +10,8 @@ import {
   Volume2,
   CheckCircle,
   AlertTriangle,
+  Clock,
+  Sparkles,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -127,6 +129,42 @@ export const SettingsView: React.FC = () => {
                   onChange={(e) => updateSettings({ longBreakMinutes: parseInt(e.target.value) || 15 })}
                   className="w-full px-3.5 py-2.5 text-xs rounded-xl glass-input font-medium"
                 />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-3 border-t border-white/[0.06]">
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-indigo-400" />
+                <div>
+                  <span className="text-xs text-slate-200 font-bold block">Default Clock Face</span>
+                  <span className="text-[10px] text-slate-400">Digital glow dial or vintage twin-bell</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-900 border border-white/10">
+                <button
+                  type="button"
+                  onClick={() => updateSettings({ clockStyle: 'digital' })}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                    (settings.clockStyle || 'digital') === 'digital'
+                      ? 'bg-amber-500 text-slate-950 font-black shadow-md'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Sparkles className="w-3 h-3" />
+                  <span>Digital</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => updateSettings({ clockStyle: 'vintage' })}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                    settings.clockStyle === 'vintage'
+                      ? 'bg-indigo-600 text-white font-black shadow-md'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Clock className="w-3 h-3" />
+                  <span>Vintage</span>
+                </button>
               </div>
             </div>
 

@@ -14,9 +14,12 @@ import {
   CheckCircle,
   Sparkles,
   Flame,
+  Clock,
   X,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { format } from 'date-fns';
+import { VintageAlarmClock } from './VintageAlarmClock';
 
 export const FocusTimer: React.FC = () => {
   const {
@@ -37,6 +40,9 @@ export const FocusTimer: React.FC = () => {
     resetTimer,
     switchPomodoroPhase,
     finishStopwatch,
+    sessions,
+    setSelectedDate,
+    setIsDayDetailOpen,
   } = useApp();
 
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -125,10 +131,28 @@ export const FocusTimer: React.FC = () => {
 
   const activeActivity = activities.find((a) => a.id === activeActivityId) || activities[0];
 
-  // Helper for formatting time MM:SS
+  // Today's study hours calculations
+  const now = new Date();
+  const todayStr = format(now, 'yyyy-MM-dd');
+  const todaySessions = sessions.filter((s) => s.date === todayStr);
+  const todayTotalSeconds = todaySessions.reduce((acc, s) => acc + s.durationSeconds, 0);
+  const todayFocusMinutes = Math.round(todayTotalSeconds / 60);
+  const targetMinutes = Math.max(1, settings.dailyTargetMinutes || 360);
+  const todayStudyHoursStr =
+    todayFocusMinutes >= 60
+      ? `${Math.floor(todayFocusMinutes / 60)}h ${todayFocusMinutes % 60}m`
+      : `${todayFocusMinutes}m`;
+  const todayGoalPercent = Math.min(100, Math.round((todayFocusMinutes / targetMinutes) * 100));
+
+  // Helper for formatting time HH:MM:SS or MM:SS
   const formatSeconds = (sec: number) => {
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
+    const sSec = Math.max(0, Math.floor(sec));
+    const h = Math.floor(sSec / 3600);
+    const m = Math.floor((sSec % 3600) / 60);
+    const s = sSec % 60;
+    if (h > 0) {
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
     return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   };
 
@@ -143,6 +167,7 @@ export const FocusTimer: React.FC = () => {
   } else if (selectedPomodoroPhase === 'longBreak') {
     totalPhaseSeconds = (settings.longBreakMinutes || 15) * 60;
   }
+  totalPhaseSeconds = Math.max(1, totalPhaseSeconds);
 
   const progressFraction =
     timerMode === 'STOPWATCH'
@@ -165,8 +190,18 @@ export const FocusTimer: React.FC = () => {
   const secX = 180 + secOrbitRadius * Math.cos(secAngle);
   const secY = 180 + secOrbitRadius * Math.sin(secAngle);
 
-  // Dynamic theme colors by phase
+  // Dynamic theme colors by mode & phase
   const getPhaseTheme = () => {
+    if (timerMode === 'STOPWATCH') {
+      return {
+        gradId: 'stopwatchGrad',
+        c1: '#6366F1',
+        c2: '#8B5CF6',
+        c3: '#06B6D4',
+        glow: 'rgba(99, 102, 241, 0.5)',
+        textAccent: 'text-indigo-400',
+      };
+    }
     if (selectedPomodoroPhase === 'shortBreak') {
       return {
         gradId: 'shortBreakGrad',
@@ -639,10 +674,7 @@ export const FocusTimer: React.FC = () => {
               <button
                 key={mode}
                 type="button"
-                onClick={() => {
-                  setTimerMode(mode);
-                  resetTimer();
-                }}
+                onClick={() => setTimerMode(mode)}
                 className={`px-5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer relative ${
                   timerMode === mode
                     ? 'text-white font-black'
@@ -659,6 +691,51 @@ export const FocusTimer: React.FC = () => {
                 <span className="relative z-10">{mode}</span>
               </button>
             ))}
+          </div>
+
+          {/* Clock Face Alternate Selector (Digital Glow vs Vintage Alarm Clock) */}
+          <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-950/80 border border-white/10 shadow-inner">
+            <button
+              type="button"
+              onClick={() => updateSettings({ clockStyle: 'digital' })}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 relative ${
+                (settings.clockStyle || 'digital') === 'digital'
+                  ? 'text-white font-black'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+              title="Modern Chrono Neon Dial with Sparks"
+            >
+              {(settings.clockStyle || 'digital') === 'digital' && (
+                <motion.div
+                  layoutId="clockFacePill"
+                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  className="absolute inset-0 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 shadow-[0_0_15px_rgba(245,158,11,0.4)]"
+                />
+              )}
+              <Sparkles className="w-3.5 h-3.5 relative z-10" />
+              <span className="relative z-10">Digital Glow</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => updateSettings({ clockStyle: 'vintage' })}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 relative ${
+                settings.clockStyle === 'vintage'
+                  ? 'text-white font-black'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+              title="Classic Twin-Bell Quartz Alarm Clock"
+            >
+              {settings.clockStyle === 'vintage' && (
+                <motion.div
+                  layoutId="clockFacePill"
+                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  className="absolute inset-0 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 shadow-[0_0_15px_rgba(99,102,241,0.4)]"
+                />
+              )}
+              <Clock className="w-3.5 h-3.5 relative z-10" />
+              <span className="relative z-10">Vintage Bell</span>
+            </button>
           </div>
 
           {/* Ambient Soundscape & Fullscreen Controls */}
@@ -705,7 +782,7 @@ export const FocusTimer: React.FC = () => {
         {/* CENTERPIECE TIME DISPLAY WITH CIRCULAR PROGRESS GAUGE */}
         <div className="glass-panel-luxury p-8 sm:p-12 lg:p-16 rounded-3xl border border-white/[0.09] flex flex-col items-center justify-center text-center space-y-8 relative overflow-hidden shadow-2xl bg-[#090E1C]/80">
           {/* Ambient Glowing Orb */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-gradient-to-tr from-amber-500/10 via-indigo-600/15 to-emerald-500/10 rounded-full blur-[100px] pointer-events-none" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-tr from-amber-500/5 via-indigo-500/8 to-emerald-500/5 rounded-full blur-[120px] pointer-events-none" />
 
           {/* Pomodoro Phase Switcher */}
           {timerMode === 'POMODORO' && (
@@ -827,8 +904,71 @@ export const FocusTimer: React.FC = () => {
             )}
           </div>
 
-          {/* CIRCULAR PROGRESS GAUGE + TIME DISPLAY */}
-          {renderDialSvg(false)}
+          {/* TODAY'S LIVE STUDY HOURS & GOAL PROGRESS CAPSULE */}
+          <div className="relative z-10 flex flex-wrap items-center justify-center gap-3">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="button"
+              onClick={() => {
+                setSelectedDate(todayStr);
+                setIsDayDetailOpen(true);
+              }}
+              className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-[#0B0E17]/90 hover:bg-[#121624] border border-white/10 hover:border-amber-400/40 shadow-xl backdrop-blur-xl text-xs cursor-pointer transition-all group"
+              title="Click to view today's complete session log & breakdown"
+            >
+              <div className="flex items-center gap-2">
+                <Flame className="w-4 h-4 text-amber-400 fill-amber-400 animate-pulse" />
+                <span className="text-slate-400 font-medium">Today's Study:</span>
+                <span className="font-black text-amber-300 font-mono text-sm tracking-tight group-hover:text-amber-200">
+                  {todayStudyHoursStr}
+                </span>
+              </div>
+
+              <span className="text-white/20">•</span>
+
+              {/* Goal Progress Bar */}
+              <div className="flex items-center gap-2">
+                <span className="text-slate-400 font-medium hidden sm:inline">
+                  Goal ({Math.round(targetMinutes / 60)}h):
+                </span>
+                <div className="w-16 sm:w-24 h-2 rounded-full bg-slate-800 overflow-hidden border border-white/10">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-amber-500 to-emerald-400 transition-all duration-500"
+                    style={{ width: `${todayGoalPercent}%` }}
+                  />
+                </div>
+                <span className="text-[11px] font-mono text-emerald-400 font-bold">
+                  {todayGoalPercent}%
+                </span>
+              </div>
+
+              {todaySessions.length > 0 && (
+                <>
+                  <span className="text-white/20 hidden md:inline">•</span>
+                  <span className="text-slate-400 hidden md:inline font-mono text-[11px]">
+                    {todaySessions.length} {todaySessions.length === 1 ? 'session' : 'sessions'}
+                  </span>
+                </>
+              )}
+            </motion.button>
+          </div>
+
+          {/* CIRCULAR PROGRESS GAUGE OR VINTAGE TWIN-BELL CLOCK */}
+          {settings.clockStyle === 'vintage' ? (
+            <VintageAlarmClock
+              timerStatus={timerStatus}
+              timerMode={timerMode}
+              displaySeconds={displaySeconds}
+              totalPhaseSeconds={totalPhaseSeconds}
+              progressFraction={progressFraction}
+              selectedPomodoroPhase={selectedPomodoroPhase}
+              theme={theme}
+              isZen={false}
+            />
+          ) : (
+            renderDialSvg(false)
+          )}
 
           {/* Notes Input */}
           <div className="w-full max-w-md relative z-10">
@@ -884,10 +1024,11 @@ export const FocusTimer: React.FC = () => {
                 whileTap={{ scale: 0.95 }}
                 type="button"
                 onClick={() => finishStopwatch(sessionNotes)}
-                className="p-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all shadow-xl cursor-pointer border border-emerald-400/40"
-                title="Save Stopwatch Session"
+                className="flex items-center gap-2 px-5 py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all shadow-xl cursor-pointer border border-emerald-400/40"
+                title="Save Stopwatch Study Session"
               >
                 <CheckCircle className="w-5 h-5" />
+                <span className="font-bold">Save Session</span>
               </motion.button>
             )}
           </div>
@@ -906,9 +1047,9 @@ export const FocusTimer: React.FC = () => {
           >
             {/* Cinematic Ambient Breathing Aura */}
             <div
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[720px] h-[720px] lg:w-[900px] lg:h-[900px] rounded-full blur-[150px] pointer-events-none opacity-35 transition-all duration-1000"
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[720px] h-[720px] lg:w-[900px] lg:h-[900px] rounded-full blur-[160px] pointer-events-none opacity-20 transition-all duration-1000"
               style={{
-                background: `radial-gradient(circle, ${theme.c1} 0%, ${theme.c2} 45%, transparent 70%)`,
+                background: `radial-gradient(circle, ${theme.c1}33 0%, ${theme.c2}18 35%, transparent 70%)`,
               }}
             />
             {/* Subtle Starry Mesh Background */}
@@ -983,8 +1124,38 @@ export const FocusTimer: React.FC = () => {
                 </div>
               )}
 
-              {/* Right: Soundscape + Exit Fullscreen */}
+              {/* Right: Clock Switcher + Soundscape + Exit Fullscreen */}
               <div className="flex items-center gap-3">
+                {/* Clock Face Toggle in Zen Mode */}
+                <div className="flex items-center gap-1 p-1 rounded-2xl bg-white/[0.06] border border-white/10 backdrop-blur-md shadow-lg">
+                  <button
+                    type="button"
+                    onClick={() => updateSettings({ clockStyle: 'digital' })}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                      (settings.clockStyle || 'digital') === 'digital'
+                        ? 'bg-amber-500 text-slate-950 font-black shadow-md'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                    title="Digital Dial"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Digital</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateSettings({ clockStyle: 'vintage' })}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                      settings.clockStyle === 'vintage'
+                        ? 'bg-indigo-600 text-white font-black shadow-md'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                    title="Vintage Bell Clock"
+                  >
+                    <Clock className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Vintage</span>
+                  </button>
+                </div>
+
                 {/* Soundscape Dropdown */}
                 <div className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/[0.06] border border-white/10 backdrop-blur-md shadow-lg">
                   <Volume2 className="w-4 h-4 text-amber-400" />
@@ -1026,7 +1197,20 @@ export const FocusTimer: React.FC = () => {
 
             {/* Zen Centerpiece Dial */}
             <div className="relative z-10 flex flex-col items-center justify-center my-auto py-2">
-              {renderDialSvg(true)}
+              {settings.clockStyle === 'vintage' ? (
+                <VintageAlarmClock
+                  timerStatus={timerStatus}
+                  timerMode={timerMode}
+                  displaySeconds={displaySeconds}
+                  totalPhaseSeconds={totalPhaseSeconds}
+                  progressFraction={progressFraction}
+                  selectedPomodoroPhase={selectedPomodoroPhase}
+                  theme={theme}
+                  isZen={true}
+                />
+              ) : (
+                renderDialSvg(true)
+              )}
             </div>
 
             {/* Zen Bottom Action Controls */}

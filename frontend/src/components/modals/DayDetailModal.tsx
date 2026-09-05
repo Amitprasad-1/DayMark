@@ -397,7 +397,9 @@ export const DayDetailModal: React.FC = () => {
                         color: '#6366F1',
                       };
                       const durationLabel =
-                        s.durationSeconds >= 60
+                        s.durationSeconds >= 3600
+                          ? `${Math.floor(s.durationSeconds / 3600)}h ${Math.floor((s.durationSeconds % 3600) / 60)}m`
+                          : s.durationSeconds >= 60
                           ? `${Math.round(s.durationSeconds / 60)} mins`
                           : s.durationSeconds > 0
                           ? `${s.durationSeconds} secs`

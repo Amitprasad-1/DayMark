@@ -90,6 +90,8 @@ export interface UserSettings {
   autoStartBreaks: boolean;
   soundEnabled: boolean;
   ambientSound: 'none' | 'rain' | 'white-noise' | 'forest' | 'waves';
+  clockStyle?: 'digital' | 'vintage';
+  vintageClockMode?: 'focus' | 'realtime';
 }
 
 export interface DayActivityData {

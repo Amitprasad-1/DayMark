@@ -133,12 +133,26 @@ export const Header: React.FC<HeaderProps> = ({ onOpenShortcuts }) => {
             </motion.button>
           )}
 
-          {/* Today's Focus Stat Pill */}
-          <div className="hidden lg:flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-amber-950/30 border border-amber-500/20 text-xs shadow-inner">
+          {/* Today's Focus Stat Pill (Click to open day detail log) */}
+          <motion.button
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
+            type="button"
+            onClick={() => {
+              setSelectedDate(todayStr);
+              setIsDayDetailOpen(true);
+            }}
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-amber-950/35 hover:bg-amber-950/55 border border-amber-500/30 hover:border-amber-400/60 text-xs shadow-inner cursor-pointer transition-all"
+            title="Today's Total Study Time — Click to View Session Log"
+          >
             <Flame className="w-4 h-4 text-amber-400 fill-amber-400 animate-pulse" />
-            <span className="text-slate-400">Today:</span>
-            <span className="font-extrabold text-amber-300 font-mono tracking-tight">{todayFocusMinutes}m</span>
-          </div>
+            <span className="text-slate-400 hidden sm:inline font-medium">Today:</span>
+            <span className="font-black text-amber-300 font-mono tracking-tight text-xs sm:text-sm">
+              {todayFocusMinutes >= 60
+                ? `${(todayFocusMinutes / 60).toFixed(1)}h`
+                : `${todayFocusMinutes}m`}
+            </span>
+          </motion.button>
 
           {/* Quick Focus Button (harmonized luxury design) */}
           {timerStatus !== 'RUNNING' && (
