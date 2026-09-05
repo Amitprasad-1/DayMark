@@ -52,7 +52,8 @@ let inMemoryStore = {
     { id: 'goal-2', title: 'Complete 30 Consecutive Habit Days', type: 'HABIT', targetValue: 30, currentValue: 18, category: 'Mindset', color: '#10B981' },
   ],
   countdowns: [
-    { id: 'cd-1', title: 'DayMark Production Launch', targetDate: '2026-11-15', category: 'Milestone', color: '#8B5CF6', icon: 'Rocket' },
+    { id: 'cd-kpit-job', title: 'KPIT Job', targetDate: '2026-09-10', category: 'Milestone', color: '#F59E0B', icon: 'Target' },
+    { id: 'cd-daymark-launch', title: 'DayMark Production Launch', targetDate: '2026-11-15', category: 'Milestone', color: '#8B5CF6', icon: 'Rocket' },
   ],
   reviews: [] as any[],
 };

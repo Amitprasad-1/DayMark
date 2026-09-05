@@ -241,7 +241,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
 
       const storedCountdowns = localStorage.getItem(STORAGE_KEYS.COUNTDOWNS);
-      if (storedCountdowns) setCountdowns(JSON.parse(storedCountdowns));
+      if (storedCountdowns) {
+        const parsedCountdowns: CustomCountdown[] = JSON.parse(storedCountdowns);
+        const hasKPIT = parsedCountdowns.some((c) => c.title.toLowerCase().includes('kpit'));
+        if (!hasKPIT) {
+          setCountdowns([
+            ...INITIAL_COUNTDOWNS,
+            ...parsedCountdowns.filter((pc) => !INITIAL_COUNTDOWNS.some((ic) => ic.title.toLowerCase() === pc.title.toLowerCase())),
+          ]);
+        } else {
+          setCountdowns(parsedCountdowns);
+        }
+      } else {
+        setCountdowns(INITIAL_COUNTDOWNS);
+      }
 
       // Restore Timer State with exact epoch timestamps
       const storedTimer = localStorage.getItem(STORAGE_KEYS.TIMER);
@@ -333,7 +346,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         ];
         setGoals(mergedGoals);
       }
-      if (cloudData.countdowns && cloudData.countdowns.length > 0) setCountdowns(cloudData.countdowns);
+      if (cloudData.countdowns && cloudData.countdowns.length > 0) {
+        const mergedCountdowns = [
+          ...INITIAL_COUNTDOWNS,
+          ...cloudData.countdowns.filter((cc) => !INITIAL_COUNTDOWNS.some((ic) => ic.title.toLowerCase() === cc.title.toLowerCase())),
+        ];
+        setCountdowns(mergedCountdowns);
+      } else {
+        setCountdowns(INITIAL_COUNTDOWNS);
+      }
       if (cloudData.reviews && cloudData.reviews.length > 0) setReviews(cloudData.reviews);
 
       setCloudSyncStatus('synced');
@@ -819,6 +840,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setHabits(INITIAL_HABITS);
     setGoals(INITIAL_GOALS);
     setTasks(INITIAL_TASKS);
+    setCountdowns(INITIAL_COUNTDOWNS);
     setActiveActivityId(INITIAL_ACTIVITIES[0].id);
     confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 } });
   };

@@ -242,20 +242,20 @@ export const INITIAL_GOALS: Goal[] = [
 
 export const INITIAL_COUNTDOWNS: CustomCountdown[] = [
   {
-    id: 'cd-1',
-    title: 'Productivity Summit & Release v1.0',
-    targetDate: format(new Date(new Date().getFullYear(), 10, 15), 'yyyy-MM-dd'),
+    id: 'cd-kpit-job',
+    title: 'KPIT Job',
+    targetDate: `${new Date().getFullYear()}-09-10`,
+    category: 'Milestone',
+    color: '#F59E0B',
+    icon: 'Target',
+  },
+  {
+    id: 'cd-daymark-launch',
+    title: 'DayMark Production Launch',
+    targetDate: `${new Date().getFullYear()}-11-15`,
     category: 'Milestone',
     color: '#8B5CF6',
     icon: 'Rocket',
-  },
-  {
-    id: 'cd-2',
-    title: 'Quarter 4 Goal Sprint',
-    targetDate: format(new Date(new Date().getFullYear(), 9, 1), 'yyyy-MM-dd'),
-    category: 'Work',
-    color: '#EC4899',
-    icon: 'Target',
   },
 ];
 
