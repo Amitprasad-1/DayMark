@@ -59,6 +59,7 @@ interface AppContextType {
 
   habits: Habit[];
   addHabit: (habit: Omit<Habit, 'id' | 'createdAt' | 'logs'>) => void;
+  updateHabit: (id: string, updates: Partial<Habit>) => void;
   toggleHabit: (habitId: string, dateStr?: string) => void;
   deleteHabit: (id: string) => void;
 
@@ -639,6 +640,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     daymarkApi.toggleHabit(habitId, targetDate).catch(() => null);
   };
 
+  const updateHabit = (id: string, updates: Partial<Habit>) => {
+    setHabits((prev) =>
+      prev.map((h) => (h.id === id ? { ...h, ...updates } : h))
+    );
+    daymarkApi.updateHabit(id, updates).catch(() => null);
+  };
+
   const deleteHabit = (id: string) => {
     setHabits((prev) => prev.filter((h) => h.id !== id));
     daymarkApi.deleteHabit(id).catch(() => null);
@@ -834,6 +842,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         deleteSession,
         habits,
         addHabit,
+        updateHabit,
         toggleHabit,
         deleteHabit,
         tasks,

@@ -151,6 +151,12 @@ export const daymarkApi = {
       body: JSON.stringify({ date }),
     });
   },
+  async updateHabit(id: string, updates: Partial<Habit>): Promise<Habit | null> {
+    return request<Habit>(`/api/habits/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+  },
   async deleteHabit(id: string): Promise<boolean> {
     const res = await request(`/api/habits/${id}`, { method: 'DELETE' });
     return res !== null;

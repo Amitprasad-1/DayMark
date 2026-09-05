@@ -11,18 +11,50 @@ import {
   CheckCircle,
   Circle,
   Sparkles,
+  Pencil,
+  X,
 } from 'lucide-react';
 import { format, subDays } from 'date-fns';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const HabitTracker: React.FC = () => {
-  const { habits, addHabit, toggleHabit, deleteHabit } = useApp();
+  const { habits, addHabit, updateHabit, toggleHabit, deleteHabit } = useApp();
 
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState('');
   const [category, setCategory] = useState('Wellness');
   const [color, setColor] = useState('#10B981');
+
+  // Edit Habit State
+  const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editCategory, setEditCategory] = useState('');
+  const [editColor, setEditColor] = useState('#10B981');
+  const [editTargetDays, setEditTargetDays] = useState(7);
+
+  const handleStartEdit = (habit: Habit) => {
+    setEditingHabit(habit);
+    setEditName(habit.name);
+    setEditCategory(habit.category);
+    setEditColor(habit.color || '#10B981');
+    setEditTargetDays(habit.targetDaysPerWeek || 7);
+  };
+
+  const handleSaveEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingHabit || !editName.trim()) return;
+
+    updateHabit(editingHabit.id, {
+      name: editName.trim(),
+      category: editCategory.trim() || 'General',
+      color: editColor,
+      targetDaysPerWeek: editTargetDays,
+    });
+
+    setEditingHabit(null);
+    confetti({ particleCount: 30, spread: 60 });
+  };
 
   // Compute last 14 days dates for the completion grid
   const daysList = Array.from({ length: 14 }).map((_, i) => {
@@ -218,14 +250,21 @@ export const HabitTracker: React.FC = () => {
                 whileHover={{ scale: 1.003 }}
                 className="flex items-center justify-between py-2.5 border-b border-white/[0.05] hover:bg-white/[0.03] px-3 rounded-2xl transition-colors"
               >
-                <div className="w-56 flex items-center gap-3">
+                <div
+                  className="w-56 flex items-center gap-3 cursor-pointer group/title"
+                  onClick={() => handleStartEdit(h)}
+                  title="Click to edit habit routine"
+                >
                   <div
-                    className="w-3 h-3 rounded-full shrink-0 shadow-sm ring-2 ring-white/10"
+                    className="w-3 h-3 rounded-full shrink-0 shadow-sm ring-2 ring-white/10 group-hover/title:scale-125 transition-transform"
                     style={{ backgroundColor: h.color }}
                   />
                   <div className="truncate">
-                    <h4 className="text-xs font-bold text-white truncate tracking-tight">{h.name}</h4>
-                    <span className="text-[10px] text-slate-400">{h.category}</span>
+                    <h4 className="text-xs font-bold text-white truncate tracking-tight group-hover/title:text-amber-300 transition-colors flex items-center gap-1.5">
+                      <span className="truncate">{h.name}</span>
+                      <Pencil className="w-3 h-3 text-slate-500 opacity-0 group-hover/title:opacity-100 transition-opacity shrink-0" />
+                    </h4>
+                    <span className="text-[10px] text-slate-400 font-medium">{h.category}</span>
                   </div>
                 </div>
 
@@ -262,16 +301,25 @@ export const HabitTracker: React.FC = () => {
                   })}
                 </div>
 
-                {/* Streak Badge & Delete */}
-                <div className="w-20 flex items-center justify-end gap-2">
-                  <div className="flex items-center gap-1 text-xs font-black text-amber-300 font-mono bg-amber-950/60 px-2.5 py-1 rounded-xl border border-amber-800/50 shadow-inner">
+                {/* Streak Badge, Edit, & Delete */}
+                <div className="w-24 flex items-center justify-end gap-1.5">
+                  <div className="flex items-center gap-1 text-xs font-black text-amber-300 font-mono bg-amber-950/60 px-2 py-1 rounded-xl border border-amber-800/50 shadow-inner">
                     <Flame className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                     <span>{streak}d</span>
                   </div>
                   <button
                     type="button"
+                    onClick={() => handleStartEdit(h)}
+                    className="text-slate-400 hover:text-amber-400 p-1.5 transition-colors cursor-pointer rounded-lg hover:bg-white/10"
+                    title="Edit Habit Routine"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => deleteHabit(h.id)}
-                    className="text-slate-500 hover:text-rose-400 p-1.5 transition-colors cursor-pointer rounded-lg hover:bg-white/5"
+                    className="text-slate-500 hover:text-rose-400 p-1.5 transition-colors cursor-pointer rounded-lg hover:bg-white/10"
+                    title="Delete Habit"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -281,6 +329,136 @@ export const HabitTracker: React.FC = () => {
           })}
         </div>
       </div>
+
+      {/* Edit Habit Modal */}
+      <AnimatePresence>
+        {editingHabit && (
+          <div
+            onClick={() => setEditingHabit(null)}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050811]/85 backdrop-blur-xl animate-fadeIn"
+          >
+            <motion.div
+              onClick={(e) => e.stopPropagation()}
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="w-full max-w-md glass-panel-luxury p-6 sm:p-7 rounded-3xl border border-amber-500/35 space-y-5 shadow-2xl bg-[#090E1C]/95"
+            >
+              <div className="flex items-center justify-between border-b border-white/[0.08] pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 shadow-md">
+                    <Pencil className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-white tracking-tight">Edit Habit Routine</h3>
+                    <p className="text-xs text-slate-400">Modify habit name, category, or color</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditingHabit(null)}
+                  className="p-2 rounded-xl text-slate-400 hover:text-white bg-slate-800/80 hover:bg-slate-700 border border-white/10 transition-colors cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveEdit} className="space-y-4">
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                    Habit Name
+                  </label>
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 text-xs rounded-xl glass-input font-medium"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                      Category
+                    </label>
+                    <input
+                      type="text"
+                      value={editCategory}
+                      onChange={(e) => setEditCategory(e.target.value)}
+                      className="w-full px-3.5 py-2.5 text-xs rounded-xl glass-input font-medium"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                      Target / Week
+                    </label>
+                    <select
+                      value={editTargetDays}
+                      onChange={(e) => setEditTargetDays(Number(e.target.value))}
+                      className="w-full px-3.5 py-2.5 text-xs rounded-xl glass-input bg-slate-900 font-medium"
+                    >
+                      <option value={7}>7 Days (Everyday)</option>
+                      <option value={6}>6 Days / Week</option>
+                      <option value={5}>5 Days (Weekdays)</option>
+                      <option value={4}>4 Days / Week</option>
+                      <option value={3}>3 Days / Week</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
+                    Badge Color Accent
+                  </label>
+                  <div className="flex items-center gap-3">
+                    {[
+                      { name: 'Cyan', hex: '#06B6D4' },
+                      { name: 'Indigo', hex: '#6366F1' },
+                      { name: 'Amber', hex: '#F59E0B' },
+                      { name: 'Emerald', hex: '#10B981' },
+                      { name: 'Purple', hex: '#8B5CF6' },
+                      { name: 'Rose', hex: '#F43F5E' },
+                    ].map((c) => (
+                      <button
+                        key={c.hex}
+                        type="button"
+                        onClick={() => setEditColor(c.hex)}
+                        className={`w-7 h-7 rounded-full cursor-pointer transition-all border-2 flex items-center justify-center ${
+                          editColor === c.hex
+                            ? 'ring-2 ring-white scale-110 shadow-lg'
+                            : 'border-transparent hover:scale-105 opacity-80 hover:opacity-100'
+                        }`}
+                        style={{ backgroundColor: c.hex }}
+                        title={c.name}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2.5 pt-3 border-t border-white/[0.08]">
+                  <button
+                    type="button"
+                    onClick={() => setEditingHabit(null)}
+                    className="px-4 py-2 text-xs font-bold text-slate-400 hover:text-white cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                    type="submit"
+                    className="px-5 py-2 text-xs rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black shadow-lg cursor-pointer border border-amber-300/40"
+                  >
+                    Save Changes
+                  </motion.button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
