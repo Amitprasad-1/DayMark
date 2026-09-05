@@ -294,6 +294,35 @@ app.post('/api/habits/:id/toggle', async (req: Request, res: Response) => {
   res.status(404).json({ error: 'Habit not found' });
 });
 
+app.put('/api/habits/:id', async (req: Request, res: Response) => {
+  const id = getId(req);
+  try {
+    if (isDbConnected()) {
+      const updated = await prisma.habit.update({
+        where: { id },
+        data: {
+          name: req.body.name,
+          category: req.body.category,
+          color: req.body.color,
+          icon: req.body.icon,
+          frequency: req.body.frequency,
+          targetDaysPerWeek: req.body.targetDaysPerWeek,
+          isActive: req.body.isActive,
+        },
+      });
+      return res.json(updated);
+    }
+  } catch (e: any) {
+    console.error('Habit update fallback:', e.message);
+  }
+  const habit = inMemoryStore.habits.find((h) => h.id === id);
+  if (habit) {
+    Object.assign(habit, req.body);
+    return res.json(habit);
+  }
+  res.status(404).json({ error: 'Habit not found' });
+});
+
 app.delete('/api/habits/:id', async (req: Request, res: Response) => {
   const id = getId(req);
   try {
