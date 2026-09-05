@@ -375,7 +375,7 @@ export const YearDashboard: React.FC = () => {
               )}
             </AnimatePresence>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="flex flex-wrap gap-3.5">
               {countdowns.map((cd) => {
                 const target = parseISO(cd.targetDate);
                 const daysRemaining = differenceInDays(target, now);
@@ -385,25 +385,29 @@ export const YearDashboard: React.FC = () => {
                   <motion.div
                     key={cd.id}
                     whileHover={{ scale: 1.02, y: -1 }}
-                    className="flex items-center justify-between p-3.5 rounded-2xl bg-gradient-to-r from-slate-900/90 via-slate-900/80 to-amber-950/20 border border-amber-500/30 hover:border-amber-400/80 transition-all group shadow-lg shadow-amber-500/5 hover:shadow-amber-500/20"
+                    className="flex-1 min-w-[280px] flex items-center justify-between gap-3.5 p-4 rounded-2xl bg-gradient-to-r from-slate-900/90 via-slate-900/80 to-amber-950/20 border border-amber-500/30 hover:border-amber-400/80 transition-all group shadow-lg shadow-amber-500/5 hover:shadow-amber-500/20"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500/25 to-orange-500/20 text-amber-400 border border-amber-500/40 shadow-[0_0_12px_rgba(245,158,11,0.25)]">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="p-2.5 rounded-xl bg-gradient-to-br from-amber-500/25 to-orange-500/20 text-amber-400 border border-amber-500/40 shadow-[0_0_12px_rgba(245,158,11,0.25)] shrink-0">
                         <Target className="w-4 h-4" />
                       </div>
-                      <div>
-                        <h4 className="text-xs font-black text-white tracking-wide flex items-center gap-2">
-                          <span>{cd.title}</span>
-                          <span className="text-[9px] font-mono font-bold text-amber-300 bg-amber-500/20 px-1.5 py-0.5 rounded border border-amber-500/40">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="text-xs sm:text-sm font-black text-white tracking-wide break-words">
+                            {cd.title}
+                          </h4>
+                          <span className="text-[9px] font-mono font-bold text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-md border border-amber-500/40 shrink-0">
                             {cd.category || 'Target'}
                           </span>
-                        </h4>
-                        <p className="text-[10px] text-slate-300 mt-0.5 font-mono font-semibold">{format(target, 'MMM d, yyyy')}</p>
+                        </div>
+                        <p className="text-[10px] text-slate-300 mt-1 font-mono font-semibold">
+                          {format(target, 'MMM d, yyyy')}
+                        </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                       <span
-                        className={`text-xs font-black font-mono px-3 py-1.5 rounded-xl shadow-md ${
+                        className={`text-xs font-black font-mono px-3 py-1.5 rounded-xl shadow-md whitespace-nowrap shrink-0 ${
                           isPassed
                             ? 'bg-slate-800 text-slate-400 border border-slate-700'
                             : 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black border border-amber-300 shadow-[0_0_14px_rgba(245,158,11,0.45)]'
@@ -414,7 +418,7 @@ export const YearDashboard: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => deleteCountdown(cd.id)}
-                        className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-rose-400 transition-opacity p-1 cursor-pointer"
+                        className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-rose-400 transition-opacity p-1 cursor-pointer shrink-0"
                         title="Delete Milestone"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
