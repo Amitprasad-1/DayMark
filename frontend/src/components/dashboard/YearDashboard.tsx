@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
+import { CustomCountdown } from '@/types';
 import {
   Calendar as CalendarIcon,
   Flame,
@@ -62,6 +63,7 @@ interface HoveredDayInfo {
   hasReview: boolean;
   isFuture: boolean;
   isToday: boolean;
+  milestones?: CustomCountdown[];
 }
 
 export const YearDashboard: React.FC = () => {
@@ -148,13 +150,17 @@ export const YearDashboard: React.FC = () => {
   };
 
   // Color helper for heatmap cells with luminous depth
-  const getCellIntensityStyle = (dateStr: string, isFutureDate: boolean) => {
+  const getCellIntensityStyle = (dateStr: string, isFutureDate: boolean, hasMilestone: boolean = false) => {
     const data = getDayActivityData(dateStr);
     const hours = data.totalSeconds / 3600;
     const isDateToday = dateStr === todayStr;
 
     if (isDateToday) {
       return 'bg-gradient-to-tr from-amber-400 via-orange-500 to-amber-500 border-amber-300 text-slate-950 font-black ring-2 ring-amber-300 shadow-[0_0_16px_rgba(245,158,11,0.6)] scale-105 z-10';
+    }
+
+    if (hasMilestone) {
+      return 'bg-amber-950/60 border-amber-400/90 text-amber-300 font-black ring-1 ring-amber-400/80 shadow-[0_0_14px_rgba(245,158,11,0.5)] hover:bg-amber-900/70 hover:border-amber-300';
     }
 
     if (isFutureDate) {
@@ -184,6 +190,12 @@ export const YearDashboard: React.FC = () => {
     const isFutureDate = isAfter(dateObj, now) && !isSameDay(dateObj, now);
     const isDateToday = isSameDay(dateObj, now);
 
+    const dayMilestones = countdowns.filter((cd) => {
+      if (!cd.targetDate) return false;
+      const formattedTarget = cd.targetDate.includes('T') ? cd.targetDate.split('T')[0] : cd.targetDate;
+      return formattedTarget === dateStr;
+    });
+
     setHoveredDay({
       dateStr,
       formattedDate: format(dateObj, 'EEEE, MMMM d, yyyy'),
@@ -194,6 +206,7 @@ export const YearDashboard: React.FC = () => {
       hasReview: data.hasReview,
       isFuture: isFutureDate,
       isToday: isDateToday,
+      milestones: dayMilestones,
     });
   };
 
@@ -539,6 +552,12 @@ export const YearDashboard: React.FC = () => {
                       Reflection Logged
                     </span>
                   )}
+                  {hoveredDay.milestones && hoveredDay.milestones.length > 0 && (
+                    <span className="px-2.5 py-0.5 rounded-full bg-amber-500/25 text-amber-300 border border-amber-400/60 text-[10px] font-black flex items-center gap-1 shadow-[0_0_8px_rgba(245,158,11,0.3)]">
+                      <Target className="w-3 h-3 text-amber-400" />
+                      <span>{hoveredDay.milestones.map((m) => m.title).join(', ')}</span>
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs text-slate-400">
                   {hoveredDay.isFuture ? (
@@ -663,6 +682,12 @@ export const YearDashboard: React.FC = () => {
             <div className="w-3 h-3 rounded-md bg-gradient-to-tr from-emerald-500 to-teal-400 border border-emerald-300" />
             <span className="text-[10px] font-bold text-emerald-300">&gt;4h Deep Work</span>
           </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-md bg-amber-950/80 border border-amber-400/90 shadow-[0_0_8px_rgba(245,158,11,0.5)] relative">
+              <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-amber-400" />
+            </div>
+            <span className="text-[10px] font-bold text-amber-300">Target Milestone</span>
+          </div>
         </div>
 
         {/* 12-Month Matrix Grid */}
@@ -724,7 +749,13 @@ export const YearDashboard: React.FC = () => {
                     const dateObj = new Date(currentYear, monthIdx, dayNum);
                     const dateStr = format(dateObj, 'yyyy-MM-dd');
                     const isFutureDate = isAfter(dateObj, now) && !isSameDay(dateObj, now);
-                    const intensityClass = getCellIntensityStyle(dateStr, isFutureDate);
+                    const dayMilestones = countdowns.filter((cd) => {
+                      if (!cd.targetDate) return false;
+                      const formattedTarget = cd.targetDate.includes('T') ? cd.targetDate.split('T')[0] : cd.targetDate;
+                      return formattedTarget === dateStr;
+                    });
+                    const hasMilestone = dayMilestones.length > 0;
+                    const intensityClass = getCellIntensityStyle(dateStr, isFutureDate, hasMilestone);
                     const data = getDayActivityData(dateStr);
 
                     return (
@@ -743,9 +774,20 @@ export const YearDashboard: React.FC = () => {
                       >
                         <span>{dayNum}</span>
 
+                        {/* Strategic Milestone Jewel Badge */}
+                        {hasMilestone && (
+                          <span
+                            className="absolute -top-1 -right-1 flex h-2.5 w-2.5 z-20 pointer-events-none"
+                            title={`🎯 Target Milestone: ${dayMilestones.map((m) => m.title).join(', ')}`}
+                          >
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400 border border-slate-950 shadow-[0_0_8px_#F59E0B]" />
+                          </span>
+                        )}
+
                         {/* Review Indicator Dot */}
                         {data.hasReview && (
-                          <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-rose-400 shadow-[0_0_6px_rgba(244,63,94,0.8)]" />
+                          <span className="absolute bottom-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-rose-400 shadow-[0_0_6px_rgba(244,63,94,0.8)]" />
                         )}
                       </motion.button>
                     );

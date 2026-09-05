@@ -12,6 +12,7 @@ import {
   Sparkles,
   Edit3,
   List,
+  Target,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -32,6 +33,7 @@ export const DayDetailModal: React.FC = () => {
     toggleHabit,
     reviews,
     saveDailyReview,
+    countdowns,
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<'sessions' | 'habits' | 'review'>('sessions');
@@ -75,6 +77,12 @@ export const DayDetailModal: React.FC = () => {
   const dayTotalSeconds = daySessions.reduce((acc, s) => acc + s.durationSeconds, 0);
   const dayTotalHours = (dayTotalSeconds / 3600).toFixed(1);
   const dayTotalMinutes = Math.round(dayTotalSeconds / 60);
+
+  const selectedDayMilestones = countdowns.filter((cd) => {
+    if (!cd.targetDate) return false;
+    const formattedTarget = cd.targetDate.includes('T') ? cd.targetDate.split('T')[0] : cd.targetDate;
+    return formattedTarget === selectedDate;
+  });
 
   const handleAddManualSession = (e: React.FormEvent) => {
     e.preventDefault();
@@ -191,6 +199,36 @@ export const DayDetailModal: React.FC = () => {
             <X className="w-4 h-4" />
           </motion.button>
         </div>
+
+        {/* Strategic Target Milestone Banner if present on selected date */}
+        {selectedDayMilestones.length > 0 && (
+          <div className="px-6 py-3.5 bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-transparent border-b border-amber-500/30 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-2xl bg-amber-500/25 text-amber-400 border border-amber-500/40 shadow-[0_0_12px_rgba(245,158,11,0.35)]">
+                <Target className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-[10px] font-mono uppercase font-black tracking-wider text-amber-400 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                  <span>Strategic Target Milestone</span>
+                </span>
+                <h4 className="text-sm sm:text-base font-black text-white">
+                  {selectedDayMilestones.map((m) => m.title).join(', ')}
+                </h4>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {selectedDayMilestones.map((m) => (
+                <span
+                  key={m.id}
+                  className="text-[10px] font-mono font-bold text-amber-300 px-3 py-1 rounded-xl bg-amber-950/80 border border-amber-500/40 shadow-inner"
+                >
+                  {m.category || 'Target'}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Tab Selector */}
         <div className="flex items-center border-b border-white/[0.08] px-6 bg-slate-900/50 text-xs gap-2 py-1">
