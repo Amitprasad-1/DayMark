@@ -104,6 +104,7 @@ interface AppContextType {
   exportDataJSON: () => string;
   importDataJSON: (jsonStr: string) => boolean;
   resetAllData: () => void;
+  loadStudyFocusPreset: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -163,7 +164,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (storedSettings) setSettings(JSON.parse(storedSettings));
 
       const storedActivities = localStorage.getItem(STORAGE_KEYS.ACTIVITIES);
-      if (storedActivities) setActivities(JSON.parse(storedActivities));
+      if (storedActivities) {
+        const parsed: Activity[] = JSON.parse(storedActivities);
+        const hasDataAnalytics = parsed.some((a) => a.name.toLowerCase().includes('data analytic'));
+        if (!hasDataAnalytics) {
+          const merged = [
+            ...INITIAL_ACTIVITIES,
+            ...parsed.filter((p) => !INITIAL_ACTIVITIES.some((ia) => ia.name.toLowerCase() === p.name.toLowerCase())),
+          ];
+          setActivities(merged);
+        } else {
+          setActivities(parsed);
+        }
+      } else {
+        setActivities(INITIAL_ACTIVITIES);
+      }
 
       const storedSessions = localStorage.getItem(STORAGE_KEYS.SESSIONS);
       const storedHabits = localStorage.getItem(STORAGE_KEYS.HABITS);
@@ -171,7 +186,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       if (storedSessions && storedHabits) {
         setSessions(JSON.parse(storedSessions));
-        setHabits(JSON.parse(storedHabits));
+        const parsedHabits: Habit[] = JSON.parse(storedHabits);
+        const hasDataHabit = parsedHabits.some((h) => h.name.toLowerCase().includes('data analytic'));
+        if (!hasDataHabit) {
+          const mergedHabits = [
+            ...INITIAL_HABITS,
+            ...parsedHabits.filter((p) => !INITIAL_HABITS.some((ih) => ih.name.toLowerCase() === p.name.toLowerCase())),
+          ];
+          setHabits(mergedHabits);
+        } else {
+          setHabits(parsedHabits);
+        }
         if (storedReviews) setReviews(JSON.parse(storedReviews));
       } else {
         const seed = generateSeedData();
@@ -186,10 +211,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
 
       const storedTasks = localStorage.getItem(STORAGE_KEYS.TASKS);
-      if (storedTasks) setTasks(JSON.parse(storedTasks));
+      if (storedTasks) {
+        const parsedTasks: Task[] = JSON.parse(storedTasks);
+        const hasDataTask = parsedTasks.some((t) => t.title.toLowerCase().includes('data analytic'));
+        if (!hasDataTask) {
+          setTasks([...INITIAL_TASKS, ...parsedTasks]);
+        } else {
+          setTasks(parsedTasks);
+        }
+      } else {
+        setTasks(INITIAL_TASKS);
+      }
 
       const storedGoals = localStorage.getItem(STORAGE_KEYS.GOALS);
-      if (storedGoals) setGoals(JSON.parse(storedGoals));
+      if (storedGoals) {
+        const parsedGoals: Goal[] = JSON.parse(storedGoals);
+        const hasDataGoal = parsedGoals.some((g) => g.title.toLowerCase().includes('data analytic'));
+        if (!hasDataGoal) {
+          setGoals([
+            ...INITIAL_GOALS,
+            ...parsedGoals.filter((p) => !INITIAL_GOALS.some((ig) => ig.title.toLowerCase() === p.title.toLowerCase())),
+          ]);
+        } else {
+          setGoals(parsedGoals);
+        }
+      } else {
+        setGoals(INITIAL_GOALS);
+      }
 
       const storedCountdowns = localStorage.getItem(STORAGE_KEYS.COUNTDOWNS);
       if (storedCountdowns) setCountdowns(JSON.parse(storedCountdowns));
@@ -734,6 +782,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     resetTimer();
   };
 
+  const loadStudyFocusPreset = () => {
+    setActivities(INITIAL_ACTIVITIES);
+    setHabits(INITIAL_HABITS);
+    setGoals(INITIAL_GOALS);
+    setTasks(INITIAL_TASKS);
+    setActiveActivityId(INITIAL_ACTIVITIES[0].id);
+    confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 } });
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -790,6 +847,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         exportDataJSON,
         importDataJSON,
         resetAllData,
+        loadStudyFocusPreset,
         cloudSyncStatus,
         lastSyncedAt,
         syncWithCloud,

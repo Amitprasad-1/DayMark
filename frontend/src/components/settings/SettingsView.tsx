@@ -22,6 +22,7 @@ export const SettingsView: React.FC = () => {
     exportDataJSON,
     importDataJSON,
     resetAllData,
+    loadStudyFocusPreset,
   } = useApp();
 
   const [importStatus, setImportStatus] = useState<string>('');
@@ -230,6 +231,33 @@ export const SettingsView: React.FC = () => {
                 {importStatus}
               </p>
             )}
+          </div>
+
+          {/* Study Focus Profile Setup */}
+          <div className="pt-6 border-t border-white/[0.07] space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="text-xs font-black text-cyan-400 uppercase tracking-wide flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Personal Study Focus Profile</span>
+                </h4>
+                <p className="text-[11px] text-slate-400">
+                  Data Analytics, Coding &amp; DSA, Apti, English Practice &amp; Exercise.
+                </p>
+              </div>
+              <motion.button
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
+                type="button"
+                onClick={() => {
+                  loadStudyFocusPreset();
+                  setImportStatus('✅ Applied your personal study focus preset (Data Analytics, Coding, Apti, English, Exercise)!');
+                }}
+                className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-cyan-500/20 to-indigo-500/20 text-cyan-300 border border-cyan-400/50 text-xs font-black cursor-pointer shadow-[0_0_12px_rgba(6,182,212,0.25)] hover:bg-cyan-500/30 transition-all"
+              >
+                Apply Routine
+              </motion.button>
+            </div>
           </div>
 
           {/* Reset Section */}
