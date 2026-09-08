@@ -100,7 +100,7 @@ export const YearDashboard: React.FC = () => {
   } = useApp();
 
   const [currentYear] = useState<number>(new Date().getFullYear());
-  type CalendarViewMode = 'FROM_CURRENT' | 'REMAINING' | 'JAN_DEC' | 'Q1' | 'Q2' | 'Q3' | 'Q4';
+  type CalendarViewMode = 'FROM_CURRENT' | 'REMAINING' | 'JAN_DEC';
   const [calendarView, setCalendarView] = useState<CalendarViewMode>('FROM_CURRENT');
   const [showAddCountdown, setShowAddCountdown] = useState<boolean>(false);
   const [hoveredDay, setHoveredDay] = useState<HoveredDayInfo | null>(null);
@@ -285,10 +285,6 @@ export const YearDashboard: React.FC = () => {
       case 'JAN_DEC':
         // Traditional Jan -> Dec
         return Array.from({ length: 12 }, (_, i) => i);
-      case 'Q1': return [0, 1, 2];
-      case 'Q2': return [3, 4, 5];
-      case 'Q3': return [6, 7, 8];
-      case 'Q4': return [9, 10, 11];
       default:
         return Array.from({ length: 12 }, (_, i) => (currentMonthIdx + i) % 12);
     }
@@ -776,10 +772,6 @@ export const YearDashboard: React.FC = () => {
                 { id: 'FROM_CURRENT', label: `From ${currentMonthShort} (Default)` },
                 { id: 'REMAINING', label: `${currentMonthShort}–Dec` },
                 { id: 'JAN_DEC', label: 'Jan–Dec' },
-                { id: 'Q1', label: 'Q1' },
-                { id: 'Q2', label: 'Q2' },
-                { id: 'Q3', label: 'Q3' },
-                { id: 'Q4', label: 'Q4' },
               ].map((opt) => (
                 <button
                   key={opt.id}
