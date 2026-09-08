@@ -238,6 +238,18 @@ export const INITIAL_GOALS: Goal[] = [
     color: '#10B981',
     createdAt: format(subDays(new Date(), 20), 'yyyy-MM-dd'),
   },
+  {
+    id: 'goal-spring-boot',
+    title: 'Complete Spring Boot',
+    description: 'Master Spring Boot fundamentals, REST APIs, and microservices architecture',
+    type: 'TIME',
+    targetValue: 60,
+    currentValue: 1,
+    targetDate: `${new Date().getFullYear()}-12-31`,
+    category: 'Development',
+    color: '#10B981',
+    createdAt: format(new Date(), 'yyyy-MM-dd'),
+  },
 ];
 
 export const INITIAL_COUNTDOWNS: CustomCountdown[] = [
@@ -257,6 +269,14 @@ export const INITIAL_COUNTDOWNS: CustomCountdown[] = [
     color: '#8B5CF6',
     icon: 'Rocket',
   },
+  {
+    id: 'cd-spring-boot',
+    title: 'Complete Spring Boot',
+    targetDate: `${new Date().getFullYear()}-12-31`,
+    category: 'Target',
+    color: '#10B981',
+    icon: 'Target',
+  },
 ];
 
 // Helper to generate seed historical data so the full year visual calendar has realistic heatmaps!
@@ -275,6 +295,23 @@ export function generateSeedData(): {
   const reviews: DailyReview[] = [];
 
   const today = new Date();
+
+  // Add today's 1-hour morning focus session
+  const todayStr = format(today, 'yyyy-MM-dd');
+  const morningStart = new Date(today);
+  morningStart.setHours(9, 0, 0, 0);
+  const morningEnd = new Date(today);
+  morningEnd.setHours(10, 0, 0, 0);
+  sessions.push({
+    id: 'sess-today-morning',
+    activityId: 'act-coding-dsa',
+    startTime: morningStart.toISOString(),
+    endTime: morningEnd.toISOString(),
+    durationSeconds: 3600,
+    notes: 'Morning Study Session (1h Focus)',
+    date: todayStr,
+  });
+
   // Generate realistic history across all past days of the current year!
   const daysInYearPassed = Math.min(245, Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 1).getTime()) / 86400000));
   for (let i = 1; i <= daysInYearPassed; i++) {

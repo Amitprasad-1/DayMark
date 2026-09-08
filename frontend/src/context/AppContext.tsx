@@ -203,23 +203,39 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
 
       const storedSessions = localStorage.getItem(STORAGE_KEYS.SESSIONS);
+      let parsedSessions: StudySession[] = [];
       if (storedSessions) {
         try {
           const parsed = JSON.parse(storedSessions);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            setSessions(parsed);
-          } else {
-            const seed = generateSeedData();
-            setSessions(seed.sessions);
+            parsedSessions = parsed;
           }
-        } catch {
-          const seed = generateSeedData();
-          setSessions(seed.sessions);
-        }
-      } else {
-        const seed = generateSeedData();
-        setSessions(seed.sessions);
+        } catch {}
       }
+      if (parsedSessions.length === 0) {
+        const seed = generateSeedData();
+        parsedSessions = seed.sessions;
+        setReviews(seed.reviews);
+      }
+      // Ensure today's 1-hour focus session is restored if missing
+      const todayStr = format(new Date(), 'yyyy-MM-dd');
+      const hasToday = parsedSessions.some((s) => isSameCalendarDay(s.date, s.startTime, todayStr));
+      if (!hasToday) {
+        const morningStart = new Date();
+        morningStart.setHours(9, 0, 0, 0);
+        const morningEnd = new Date();
+        morningEnd.setHours(10, 0, 0, 0);
+        parsedSessions.unshift({
+          id: `sess-today-morning`,
+          activityId: 'act-coding-dsa',
+          startTime: morningStart.toISOString(),
+          endTime: morningEnd.toISOString(),
+          durationSeconds: 3600,
+          notes: 'Morning Study Session (1h Focus)',
+          date: todayStr,
+        });
+      }
+      setSessions(parsedSessions);
 
       const storedHabits = localStorage.getItem(STORAGE_KEYS.HABITS);
       if (storedHabits) {
