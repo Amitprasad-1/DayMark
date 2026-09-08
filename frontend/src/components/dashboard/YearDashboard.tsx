@@ -839,6 +839,7 @@ export const YearDashboard: React.FC = () => {
                         transition={{ type: 'spring', stiffness: 500, damping: 25 }}
                         key={dateStr}
                         type="button"
+                        title={`${format(dateObj, 'EEEE, MMMM d, yyyy')}: ${(data.totalSeconds / 3600).toFixed(1)}h focus (${data.sessionCount} session${data.sessionCount === 1 ? '' : 's'})`}
                         onMouseEnter={() => handleCellHover(dateObj)}
                         onClick={() => {
                           setSelectedDate(dateStr);
