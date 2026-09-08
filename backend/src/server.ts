@@ -169,10 +169,36 @@ app.get('/api/sessions', async (_req: Request, res: Response) => {
 app.post('/api/sessions', async (req: Request, res: Response) => {
   try {
     if (isDbConnected()) {
+      let actId = req.body.activityId;
+      if (actId) {
+        const existingAct = await prisma.activity.findUnique({ where: { id: actId } });
+        if (!existingAct) {
+          // Auto-upsert activity to guarantee foreign key integrity
+          await prisma.activity.create({
+            data: {
+              id: actId,
+              userId: 'default-user',
+              name: req.body.activityName || 'Focus Study',
+              category: req.body.category || 'Study',
+              icon: req.body.icon || 'BookOpen',
+              color: req.body.color || '#3B82F6',
+              dailyTargetMinutes: 60,
+              isActive: true,
+            },
+          }).catch(async () => {
+            const fallback = await prisma.activity.findFirst({ where: { userId: 'default-user' } });
+            if (fallback) actId = fallback.id;
+          });
+        }
+      } else {
+        const fallback = await prisma.activity.findFirst({ where: { userId: 'default-user' } });
+        if (fallback) actId = fallback.id;
+      }
+
       const created = await prisma.studySession.create({
         data: {
           userId: 'default-user',
-          activityId: req.body.activityId,
+          activityId: actId,
           startTime: new Date(req.body.startTime),
           endTime: new Date(req.body.endTime),
           durationSeconds: req.body.durationSeconds,
@@ -645,6 +671,132 @@ app.post('/api/sync/full', async (req: Request, res: Response) => {
   if (goals) inMemoryStore.goals = goals;
   if (countdowns) inMemoryStore.countdowns = countdowns;
   if (reviews) inMemoryStore.reviews = reviews;
+
+  // Persist to PostgreSQL if connected
+  if (isDbConnected()) {
+    try {
+      if (settings) {
+        await prisma.userSettings.upsert({
+          where: { userId: 'default-user' },
+          update: settings,
+          create: { userId: 'default-user', ...settings },
+        }).catch(() => null);
+      }
+
+      if (Array.isArray(activities) && activities.length > 0) {
+        for (const act of activities) {
+          if (!act.id || !act.name) continue;
+          await prisma.activity.upsert({
+            where: { id: act.id },
+            update: {
+              name: act.name,
+              category: act.category || 'Study',
+              icon: act.icon || 'BookOpen',
+              color: act.color || '#3B82F6',
+              dailyTargetMinutes: act.dailyTargetMinutes || 60,
+              isActive: act.isActive !== false,
+            },
+            create: {
+              id: act.id,
+              userId: 'default-user',
+              name: act.name,
+              category: act.category || 'Study',
+              icon: act.icon || 'BookOpen',
+              color: act.color || '#3B82F6',
+              dailyTargetMinutes: act.dailyTargetMinutes || 60,
+              isActive: act.isActive !== false,
+            },
+          }).catch(() => null);
+        }
+      }
+
+      if (Array.isArray(sessions) && sessions.length > 0) {
+        for (const s of sessions) {
+          if (!s.id || !s.startTime) continue;
+          let actId = s.activityId;
+          const actExists = await prisma.activity.findUnique({ where: { id: actId } }).catch(() => null);
+          if (!actExists) {
+            const fallbackAct = await prisma.activity.findFirst({ where: { userId: 'default-user' } });
+            if (fallbackAct) actId = fallbackAct.id;
+          }
+          await prisma.studySession.upsert({
+            where: { id: s.id },
+            update: {
+              notes: s.notes,
+              durationSeconds: s.durationSeconds,
+            },
+            create: {
+              id: s.id,
+              userId: 'default-user',
+              activityId: actId,
+              startTime: new Date(s.startTime),
+              endTime: new Date(s.endTime || s.startTime),
+              durationSeconds: s.durationSeconds || 0,
+              notes: s.notes || null,
+              date: s.date || new Date(s.startTime).toISOString().slice(0, 10),
+            },
+          }).catch(() => null);
+        }
+      }
+
+      if (Array.isArray(goals) && goals.length > 0) {
+        for (const g of goals) {
+          if (!g.id || !g.title) continue;
+          await prisma.goal.upsert({
+            where: { id: g.id },
+            update: {
+              title: g.title,
+              description: g.description || null,
+              type: g.type || 'TIME',
+              targetValue: g.targetValue || 10,
+              currentValue: g.currentValue || 0,
+              targetDate: g.targetDate || null,
+              category: g.category || 'General',
+              color: g.color || '#3B82F6',
+            },
+            create: {
+              id: g.id,
+              userId: 'default-user',
+              title: g.title,
+              description: g.description || null,
+              type: g.type || 'TIME',
+              targetValue: g.targetValue || 10,
+              currentValue: g.currentValue || 0,
+              targetDate: g.targetDate || null,
+              category: g.category || 'General',
+              color: g.color || '#3B82F6',
+            },
+          }).catch(() => null);
+        }
+      }
+
+      if (Array.isArray(countdowns) && countdowns.length > 0) {
+        for (const c of countdowns) {
+          if (!c.id || !c.title) continue;
+          await prisma.customCountdown.upsert({
+            where: { id: c.id },
+            update: {
+              title: c.title,
+              targetDate: c.targetDate,
+              category: c.category || 'Milestone',
+              color: c.color || '#8B5CF6',
+              icon: c.icon || 'Rocket',
+            },
+            create: {
+              id: c.id,
+              title: c.title,
+              targetDate: c.targetDate,
+              category: c.category || 'Milestone',
+              color: c.color || '#8B5CF6',
+              icon: c.icon || 'Rocket',
+            },
+          }).catch(() => null);
+        }
+      }
+    } catch (err: any) {
+      console.warn('Sync full db persistence warning:', err.message);
+    }
+  }
 
   res.json({
     ...inMemoryStore,

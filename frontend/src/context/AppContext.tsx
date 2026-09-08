@@ -27,6 +27,7 @@ import { soundEngine } from '@/lib/audio';
 import { daymarkApi } from '@/lib/api';
 import confetti from 'canvas-confetti';
 import { format, parseISO } from 'date-fns';
+import { normalizeDateStr, isSameCalendarDay } from '@/lib/dateUtils';
 
 interface AppContextType {
   // Navigation State
@@ -158,7 +159,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [isHydrated, setIsHydrated] = useState(false);
 
-  // Hydrate from localStorage on mount
+  // Track latest state in a ref for atomic two-way sync without stale closures
+  const latestStateRef = useRef({
+    settings,
+    activities,
+    sessions,
+    habits,
+    tasks,
+    goals,
+    countdowns,
+    reviews,
+  });
+
+  useEffect(() => {
+    latestStateRef.current = {
+      settings,
+      activities,
+      sessions,
+      habits,
+      tasks,
+      goals,
+      countdowns,
+      reviews,
+    };
+  }, [settings, activities, sessions, habits, tasks, goals, countdowns, reviews]);
+
+  // Hydrate from localStorage on mount (Each entity hydrates independently!)
   useEffect(() => {
     try {
       const storedSettings = localStorage.getItem(STORAGE_KEYS.SETTINGS);
@@ -167,58 +193,69 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const storedActivities = localStorage.getItem(STORAGE_KEYS.ACTIVITIES);
       if (storedActivities) {
         const parsed: Activity[] = JSON.parse(storedActivities);
-        const hasDataAnalytics = parsed.some((a) => a.name.toLowerCase().includes('data analytic'));
-        if (!hasDataAnalytics) {
-          const merged = [
-            ...INITIAL_ACTIVITIES,
-            ...parsed.filter((p) => !INITIAL_ACTIVITIES.some((ia) => ia.name.toLowerCase() === p.name.toLowerCase())),
-          ];
-          setActivities(merged);
-        } else {
-          setActivities(parsed);
-        }
+        const merged = [
+          ...parsed,
+          ...INITIAL_ACTIVITIES.filter((ia) => !parsed.some((p) => p.name.toLowerCase() === ia.name.toLowerCase() || p.id === ia.id)),
+        ];
+        setActivities(merged);
       } else {
         setActivities(INITIAL_ACTIVITIES);
       }
 
       const storedSessions = localStorage.getItem(STORAGE_KEYS.SESSIONS);
-      const storedHabits = localStorage.getItem(STORAGE_KEYS.HABITS);
-      const storedReviews = localStorage.getItem(STORAGE_KEYS.REVIEWS);
-
-      if (storedSessions && storedHabits) {
-        setSessions(JSON.parse(storedSessions));
-        const parsedHabits: Habit[] = JSON.parse(storedHabits);
-        const hasDataHabit = parsedHabits.some((h) => h.name.toLowerCase().includes('data analytic'));
-        if (!hasDataHabit) {
-          const mergedHabits = [
-            ...INITIAL_HABITS,
-            ...parsedHabits.filter((p) => !INITIAL_HABITS.some((ih) => ih.name.toLowerCase() === p.name.toLowerCase())),
-          ];
-          setHabits(mergedHabits);
-        } else {
-          setHabits(parsedHabits);
+      if (storedSessions) {
+        try {
+          const parsed = JSON.parse(storedSessions);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setSessions(parsed);
+          } else {
+            const seed = generateSeedData();
+            setSessions(seed.sessions);
+          }
+        } catch {
+          const seed = generateSeedData();
+          setSessions(seed.sessions);
         }
-        if (storedReviews) setReviews(JSON.parse(storedReviews));
       } else {
         const seed = generateSeedData();
         setSessions(seed.sessions);
-        setReviews(seed.reviews);
-        setHabits((prev) =>
-          prev.map((h) => ({
-            ...h,
-            logs: seed.habitLogs[h.id] || {},
-          }))
-        );
+      }
+
+      const storedHabits = localStorage.getItem(STORAGE_KEYS.HABITS);
+      if (storedHabits) {
+        try {
+          const parsedHabits: Habit[] = JSON.parse(storedHabits);
+          const mergedHabits = [
+            ...parsedHabits,
+            ...INITIAL_HABITS.filter((ih) => !parsedHabits.some((p) => p.name.toLowerCase() === ih.name.toLowerCase() || p.id === ih.id)),
+          ];
+          setHabits(mergedHabits);
+        } catch {
+          setHabits(INITIAL_HABITS);
+        }
+      } else {
+        setHabits(INITIAL_HABITS);
+      }
+
+      const storedReviews = localStorage.getItem(STORAGE_KEYS.REVIEWS);
+      if (storedReviews) {
+        try {
+          const parsed = JSON.parse(storedReviews);
+          if (Array.isArray(parsed)) setReviews(parsed);
+        } catch {}
       }
 
       const storedTasks = localStorage.getItem(STORAGE_KEYS.TASKS);
       if (storedTasks) {
-        const parsedTasks: Task[] = JSON.parse(storedTasks);
-        const hasDataTask = parsedTasks.some((t) => t.title.toLowerCase().includes('data analytic'));
-        if (!hasDataTask) {
-          setTasks([...INITIAL_TASKS, ...parsedTasks]);
-        } else {
-          setTasks(parsedTasks);
+        try {
+          const parsedTasks: Task[] = JSON.parse(storedTasks);
+          const mergedTasks = [
+            ...parsedTasks,
+            ...INITIAL_TASKS.filter((it) => !parsedTasks.some((p) => p.title.toLowerCase() === it.title.toLowerCase() || p.id === it.id)),
+          ];
+          setTasks(mergedTasks);
+        } catch {
+          setTasks(INITIAL_TASKS);
         }
       } else {
         setTasks(INITIAL_TASKS);
@@ -226,15 +263,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       const storedGoals = localStorage.getItem(STORAGE_KEYS.GOALS);
       if (storedGoals) {
-        const parsedGoals: Goal[] = JSON.parse(storedGoals);
-        const hasDataGoal = parsedGoals.some((g) => g.title.toLowerCase().includes('data analytic'));
-        if (!hasDataGoal) {
-          setGoals([
-            ...INITIAL_GOALS,
-            ...parsedGoals.filter((p) => !INITIAL_GOALS.some((ig) => ig.title.toLowerCase() === p.title.toLowerCase())),
-          ]);
-        } else {
-          setGoals(parsedGoals);
+        try {
+          const parsedGoals: Goal[] = JSON.parse(storedGoals);
+          const mergedGoals = [
+            ...parsedGoals,
+            ...INITIAL_GOALS.filter((ig) => !parsedGoals.some((p) => p.title.toLowerCase() === ig.title.toLowerCase() || p.id === ig.id)),
+          ];
+          setGoals(mergedGoals);
+        } catch {
+          setGoals(INITIAL_GOALS);
         }
       } else {
         setGoals(INITIAL_GOALS);
@@ -242,15 +279,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       const storedCountdowns = localStorage.getItem(STORAGE_KEYS.COUNTDOWNS);
       if (storedCountdowns) {
-        const parsedCountdowns: CustomCountdown[] = JSON.parse(storedCountdowns);
-        const hasKPIT = parsedCountdowns.some((c) => c.title.toLowerCase().includes('kpit'));
-        if (!hasKPIT) {
-          setCountdowns([
-            ...INITIAL_COUNTDOWNS,
-            ...parsedCountdowns.filter((pc) => !INITIAL_COUNTDOWNS.some((ic) => ic.title.toLowerCase() === pc.title.toLowerCase())),
-          ]);
-        } else {
-          setCountdowns(parsedCountdowns);
+        try {
+          const parsedCountdowns: CustomCountdown[] = JSON.parse(storedCountdowns);
+          const mergedCountdowns = [
+            ...parsedCountdowns,
+            ...INITIAL_COUNTDOWNS.filter((ic) => !parsedCountdowns.some((p) => p.title.toLowerCase() === ic.title.toLowerCase() || p.id === ic.id)),
+          ];
+          setCountdowns(mergedCountdowns);
+        } catch {
+          setCountdowns(INITIAL_COUNTDOWNS);
         }
       } else {
         setCountdowns(INITIAL_COUNTDOWNS);
@@ -299,7 +336,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, []);
 
-  // Background Cloud Sync Function (Runs without blocking UI)
+  // Background Cloud Sync Function (Runs without blocking UI, 2-way safe union merge)
   const syncWithCloud = async () => {
     if (!process.env.NEXT_PUBLIC_API_URL) {
       setCloudSyncStatus('offline');
@@ -315,47 +352,156 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return;
       }
 
-      // Merge Cloud updates if remote data exists
-      if (cloudData.settings) setSettings((prev) => ({ ...prev, ...cloudData.settings }));
-      if (cloudData.activities && cloudData.activities.length > 0) {
-        const mergedActs = [
-          ...INITIAL_ACTIVITIES,
-          ...cloudData.activities.filter((ca) => !INITIAL_ACTIVITIES.some((ia) => ia.name.toLowerCase() === ca.name.toLowerCase())),
-        ];
-        setActivities(mergedActs);
+      const current = latestStateRef.current;
+      let hasLocalAdditions = false;
+
+      // 1. Settings
+      if (cloudData.settings) {
+        setSettings((prev) => ({ ...prev, ...cloudData.settings }));
       }
-      if (cloudData.sessions && cloudData.sessions.length > 0) setSessions(cloudData.sessions);
-      if (cloudData.habits && cloudData.habits.length > 0) {
-        const mergedHabits = [
-          ...INITIAL_HABITS,
-          ...cloudData.habits.filter((ch) => !INITIAL_HABITS.some((ih) => ih.name.toLowerCase() === ch.name.toLowerCase())),
-        ];
-        setHabits(mergedHabits);
+
+      // 2. Activities: Union by ID or name
+      const mergedActs = [...current.activities];
+      if (Array.isArray(cloudData.activities)) {
+        cloudData.activities.forEach((ca) => {
+          if (!mergedActs.some((la) => la.id === ca.id || la.name.toLowerCase() === ca.name.toLowerCase())) {
+            mergedActs.push(ca);
+          }
+        });
       }
-      if (cloudData.tasks && cloudData.tasks.length > 0) {
-        const mergedTasks = [
-          ...INITIAL_TASKS,
-          ...cloudData.tasks.filter((ct) => !INITIAL_TASKS.some((it) => it.title.toLowerCase() === ct.title.toLowerCase())),
-        ];
-        setTasks(mergedTasks);
+      setActivities(mergedActs);
+
+      // 3. Sessions: Union by ID or (cleanDate + duration + startTime)
+      const mergedSessions = [...current.sessions];
+      if (Array.isArray(cloudData.sessions)) {
+        cloudData.sessions.forEach((cs) => {
+          const csCleanDate = normalizeDateStr(cs.date || cs.startTime);
+          const exists = mergedSessions.some((ls) => {
+            if (ls.id === cs.id) return true;
+            const lsCleanDate = normalizeDateStr(ls.date || ls.startTime);
+            return (
+              lsCleanDate === csCleanDate &&
+              ls.durationSeconds === cs.durationSeconds &&
+              Math.abs(new Date(ls.startTime).getTime() - new Date(cs.startTime).getTime()) < 60000
+            );
+          });
+          if (!exists) {
+            mergedSessions.push({ ...cs, date: csCleanDate });
+          }
+        });
       }
-      if (cloudData.goals && cloudData.goals.length > 0) {
-        const mergedGoals = [
-          ...INITIAL_GOALS,
-          ...cloudData.goals.filter((cg) => !INITIAL_GOALS.some((ig) => ig.title.toLowerCase() === cg.title.toLowerCase())),
-        ];
-        setGoals(mergedGoals);
+      if (current.sessions.some((ls) => !cloudData.sessions?.some((cs) => cs.id === ls.id))) {
+        hasLocalAdditions = true;
       }
-      if (cloudData.countdowns && cloudData.countdowns.length > 0) {
-        const mergedCountdowns = [
-          ...INITIAL_COUNTDOWNS,
-          ...cloudData.countdowns.filter((cc) => !INITIAL_COUNTDOWNS.some((ic) => ic.title.toLowerCase() === cc.title.toLowerCase())),
-        ];
-        setCountdowns(mergedCountdowns);
-      } else {
-        setCountdowns(INITIAL_COUNTDOWNS);
+      setSessions(mergedSessions);
+
+      // 4. Goals: Union by ID or title
+      const mergedGoals = [...current.goals];
+      if (Array.isArray(cloudData.goals)) {
+        cloudData.goals.forEach((cg) => {
+          const exists = mergedGoals.some(
+            (lg) => lg.id === cg.id || lg.title.trim().toLowerCase() === cg.title.trim().toLowerCase()
+          );
+          if (!exists) {
+            mergedGoals.push(cg);
+          }
+        });
       }
-      if (cloudData.reviews && cloudData.reviews.length > 0) setReviews(cloudData.reviews);
+      if (current.goals.some((lg) => !cloudData.goals?.some((cg) => cg.id === lg.id || cg.title.trim().toLowerCase() === lg.title.trim().toLowerCase()))) {
+        hasLocalAdditions = true;
+      }
+      setGoals(mergedGoals);
+
+      // 5. Countdowns: Union by ID or title
+      const mergedCountdowns = [...current.countdowns];
+      if (Array.isArray(cloudData.countdowns)) {
+        cloudData.countdowns.forEach((cc) => {
+          const exists = mergedCountdowns.some(
+            (lc) => lc.id === cc.id || lc.title.trim().toLowerCase() === cc.title.trim().toLowerCase()
+          );
+          if (!exists) {
+            mergedCountdowns.push(cc);
+          }
+        });
+      }
+      if (current.countdowns.some((lc) => !cloudData.countdowns?.some((cc) => cc.id === lc.id || cc.title.trim().toLowerCase() === lc.title.trim().toLowerCase()))) {
+        hasLocalAdditions = true;
+      }
+      setCountdowns(mergedCountdowns);
+
+      // 6. Tasks: Union by ID or title
+      const mergedTasks = [...current.tasks];
+      if (Array.isArray(cloudData.tasks)) {
+        cloudData.tasks.forEach((ct) => {
+          const exists = mergedTasks.some(
+            (lt) => lt.id === ct.id || lt.title.trim().toLowerCase() === ct.title.trim().toLowerCase()
+          );
+          if (!exists) {
+            mergedTasks.push(ct);
+          }
+        });
+      }
+      if (current.tasks.some((lt) => !cloudData.tasks?.some((ct) => ct.id === lt.id))) {
+        hasLocalAdditions = true;
+      }
+      setTasks(mergedTasks);
+
+      // 7. Habits: Union by ID or name
+      const mergedHabits = [...current.habits];
+      if (Array.isArray(cloudData.habits)) {
+        cloudData.habits.forEach((ch) => {
+          const existingIdx = mergedHabits.findIndex(
+            (lh) => lh.id === ch.id || lh.name.trim().toLowerCase() === ch.name.trim().toLowerCase()
+          );
+          if (existingIdx === -1) {
+            mergedHabits.push(ch);
+          } else {
+            mergedHabits[existingIdx] = {
+              ...mergedHabits[existingIdx],
+              ...ch,
+              logs: { ...(ch.logs || {}), ...(mergedHabits[existingIdx].logs || {}) },
+            };
+          }
+        });
+      }
+      setHabits(mergedHabits);
+
+      // 8. Reviews: Union by date
+      const mergedReviews = [...current.reviews];
+      if (Array.isArray(cloudData.reviews)) {
+        cloudData.reviews.forEach((cr) => {
+          if (!mergedReviews.some((lr) => lr.date === cr.date)) {
+            mergedReviews.push(cr);
+          }
+        });
+      }
+      setReviews(mergedReviews);
+
+      // Persist merged data immediately to localStorage
+      try {
+        localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(mergedSessions));
+        localStorage.setItem(STORAGE_KEYS.GOALS, JSON.stringify(mergedGoals));
+        localStorage.setItem(STORAGE_KEYS.COUNTDOWNS, JSON.stringify(mergedCountdowns));
+        localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(mergedTasks));
+        localStorage.setItem(STORAGE_KEYS.HABITS, JSON.stringify(mergedHabits));
+        localStorage.setItem(STORAGE_KEYS.ACTIVITIES, JSON.stringify(mergedActs));
+      } catch (storageErr) {
+        console.warn('LocalStorage merge write warning:', storageErr);
+      }
+
+      // If local had additions not in cloud, push to backend so remote database is updated!
+      if (hasLocalAdditions) {
+        daymarkApi.syncFull({
+          settings: current.settings,
+          activities: mergedActs,
+          sessions: mergedSessions,
+          goals: mergedGoals,
+          countdowns: mergedCountdowns,
+          tasks: mergedTasks,
+          habits: mergedHabits,
+          reviews: mergedReviews,
+        }).catch(() => null);
+      }
 
       setCloudSyncStatus('synced');
       setLastSyncedAt(new Date());
@@ -611,12 +757,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addSession = (sessionData: Omit<StudySession, 'id'>) => {
+    const cleanDate = normalizeDateStr(sessionData.date || sessionData.startTime || new Date());
     const newSession: StudySession = {
       ...sessionData,
       id: `sess-${Date.now()}`,
+      date: cleanDate,
     };
     setSessions((prev) => [newSession, ...prev]);
-    daymarkApi.createSession(sessionData).catch(() => null);
+    daymarkApi.createSession({ ...sessionData, date: cleanDate }).catch(() => null);
 
     const durationHours = Math.round(sessionData.durationSeconds / 3600);
     if (durationHours > 0) {
@@ -712,14 +860,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addGoal = (goalData: Omit<Goal, 'id' | 'createdAt' | 'currentValue'>) => {
+    const cleanTargetDate = goalData.targetDate ? normalizeDateStr(goalData.targetDate) : undefined;
     const newGoal: Goal = {
       ...goalData,
       id: `goal-${Date.now()}`,
+      targetDate: cleanTargetDate,
       createdAt: format(new Date(), 'yyyy-MM-dd'),
       currentValue: 0,
     };
     setGoals((prev) => [...prev, newGoal]);
-    daymarkApi.createGoal(goalData).catch(() => null);
+    daymarkApi.createGoal({ ...goalData, targetDate: cleanTargetDate }).catch(() => null);
   };
 
   const updateGoalProgress = (id: string, delta: number) => {
@@ -737,12 +887,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addCountdown = (cdData: Omit<CustomCountdown, 'id'>) => {
+    const cleanTargetDate = normalizeDateStr(cdData.targetDate);
     const newCd: CustomCountdown = {
       ...cdData,
+      targetDate: cleanTargetDate,
       id: `cd-${Date.now()}`,
     };
     setCountdowns((prev) => [...prev, newCd]);
-    daymarkApi.createCountdown(cdData).catch(() => null);
+    daymarkApi.createCountdown({ ...cdData, targetDate: cleanTargetDate }).catch(() => null);
   };
 
   const deleteCountdown = (id: string) => {
@@ -765,17 +917,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Helper for date stats
   const getDayActivityData = (dateStr: string): DayActivityData => {
-    const daySessions = sessions.filter((s) => s.date === dateStr);
+    const daySessions = sessions.filter((s) => isSameCalendarDay(s.date, s.startTime, dateStr));
     const totalSeconds = daySessions.reduce((acc, s) => acc + s.durationSeconds, 0);
 
     const activeHabits = habits.filter((h) => h.isActive);
     const completedHabitsCount = activeHabits.filter((h) => !!h.logs[dateStr]).length;
 
     const completedTasksCount = tasks.filter(
-      (t) => t.completedAt && format(parseISO(t.completedAt), 'yyyy-MM-dd') === dateStr
+      (t) => t.completedAt && isSameCalendarDay(undefined, t.completedAt, dateStr)
     ).length;
 
-    const hasReview = reviews.some((r) => r.date === dateStr);
+    const hasReview = reviews.some((r) => isSameCalendarDay(r.date, undefined, dateStr));
 
     return {
       date: dateStr,

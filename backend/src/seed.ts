@@ -40,10 +40,11 @@ export async function seedDatabaseIfEmpty() {
     if (activityCount === 0) {
       await prisma.activity.createMany({
         data: [
-          { userId: user.id, name: 'Deep Work & Coding', category: 'Development', icon: 'Code', color: '#3B82F6', dailyTargetMinutes: 240, isActive: true },
-          { userId: user.id, name: 'Reading & Research', category: 'Learning', icon: 'BookOpen', color: '#8B5CF6', dailyTargetMinutes: 60, isActive: true },
-          { userId: user.id, name: 'Health & Fitness', category: 'Wellness', icon: 'Dumbbell', color: '#10B981', dailyTargetMinutes: 45, isActive: true },
-          { userId: user.id, name: 'Creative Design', category: 'Design', icon: 'Sparkles', color: '#EC4899', dailyTargetMinutes: 60, isActive: true },
+          { id: 'act-data-analytics', userId: user.id, name: 'Data Analytics Course', category: 'Study', icon: 'Database', color: '#06B6D4', dailyTargetMinutes: 120, isActive: true },
+          { id: 'act-coding-dsa', userId: user.id, name: 'Coding & DSA Practice', category: 'Development', icon: 'Code', color: '#6366F1', dailyTargetMinutes: 90, isActive: true },
+          { id: 'act-apti-prep', userId: user.id, name: 'Aptitude & KPIT Prep', category: 'Placement', icon: 'Brain', color: '#F59E0B', dailyTargetMinutes: 60, isActive: true },
+          { id: 'act-english-reading', userId: user.id, name: 'English Practice & Reading', category: 'Language', icon: 'BookOpen', color: '#8B5CF6', dailyTargetMinutes: 30, isActive: true },
+          { id: 'act-exercise-fitness', userId: user.id, name: 'Exercise & Workout', category: 'Health', icon: 'Flame', color: '#10B981', dailyTargetMinutes: 45, isActive: true },
         ],
       });
       console.log('✅ Default activities seeded');

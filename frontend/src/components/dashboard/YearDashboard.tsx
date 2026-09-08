@@ -37,6 +37,7 @@ import {
 } from 'date-fns';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
+import { isSameCalendarDay, normalizeDateStr, getCalendarDaysRemaining } from '@/lib/dateUtils';
 
 const MONTH_NAMES = [
   'January',
@@ -53,6 +54,19 @@ const MONTH_NAMES = [
   'December',
 ];
 
+export interface UnifiedMilestone {
+  id: string;
+  title: string;
+  targetDate: string;
+  category: string;
+  color: string;
+  icon?: string;
+  isGoal: boolean;
+  goalType?: string;
+  currentValue?: number;
+  targetValue?: number;
+}
+
 interface HoveredDayInfo {
   dateStr: string;
   formattedDate: string;
@@ -63,7 +77,7 @@ interface HoveredDayInfo {
   hasReview: boolean;
   isFuture: boolean;
   isToday: boolean;
-  milestones?: CustomCountdown[];
+  milestones?: UnifiedMilestone[];
 }
 
 export const YearDashboard: React.FC = () => {
@@ -75,6 +89,8 @@ export const YearDashboard: React.FC = () => {
     countdowns,
     addCountdown,
     deleteCountdown,
+    goals,
+    deleteGoal,
     getDayActivityData,
     setSelectedDate,
     setIsDayDetailOpen,
@@ -92,6 +108,33 @@ export const YearDashboard: React.FC = () => {
   const [newCdTitle, setNewCdTitle] = useState('');
   const [newCdDate, setNewCdDate] = useState('');
   const [newCdCategory, setNewCdCategory] = useState('Milestone');
+
+  // Unified Target Milestones (combining Countdowns and Goals with a targetDate)
+  const allMilestones: UnifiedMilestone[] = [
+    ...countdowns.map((cd) => ({
+      id: cd.id,
+      title: cd.title,
+      targetDate: cd.targetDate,
+      category: cd.category || 'Target',
+      color: cd.color || '#F59E0B',
+      icon: cd.icon || 'Target',
+      isGoal: false,
+    })),
+    ...goals
+      .filter((g) => !!g.targetDate)
+      .map((g) => ({
+        id: g.id,
+        title: g.title,
+        targetDate: g.targetDate!,
+        category: g.category || 'Goal Target',
+        color: g.color || '#A855F7',
+        icon: 'Target',
+        isGoal: true,
+        goalType: g.type,
+        currentValue: g.currentValue,
+        targetValue: g.targetValue,
+      })),
+  ];
 
   // Year End Real-Time Countdown
   const [timeToNewYear, setTimeToNewYear] = useState<{
@@ -192,11 +235,9 @@ export const YearDashboard: React.FC = () => {
     const isFutureDate = isAfter(dateObj, now) && !isSameDay(dateObj, now);
     const isDateToday = isSameDay(dateObj, now);
 
-    const dayMilestones = countdowns.filter((cd) => {
-      if (!cd.targetDate) return false;
-      const formattedTarget = cd.targetDate.includes('T') ? cd.targetDate.split('T')[0] : cd.targetDate;
-      return formattedTarget === dateStr;
-    });
+    const dayMilestones = allMilestones.filter((m) =>
+      isSameCalendarDay(m.targetDate, undefined, dateStr)
+    );
 
     setHoveredDay({
       dateStr,
@@ -214,10 +255,11 @@ export const YearDashboard: React.FC = () => {
 
   const handleCreateCountdown = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newCdTitle || !newCdDate) return;
+    if (!newCdTitle.trim() || !newCdDate) return;
+    const cleanDate = normalizeDateStr(newCdDate);
     addCountdown({
-      title: newCdTitle,
-      targetDate: newCdDate,
+      title: newCdTitle.trim(),
+      targetDate: cleanDate,
       category: newCdCategory,
       color: '#F59E0B',
       icon: 'Target',
@@ -376,10 +418,8 @@ export const YearDashboard: React.FC = () => {
             </AnimatePresence>
 
             <div className="flex flex-wrap gap-3.5">
-              {countdowns.map((cd) => {
-                const target = parseISO(cd.targetDate);
-                const daysRemaining = differenceInDays(target, now);
-                const isPassed = daysRemaining < 0;
+              {allMilestones.map((cd) => {
+                const { daysRemaining, isPassed, formattedTarget } = getCalendarDaysRemaining(cd.targetDate, now);
 
                 return (
                   <motion.div
@@ -388,7 +428,11 @@ export const YearDashboard: React.FC = () => {
                     className="flex-1 min-w-[280px] flex items-center justify-between gap-3.5 p-4 rounded-2xl bg-gradient-to-r from-slate-900/90 via-slate-900/80 to-amber-950/20 border border-amber-500/30 hover:border-amber-400/80 transition-all group shadow-lg shadow-amber-500/5 hover:shadow-amber-500/20"
                   >
                     <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className="p-2.5 rounded-xl bg-gradient-to-br from-amber-500/25 to-orange-500/20 text-amber-400 border border-amber-500/40 shadow-[0_0_12px_rgba(245,158,11,0.25)] shrink-0">
+                      <div className={`p-2.5 rounded-xl border shadow-[0_0_12px_rgba(245,158,11,0.25)] shrink-0 ${
+                        cd.isGoal
+                          ? 'bg-gradient-to-br from-purple-500/25 to-indigo-500/20 text-purple-400 border-purple-500/40'
+                          : 'bg-gradient-to-br from-amber-500/25 to-orange-500/20 text-amber-400 border-amber-500/40'
+                      }`}>
                         <Target className="w-4 h-4" />
                       </div>
                       <div className="min-w-0 flex-1">
@@ -396,12 +440,21 @@ export const YearDashboard: React.FC = () => {
                           <h4 className="text-xs sm:text-sm font-black text-white tracking-wide break-words">
                             {cd.title}
                           </h4>
-                          <span className="text-[9px] font-mono font-bold text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-md border border-amber-500/40 shrink-0">
-                            {cd.category || 'Target'}
+                          <span className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded-md border shrink-0 ${
+                            cd.isGoal
+                              ? 'text-purple-300 bg-purple-500/20 border-purple-500/40'
+                              : 'text-amber-300 bg-amber-500/20 border-amber-500/40'
+                          }`}>
+                            {cd.isGoal ? '🎯 Goal Target' : (cd.category || 'Target')}
                           </span>
                         </div>
                         <p className="text-[10px] text-slate-300 mt-1 font-mono font-semibold">
-                          {format(target, 'MMM d, yyyy')}
+                          {formattedTarget}
+                          {cd.isGoal && typeof cd.targetValue === 'number' && (
+                            <span className="ml-2 text-purple-400">
+                              ({cd.currentValue || 0}/{cd.targetValue} {cd.goalType === 'TIME' ? 'hrs' : 'units'})
+                            </span>
+                          )}
                         </p>
                       </div>
                     </div>
@@ -417,9 +470,15 @@ export const YearDashboard: React.FC = () => {
                       </span>
                       <button
                         type="button"
-                        onClick={() => deleteCountdown(cd.id)}
+                        onClick={() => {
+                          if (cd.isGoal) {
+                            deleteGoal(cd.id);
+                          } else {
+                            deleteCountdown(cd.id);
+                          }
+                        }}
                         className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-rose-400 transition-opacity p-1 cursor-pointer shrink-0"
-                        title="Delete Milestone"
+                        title={cd.isGoal ? "Delete Goal Target" : "Delete Milestone"}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -766,11 +825,9 @@ export const YearDashboard: React.FC = () => {
                     const dateObj = new Date(currentYear, monthIdx, dayNum);
                     const dateStr = format(dateObj, 'yyyy-MM-dd');
                     const isFutureDate = isAfter(dateObj, now) && !isSameDay(dateObj, now);
-                    const dayMilestones = countdowns.filter((cd) => {
-                      if (!cd.targetDate) return false;
-                      const formattedTarget = cd.targetDate.includes('T') ? cd.targetDate.split('T')[0] : cd.targetDate;
-                      return formattedTarget === dateStr;
-                    });
+                    const dayMilestones = allMilestones.filter((m) =>
+                      isSameCalendarDay(m.targetDate, undefined, dateStr)
+                    );
                     const hasMilestone = dayMilestones.length > 0;
                     const intensityClass = getCellIntensityStyle(dateStr, isFutureDate, hasMilestone);
                     const data = getDayActivityData(dateStr);

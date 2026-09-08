@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
+import { isSameCalendarDay, normalizeDateStr } from '@/lib/dateUtils';
 
 const ACTIVITY_PALETTE = ['#6366F1', '#8B5CF6', '#EC4899', '#F43F5E', '#F59E0B', '#10B981', '#06B6D4', '#3B82F6'];
 
@@ -34,6 +35,7 @@ export const DayDetailModal: React.FC = () => {
     reviews,
     saveDailyReview,
     countdowns,
+    goals,
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<'sessions' | 'habits' | 'review'>('sessions');
@@ -50,7 +52,7 @@ export const DayDetailModal: React.FC = () => {
   const [sessionNotes, setSessionNotes] = useState<string>('');
 
   // Daily Review Form State
-  const existingReview = reviews.find((r) => r.date === selectedDate);
+  const existingReview = reviews.find((r) => isSameCalendarDay(r.date, undefined, selectedDate));
   const [wentWell, setWentWell] = useState<string>(existingReview?.wentWell || '');
   const [improve, setImprove] = useState<string>(existingReview?.improve || '');
   const [tomorrowFocus, setTomorrowFocus] = useState<string>(existingReview?.tomorrowFocus || '');
@@ -72,17 +74,21 @@ export const DayDetailModal: React.FC = () => {
   const dateObj = parseISO(selectedDate);
   const formattedDate = format(dateObj, 'EEEE, MMMM d, yyyy');
 
-  // Filter day data
-  const daySessions = sessions.filter((s) => s.date === selectedDate);
+  // Filter day data with robust calendar day matching
+  const daySessions = sessions.filter((s) => isSameCalendarDay(s.date, s.startTime, selectedDate));
   const dayTotalSeconds = daySessions.reduce((acc, s) => acc + s.durationSeconds, 0);
   const dayTotalHours = (dayTotalSeconds / 3600).toFixed(1);
   const dayTotalMinutes = Math.round(dayTotalSeconds / 60);
 
-  const selectedDayMilestones = countdowns.filter((cd) => {
-    if (!cd.targetDate) return false;
-    const formattedTarget = cd.targetDate.includes('T') ? cd.targetDate.split('T')[0] : cd.targetDate;
-    return formattedTarget === selectedDate;
-  });
+  // Unified Strategic Milestones & Goals for this date
+  const selectedDayMilestones = [
+    ...countdowns
+      .filter((cd) => isSameCalendarDay(cd.targetDate, undefined, selectedDate))
+      .map((cd) => ({ id: cd.id, title: cd.title, category: cd.category || 'Target', isGoal: false })),
+    ...goals
+      .filter((g) => isSameCalendarDay(g.targetDate, undefined, selectedDate))
+      .map((g) => ({ id: g.id, title: g.title, category: g.category || 'Strategic Target', isGoal: true })),
+  ];
 
   const handleAddManualSession = (e: React.FormEvent) => {
     e.preventDefault();

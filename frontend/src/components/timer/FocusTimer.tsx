@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
+import { isSameCalendarDay } from '@/lib/dateUtils';
 import { VintageAlarmClock } from './VintageAlarmClock';
 
 export const FocusTimer: React.FC = () => {
@@ -134,7 +135,7 @@ export const FocusTimer: React.FC = () => {
   // Today's study hours calculations
   const now = new Date();
   const todayStr = format(now, 'yyyy-MM-dd');
-  const todaySessions = sessions.filter((s) => s.date === todayStr);
+  const todaySessions = sessions.filter((s) => isSameCalendarDay(s.date, s.startTime, todayStr));
   const todayTotalSeconds = todaySessions.reduce((acc, s) => acc + s.durationSeconds, 0);
   const todayFocusMinutes = Math.round(todayTotalSeconds / 60);
   const targetMinutes = Math.max(1, settings.dailyTargetMinutes || 360);

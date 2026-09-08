@@ -23,6 +23,7 @@ import {
   Cell,
 } from 'recharts';
 import { format, subDays } from 'date-fns';
+import { isSameCalendarDay } from '@/lib/dateUtils';
 import { motion } from 'framer-motion';
 
 export const AnalyticsView: React.FC = () => {
@@ -32,7 +33,7 @@ export const AnalyticsView: React.FC = () => {
   const last7DaysData = Array.from({ length: 7 }).map((_, i) => {
     const d = subDays(new Date(), 6 - i);
     const dateStr = format(d, 'yyyy-MM-dd');
-    const daySessions = sessions.filter((s) => s.date === dateStr);
+    const daySessions = sessions.filter((s) => isSameCalendarDay(s.date, s.startTime, dateStr));
     const totalMinutes = Math.round(
       daySessions.reduce((acc, s) => acc + s.durationSeconds, 0) / 60
     );

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { format, getDayOfYear, getDaysInYear } from 'date-fns';
 import { motion } from 'framer-motion';
+import { isSameCalendarDay } from '@/lib/dateUtils';
 
 interface HeaderProps {
   onOpenShortcuts?: () => void;
@@ -53,9 +54,9 @@ export const Header: React.FC<HeaderProps> = ({ onOpenShortcuts }) => {
   const totalDaysInYear = getDaysInYear(now);
   const yearProgress = ((dayOfYear / totalDaysInYear) * 100).toFixed(1);
 
-  // Calculate today's focus minutes
+  // Calculate today's focus minutes with timezone-safe matching
   const todayStr = format(now, 'yyyy-MM-dd');
-  const todaySessions = sessions.filter((s) => s.date === todayStr);
+  const todaySessions = sessions.filter((s) => isSameCalendarDay(s.date, s.startTime, todayStr));
   const todayFocusMinutes = Math.round(
     todaySessions.reduce((acc, s) => acc + s.durationSeconds, 0) / 60
   );
