@@ -221,13 +221,13 @@ export const TaskManager: React.FC = () => {
       </AnimatePresence>
 
       {/* Filter Tabs with Sliding Motion Pill */}
-      <div className="flex items-center gap-2 text-xs p-1 rounded-2xl bg-slate-950/80 border border-white/10 w-fit">
+      <div className="flex flex-wrap sm:flex-nowrap items-center gap-1.5 text-xs p-1 rounded-2xl bg-slate-950/80 border border-white/10 w-fit max-w-full">
         {(['ALL', 'TODAY', 'HIGH_PRIORITY', 'COMPLETED'] as const).map((f) => (
           <button
             key={f}
             type="button"
             onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-xl font-extrabold transition-all relative cursor-pointer ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl font-extrabold transition-all relative cursor-pointer text-[11px] sm:text-xs shrink-0 ${
               filter === f ? 'text-white' : 'text-slate-400 hover:text-slate-200'
             }`}
           >

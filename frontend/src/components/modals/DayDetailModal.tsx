@@ -79,6 +79,7 @@ export const DayDetailModal: React.FC = () => {
   const dayTotalSeconds = daySessions.reduce((acc, s) => acc + s.durationSeconds, 0);
   const dayTotalHours = (dayTotalSeconds / 3600).toFixed(1);
   const dayTotalMinutes = Math.round(dayTotalSeconds / 60);
+  const dayHabitsCompleted = habits.filter((h) => !!h.logs[selectedDate]).length;
 
   // Unified Strategic Milestones & Goals for this date
   const selectedDayMilestones = [
@@ -239,11 +240,11 @@ export const DayDetailModal: React.FC = () => {
         )}
 
         {/* Tab Selector */}
-        <div className="flex items-center border-b border-white/[0.08] px-6 bg-slate-900/50 text-xs gap-2 py-1">
+        <div className="flex items-center border-b border-white/[0.08] px-3 sm:px-6 bg-slate-900/50 text-xs gap-1 sm:gap-2 py-1 overflow-x-auto whitespace-nowrap scrollbar-none">
           <button
             type="button"
             onClick={() => setActiveTab('sessions')}
-            className={`py-3 px-4 font-black transition-all relative cursor-pointer ${
+            className={`py-3 px-3 sm:px-4 font-black transition-all relative cursor-pointer shrink-0 ${
               activeTab === 'sessions' ? 'text-indigo-400' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -258,7 +259,7 @@ export const DayDetailModal: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveTab('habits')}
-            className={`py-3 px-4 font-black transition-all relative cursor-pointer ${
+            className={`py-3 px-3 sm:px-4 font-black transition-all relative cursor-pointer shrink-0 ${
               activeTab === 'habits' ? 'text-emerald-400' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -268,12 +269,12 @@ export const DayDetailModal: React.FC = () => {
                 className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"
               />
             )}
-            <span>Habit Records</span>
+            <span>Habits Checklist ({dayHabitsCompleted}/{habits.length})</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('review')}
-            className={`py-3 px-4 font-black transition-all relative cursor-pointer ${
+            className={`py-3 px-3 sm:px-4 font-black transition-all relative cursor-pointer shrink-0 ${
               activeTab === 'review' ? 'text-rose-400' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
