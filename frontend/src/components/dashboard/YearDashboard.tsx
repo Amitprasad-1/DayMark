@@ -299,7 +299,7 @@ export const YearDashboard: React.FC = () => {
       {/* 1. TOP HERO SECTION */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left 2 Cols: Year Progress & Real-Time Countdown */}
-        <div className="lg:col-span-2 glass-panel-luxury p-6 lg:p-8 rounded-3xl border border-white/[0.09] space-y-6 relative overflow-hidden shadow-2xl bg-[#090E1C]/80">
+        <div className="lg:col-span-2 glass-panel-luxury p-6 lg:p-8 rounded-3xl border border-white/[0.09] flex flex-col justify-between space-y-6 relative overflow-hidden shadow-2xl bg-[#090E1C]/80">
           {/* Ambient Lighting */}
           <div className="absolute -top-12 -right-12 w-96 h-96 bg-gradient-to-br from-amber-500/15 via-orange-500/10 to-transparent rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -bottom-16 -left-16 w-80 h-80 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
@@ -442,14 +442,15 @@ export const YearDashboard: React.FC = () => {
               )}
             </AnimatePresence>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+            {/* 2-Column Balanced Responsive Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               {allMilestones.map((cd) => {
                 const { daysRemaining, isPassed, formattedTarget } = getCalendarDaysRemaining(cd.targetDate, now);
 
                 return (
                   <motion.div
                     key={cd.id}
-                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileHover={{ scale: 1.015, y: -2 }}
                     className="w-full flex items-center justify-between gap-3.5 p-4 rounded-2xl bg-gradient-to-br from-slate-900/95 via-[#0d1326]/90 to-amber-950/25 border border-amber-500/25 hover:border-amber-400/80 transition-all duration-300 group shadow-lg shadow-amber-500/5 hover:shadow-amber-500/20 border-t border-t-amber-400/30"
                   >
                     <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -462,7 +463,7 @@ export const YearDashboard: React.FC = () => {
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h4 className="text-xs sm:text-sm font-black text-white tracking-wide break-words">
+                          <h4 className="text-xs sm:text-sm font-black text-white tracking-wide truncate">
                             {cd.title}
                           </h4>
                           <span className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded-md border shrink-0 ${
@@ -470,13 +471,14 @@ export const YearDashboard: React.FC = () => {
                               ? 'text-purple-300 bg-purple-500/20 border-purple-500/40'
                               : 'text-amber-300 bg-amber-500/20 border-amber-500/40'
                           }`}>
-                            {cd.isGoal ? '🎯 Goal Target' : (cd.category || 'Target')}
+                            {cd.isGoal ? '🎯 Goal Target' : (cd.category || 'Milestone')}
                           </span>
                         </div>
-                        <p className="text-[10px] text-slate-300 mt-1 font-mono font-semibold">
-                          {formattedTarget}
+                        <p className="text-[10px] text-slate-300 mt-1 font-mono font-semibold flex items-center gap-1.5">
+                          <CalendarIcon className="w-3 h-3 text-slate-400 shrink-0" />
+                          <span>{formattedTarget}</span>
                           {cd.isGoal && typeof cd.targetValue === 'number' && (
-                            <span className="ml-2 text-purple-400">
+                            <span className="ml-1 text-purple-400">
                               ({cd.currentValue || 0}/{cd.targetValue} {cd.goalType === 'TIME' ? 'hrs' : 'units'})
                             </span>
                           )}
@@ -512,6 +514,53 @@ export const YearDashboard: React.FC = () => {
                   </motion.div>
                 );
               })}
+
+              {/* When odd milestone count, render an elegant Add Milestone card to keep grid perfectly 2x2 and balanced */}
+              {allMilestones.length % 2 !== 0 && (
+                <motion.button
+                  whileHover={{ scale: 1.015, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setShowAddCountdown(!showAddCountdown)}
+                  type="button"
+                  className="w-full flex items-center justify-between gap-3.5 p-4 rounded-2xl border-2 border-dashed border-amber-500/30 hover:border-amber-400/80 bg-slate-900/40 hover:bg-amber-950/20 text-slate-400 hover:text-amber-300 transition-all duration-300 group cursor-pointer shadow-sm hover:shadow-amber-500/10 min-h-[72px]"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-400 group-hover:scale-110 group-hover:bg-amber-500/20 group-hover:border-amber-400/50 transition-all shrink-0">
+                      <Plus className="w-4 h-4" />
+                    </div>
+                    <div className="text-left">
+                      <h4 className="text-xs sm:text-sm font-bold text-slate-300 group-hover:text-amber-200 transition-colors">
+                        Add Target Milestone
+                      </h4>
+                      <p className="text-[10px] text-slate-400 font-mono font-medium mt-0.5">
+                        Set deadline &amp; countdown
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[11px] font-bold text-amber-400/80 group-hover:text-amber-300 font-mono px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 shrink-0">
+                    + New
+                  </span>
+                </motion.button>
+              )}
+
+              {/* Empty state if 0 milestones */}
+              {allMilestones.length === 0 && (
+                <motion.button
+                  whileHover={{ scale: 1.015, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setShowAddCountdown(!showAddCountdown)}
+                  type="button"
+                  className="sm:col-span-2 w-full flex items-center justify-center gap-3 p-6 rounded-2xl border-2 border-dashed border-amber-500/30 hover:border-amber-400/80 bg-slate-900/40 hover:bg-amber-950/20 text-slate-400 hover:text-amber-300 transition-all duration-300 group cursor-pointer"
+                >
+                  <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-400 group-hover:scale-110 transition-all">
+                    <Plus className="w-5 h-5" />
+                  </div>
+                  <div className="text-left">
+                    <h4 className="text-sm font-bold text-slate-300 group-hover:text-amber-200">Set Your First Target Milestone</h4>
+                    <p className="text-xs text-slate-400 font-mono">Add project launches, exams, or major year targets</p>
+                  </div>
+                </motion.button>
+              )}
             </div>
           </div>
         </div>
