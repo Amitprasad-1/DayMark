@@ -94,14 +94,14 @@ export const Sidebar: React.FC = () => {
   const renderNavGroup = (title: string, items: NavItem[]) => (
     <div className="space-y-1 w-full">
       {/* Group Header: Constant height prevents any vertical jumping */}
-      <div className="h-6 flex items-center px-1">
+      <div className="h-6 flex items-center px-1 overflow-hidden">
         {isExpanded ? (
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 font-sans flex items-center justify-between w-full">
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 font-sans flex items-center justify-between w-full whitespace-nowrap overflow-hidden">
             <span>{title}</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-slate-700/60" />
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-700/60 shrink-0" />
           </p>
         ) : (
-          <div className="w-5 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mx-auto" />
+          <div className="w-5 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mx-auto shrink-0" />
         )}
       </div>
 
@@ -210,21 +210,21 @@ export const Sidebar: React.FC = () => {
         className="absolute top-0 left-0 bottom-0 flex flex-col glass-panel-luxury border-r border-white/[0.08] p-2.5 space-y-3 overflow-hidden bg-[#050811]/95 backdrop-blur-3xl h-full select-none"
       >
         {/* Top Header Row with Pin / Expand Toggle */}
-        <div className="h-9 flex items-center justify-between px-1 pb-1 border-b border-white/[0.06] shrink-0">
+        <div className="h-9 flex items-center justify-between px-1 pb-1 border-b border-white/[0.06] shrink-0 overflow-hidden">
           {isExpanded ? (
-            <div className="flex items-center justify-between w-full animate-fadeIn">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+            <div className="flex items-center justify-between w-full animate-fadeIn whitespace-nowrap overflow-hidden">
+              <div className="flex items-center gap-2 overflow-hidden">
+                <div className="p-1.5 rounded-xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 shrink-0">
                   <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                 </div>
-                <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">
+                <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider truncate">
                   Navigation
                 </span>
               </div>
               <button
                 type="button"
                 onClick={togglePin}
-                className={`p-1.5 rounded-xl text-xs transition-colors cursor-pointer ${
+                className={`p-1.5 rounded-xl text-xs transition-colors cursor-pointer shrink-0 ${
                   isPinned
                     ? 'text-amber-400 bg-amber-500/20 border border-amber-500/40 shadow-sm'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-white/5 border border-white/5'
@@ -238,7 +238,7 @@ export const Sidebar: React.FC = () => {
             <button
               type="button"
               onClick={togglePin}
-              className="w-9 h-8 mx-auto rounded-xl flex items-center justify-center bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/25 hover:border-indigo-500/50 transition-all cursor-pointer shadow-[0_0_10px_rgba(99,102,241,0.2)] group"
+              className="w-9 h-8 mx-auto rounded-xl flex items-center justify-center bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/25 hover:border-indigo-500/50 transition-all cursor-pointer shadow-[0_0_10px_rgba(99,102,241,0.2)] group shrink-0"
               title="Click to pin navigation open"
             >
               <Sparkles className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
@@ -254,10 +254,10 @@ export const Sidebar: React.FC = () => {
 
         {/* Motivational Mindset Card */}
         {isExpanded ? (
-          <div className="mt-auto p-3 rounded-2xl bg-gradient-to-br from-amber-950/20 via-slate-900/70 to-indigo-950/30 border border-amber-500/20 text-xs space-y-1.5 relative overflow-hidden shadow-xl animate-fadeIn">
+          <div className="mt-auto p-3 rounded-2xl bg-gradient-to-br from-amber-950/20 via-slate-900/70 to-indigo-950/30 border border-amber-500/20 text-xs space-y-1.5 relative overflow-hidden shadow-xl animate-fadeIn min-w-[210px] shrink-0">
             <div className="flex items-center gap-2 text-amber-400 font-bold">
-              <Flame className="w-3.5 h-3.5 fill-amber-400 animate-pulse" />
-              <span className="font-extrabold tracking-wide uppercase text-[10px]">Daily Mindset</span>
+              <Flame className="w-3.5 h-3.5 fill-amber-400 animate-pulse shrink-0" />
+              <span className="font-extrabold tracking-wide uppercase text-[10px] whitespace-nowrap">Daily Mindset</span>
             </div>
             <p className="text-slate-300 italic leading-relaxed text-[10px]">
               &quot;We are what we repeatedly do. Excellence, then, is not an act, but a habit.&quot;
@@ -266,7 +266,7 @@ export const Sidebar: React.FC = () => {
         ) : (
           <div
             onClick={togglePin}
-            className="mt-auto w-10 h-10 mx-auto rounded-2xl bg-gradient-to-tr from-amber-500/20 via-orange-500/15 to-amber-950/40 border border-amber-500/35 flex items-center justify-center text-amber-400 shadow-[0_0_16px_rgba(245,158,11,0.25)] hover:scale-105 transition-all cursor-pointer group"
+            className="mt-auto w-10 h-10 mx-auto rounded-2xl bg-gradient-to-tr from-amber-500/20 via-orange-500/15 to-amber-950/40 border border-amber-500/35 flex items-center justify-center text-amber-400 shadow-[0_0_16px_rgba(245,158,11,0.25)] hover:scale-105 transition-all cursor-pointer group shrink-0"
             title="Daily Mindset (Click to pin navigation open)"
           >
             <Flame className="w-5 h-5 fill-amber-400 group-hover:scale-110 transition-transform animate-pulse" />

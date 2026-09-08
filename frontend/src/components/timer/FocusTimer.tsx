@@ -291,12 +291,12 @@ export const FocusTimer: React.FC = () => {
   // Reusable Electric Spark Dial SVG Renderer
   const renderDialSvg = (isZen: boolean = false) => {
     const svgClass = isZen
-      ? 'w-[310px] h-[310px] sm:w-[420px] sm:h-[420px] md:w-[500px] md:h-[500px] lg:w-[560px] lg:h-[560px] overflow-visible drop-shadow-[0_0_55px_rgba(0,0,0,0.95)]'
-      : 'w-72 h-72 sm:w-84 sm:h-84 md:w-[410px] md:h-[410px] overflow-visible drop-shadow-[0_0_35px_rgba(0,0,0,0.9)]';
+      ? 'w-72 h-72 sm:w-96 sm:h-96 md:w-[460px] md:h-[460px] lg:w-[500px] lg:h-[500px] overflow-visible drop-shadow-[0_0_50px_rgba(0,0,0,0.9)]'
+      : 'w-60 h-60 sm:w-72 sm:h-72 md:w-[330px] md:h-[330px] overflow-visible drop-shadow-[0_0_35px_rgba(0,0,0,0.9)]';
 
     const digitsClass = isZen
       ? 'text-6xl sm:text-8xl md:text-9xl lg:text-[112px] font-black font-mono tracking-tight text-white drop-shadow-[0_16px_36px_rgba(0,0,0,0.95)] select-none'
-      : 'text-5xl sm:text-7xl md:text-8xl font-black font-mono tracking-tight text-white drop-shadow-[0_12px_28px_rgba(0,0,0,0.95)] select-none';
+      : 'text-5xl sm:text-6xl md:text-7xl font-black font-mono tracking-tight text-white drop-shadow-[0_12px_28px_rgba(0,0,0,0.95)] select-none';
 
     return (
       <div className="relative flex items-center justify-center z-10 select-none">
@@ -781,7 +781,7 @@ export const FocusTimer: React.FC = () => {
         </div>
 
         {/* CENTERPIECE TIME DISPLAY WITH CIRCULAR PROGRESS GAUGE */}
-        <div className="glass-panel-luxury p-8 sm:p-12 lg:p-16 rounded-3xl border border-white/[0.09] flex flex-col items-center justify-center text-center space-y-8 relative overflow-hidden shadow-2xl bg-[#090E1C]/80">
+        <div className="glass-panel-luxury p-6 sm:p-8 lg:p-10 rounded-3xl border border-white/[0.09] flex flex-col items-center justify-center text-center space-y-6 relative overflow-hidden shadow-2xl bg-[#090E1C]/80">
           {/* Ambient Glowing Orb */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-tr from-amber-500/5 via-indigo-500/8 to-emerald-500/5 rounded-full blur-[120px] pointer-events-none" />
 

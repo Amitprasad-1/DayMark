@@ -229,8 +229,10 @@ export const HabitTracker: React.FC = () => {
               {daysList.map((d) => (
                 <div
                   key={d.dateStr}
-                  className={`w-9 text-center flex flex-col items-center ${
-                    d.isToday ? 'text-amber-400 font-extrabold' : 'text-slate-500'
+                  className={`w-9 text-center flex flex-col items-center py-1 rounded-xl transition-colors ${
+                    d.isToday
+                      ? 'bg-amber-500/15 border border-amber-500/35 text-amber-300 font-black shadow-[0_0_12px_rgba(245,158,11,0.2)]'
+                      : 'text-slate-500'
                   }`}
                 >
                   <span className="text-[9px] uppercase font-mono">{d.dayName}</span>
@@ -286,15 +288,19 @@ export const HabitTracker: React.FC = () => {
                         }}
                         className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
                           isDone
-                            ? 'bg-gradient-to-tr from-emerald-500 to-teal-400 text-slate-950 shadow-[0_0_12px_rgba(16,185,129,0.45)] border border-emerald-300/50'
-                            : 'bg-slate-900/90 border border-white/10 hover:border-white/25'
+                            ? 'bg-gradient-to-tr from-emerald-500 to-teal-400 text-slate-950 shadow-[0_0_12px_rgba(16,185,129,0.5)] border border-emerald-300/60'
+                            : d.isToday
+                              ? 'bg-amber-500/10 border-2 border-amber-400/50 hover:border-amber-400 hover:bg-amber-500/20 shadow-[0_0_10px_rgba(245,158,11,0.2)]'
+                              : 'bg-slate-900/90 border border-white/10 hover:border-indigo-400/60 hover:bg-slate-800'
                         }`}
-                        title={`${h.name} - ${d.dateStr}`}
+                        title={`${h.name} - ${d.dateStr}${d.isToday ? ' (Today)' : ''}`}
                       >
                         {isDone ? (
                           <CheckCircle className="w-4 h-4 text-slate-950 fill-slate-950" />
+                        ) : d.isToday ? (
+                          <Circle className="w-3.5 h-3.5 text-amber-400/70 hover:text-amber-300" />
                         ) : (
-                          <Circle className="w-3 h-3 text-slate-700" />
+                          <Circle className="w-3 h-3 text-slate-600 hover:text-indigo-300" />
                         )}
                       </motion.button>
                     );

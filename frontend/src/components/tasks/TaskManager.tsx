@@ -252,15 +252,21 @@ export const TaskManager: React.FC = () => {
         ) : (
           filteredTasks.map((task) => {
             const isCompleted = task.completed;
+            const priorityBorder = task.priority === 'HIGH'
+              ? 'border-l-4 border-l-rose-500'
+              : task.priority === 'MEDIUM'
+                ? 'border-l-4 border-l-amber-500'
+                : 'border-l-4 border-l-indigo-500/80';
+
             return (
               <motion.div
                 key={task.id}
                 layout
-                whileHover={{ scale: 1.005 }}
-                className={`glass-panel-luxury p-4 sm:p-5 rounded-2xl border flex items-center justify-between gap-4 transition-all ${
+                whileHover={{ scale: 1.006, y: -1 }}
+                className={`glass-panel-luxury p-4 sm:p-5 rounded-2xl border flex items-center justify-between gap-4 transition-all duration-200 group ${priorityBorder} ${
                   isCompleted
                     ? 'opacity-60 bg-slate-950/40 border-white/[0.05]'
-                    : 'border-white/[0.09] hover:border-indigo-500/40 bg-[#090E1C]/80 shadow-md'
+                    : 'border-white/[0.09] hover:border-indigo-500/50 bg-[#090E1C]/85 shadow-md hover:shadow-xl hover:shadow-indigo-500/5'
                 }`}
               >
                 <div className="flex items-start gap-3.5">
@@ -276,7 +282,7 @@ export const TaskManager: React.FC = () => {
                     {isCompleted ? (
                       <CheckCircle2 className="w-5 h-5 text-emerald-400 fill-emerald-950/80 shadow-sm" />
                     ) : (
-                      <Circle className="w-5 h-5 text-slate-500 hover:text-indigo-400 transition-colors" />
+                      <Circle className="w-5 h-5 text-slate-500 group-hover:text-indigo-400 transition-colors" />
                     )}
                   </motion.button>
 

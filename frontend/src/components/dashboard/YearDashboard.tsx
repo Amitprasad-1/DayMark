@@ -442,15 +442,15 @@ export const YearDashboard: React.FC = () => {
               )}
             </AnimatePresence>
 
-            <div className="flex flex-wrap gap-3.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
               {allMilestones.map((cd) => {
                 const { daysRemaining, isPassed, formattedTarget } = getCalendarDaysRemaining(cd.targetDate, now);
 
                 return (
                   <motion.div
                     key={cd.id}
-                    whileHover={{ scale: 1.02, y: -1 }}
-                    className="flex-1 min-w-[280px] flex items-center justify-between gap-3.5 p-4 rounded-2xl bg-gradient-to-r from-slate-900/90 via-slate-900/80 to-amber-950/20 border border-amber-500/30 hover:border-amber-400/80 transition-all group shadow-lg shadow-amber-500/5 hover:shadow-amber-500/20"
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    className="w-full flex items-center justify-between gap-3.5 p-4 rounded-2xl bg-gradient-to-br from-slate-900/95 via-[#0d1326]/90 to-amber-950/25 border border-amber-500/25 hover:border-amber-400/80 transition-all duration-300 group shadow-lg shadow-amber-500/5 hover:shadow-amber-500/20 border-t border-t-amber-400/30"
                   >
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                       <div className={`p-2.5 rounded-xl border shadow-[0_0_12px_rgba(245,158,11,0.25)] shrink-0 ${
