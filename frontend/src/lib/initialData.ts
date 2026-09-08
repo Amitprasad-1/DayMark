@@ -238,18 +238,6 @@ export const INITIAL_GOALS: Goal[] = [
     color: '#10B981',
     createdAt: format(subDays(new Date(), 20), 'yyyy-MM-dd'),
   },
-  {
-    id: 'goal-spring-boot',
-    title: 'Complete Spring Boot',
-    description: 'Master Spring Boot fundamentals, REST APIs, and microservices architecture',
-    type: 'TIME',
-    targetValue: 60,
-    currentValue: 1,
-    targetDate: `${new Date().getFullYear()}-12-31`,
-    category: 'Development',
-    color: '#10B981',
-    createdAt: format(new Date(), 'yyyy-MM-dd'),
-  },
 ];
 
 export const INITIAL_COUNTDOWNS: CustomCountdown[] = [

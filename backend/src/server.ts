@@ -509,15 +509,26 @@ app.post('/api/goals/:id/progress', async (req: Request, res: Response) => {
 
 app.delete('/api/goals/:id', async (req: Request, res: Response) => {
   const id = getId(req);
+  const title = (req.query.title as string) || '';
   try {
     if (isDbConnected()) {
-      await prisma.goal.delete({ where: { id } }).catch(() => null);
+      await prisma.goal.deleteMany({
+        where: {
+          userId: 'default-user',
+          OR: [
+            { id },
+            ...(title ? [{ title: { equals: title, mode: 'insensitive' as const } }] : []),
+          ],
+        },
+      }).catch(() => null);
       return res.status(204).send();
     }
   } catch (e: any) {
     console.error('Goal delete fallback:', e.message);
   }
-  inMemoryStore.goals = inMemoryStore.goals.filter((g) => g.id !== id);
+  inMemoryStore.goals = inMemoryStore.goals.filter(
+    (g) => g.id !== id && (!title || g.title.toLowerCase() !== title.toLowerCase())
+  );
   res.status(204).send();
 });
 
@@ -539,6 +550,7 @@ app.post('/api/countdowns', async (req: Request, res: Response) => {
     if (isDbConnected()) {
       const created = await prisma.customCountdown.create({
         data: {
+          ...(req.body.id ? { id: req.body.id } : {}),
           title: req.body.title,
           targetDate: req.body.targetDate,
           category: req.body.category || 'Milestone',
@@ -551,22 +563,32 @@ app.post('/api/countdowns', async (req: Request, res: Response) => {
   } catch (e: any) {
     console.error('Countdown create fallback:', e.message);
   }
-  const newCd = { ...req.body, id: `cd-${Date.now()}` };
+  const newCd = { ...req.body, id: req.body.id || `cd-${Date.now()}` };
   inMemoryStore.countdowns.push(newCd);
   res.status(201).json(newCd);
 });
 
 app.delete('/api/countdowns/:id', async (req: Request, res: Response) => {
   const id = getId(req);
+  const title = (req.query.title as string) || '';
   try {
     if (isDbConnected()) {
-      await prisma.customCountdown.delete({ where: { id } }).catch(() => null);
+      await prisma.customCountdown.deleteMany({
+        where: {
+          OR: [
+            { id },
+            ...(title ? [{ title: { equals: title, mode: 'insensitive' as const } }] : []),
+          ],
+        },
+      }).catch(() => null);
       return res.status(204).send();
     }
   } catch (e: any) {
     console.error('Countdown delete fallback:', e.message);
   }
-  inMemoryStore.countdowns = inMemoryStore.countdowns.filter((c) => c.id !== id);
+  inMemoryStore.countdowns = inMemoryStore.countdowns.filter(
+    (c) => c.id !== id && (!title || c.title.toLowerCase() !== title.toLowerCase())
+  );
   res.status(204).send();
 });
 
@@ -644,9 +666,9 @@ app.get('/api/sync/full', async (_req: Request, res: Response) => {
         activities: activities.length > 0 ? activities : inMemoryStore.activities,
         sessions,
         habits: mappedHabits.length > 0 ? mappedHabits : inMemoryStore.habits,
-        tasks: tasks.length > 0 ? tasks : inMemoryStore.tasks,
-        goals: goals.length > 0 ? goals : inMemoryStore.goals,
-        countdowns: countdowns.length > 0 ? countdowns : inMemoryStore.countdowns,
+        tasks,
+        goals,
+        countdowns,
         reviews,
         serverTime: new Date().toISOString(),
       });
@@ -739,7 +761,15 @@ app.post('/api/sync/full', async (req: Request, res: Response) => {
         }
       }
 
-      if (Array.isArray(goals) && goals.length > 0) {
+      if (Array.isArray(goals)) {
+        const currentGoalIds = goals.map((g) => g.id).filter(Boolean);
+        await prisma.goal.deleteMany({
+          where: {
+            userId: 'default-user',
+            id: { notIn: currentGoalIds },
+          },
+        }).catch(() => null);
+
         for (const g of goals) {
           if (!g.id || !g.title) continue;
           await prisma.goal.upsert({
@@ -770,7 +800,14 @@ app.post('/api/sync/full', async (req: Request, res: Response) => {
         }
       }
 
-      if (Array.isArray(countdowns) && countdowns.length > 0) {
+      if (Array.isArray(countdowns)) {
+        const currentCdIds = countdowns.map((c) => c.id).filter(Boolean);
+        await prisma.customCountdown.deleteMany({
+          where: {
+            id: { notIn: currentCdIds },
+          },
+        }).catch(() => null);
+
         for (const c of countdowns) {
           if (!c.id || !c.title) continue;
           await prisma.customCountdown.upsert({

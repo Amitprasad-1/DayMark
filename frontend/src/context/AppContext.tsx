@@ -121,6 +121,39 @@ const STORAGE_KEYS = {
   COUNTDOWNS: 'daymark_countdowns',
   REVIEWS: 'daymark_reviews',
   TIMER: 'daymark_timer_state_v2',
+  DELETED_IDS: 'daymark_deleted_item_ids_v1',
+};
+
+const recordDeletedId = (id: string, title?: string) => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.DELETED_IDS);
+    const set: string[] = raw ? JSON.parse(raw) : [];
+    if (id && !set.includes(id)) set.push(id);
+    if (title && !set.includes(title.toLowerCase().trim())) set.push(title.toLowerCase().trim());
+    localStorage.setItem(STORAGE_KEYS.DELETED_IDS, JSON.stringify(set));
+  } catch {}
+};
+
+const isDeleted = (id?: string, title?: string): boolean => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.DELETED_IDS);
+    if (!raw) return false;
+    const set: string[] = JSON.parse(raw);
+    if (id && set.includes(id)) return true;
+    if (title && set.includes(title.toLowerCase().trim())) return true;
+  } catch {}
+  return false;
+};
+
+const unmarkDeleted = (title?: string) => {
+  if (!title) return;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.DELETED_IDS);
+    if (!raw) return;
+    const set: string[] = JSON.parse(raw);
+    const updated = set.filter((x) => x !== title.toLowerCase().trim());
+    localStorage.setItem(STORAGE_KEYS.DELETED_IDS, JSON.stringify(updated));
+  } catch {}
 };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -192,14 +225,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       const storedActivities = localStorage.getItem(STORAGE_KEYS.ACTIVITIES);
       if (storedActivities) {
-        const parsed: Activity[] = JSON.parse(storedActivities);
-        const merged = [
-          ...parsed,
-          ...INITIAL_ACTIVITIES.filter((ia) => !parsed.some((p) => p.name.toLowerCase() === ia.name.toLowerCase() || p.id === ia.id)),
-        ];
-        setActivities(merged);
+        try {
+          const parsed: Activity[] = JSON.parse(storedActivities);
+          setActivities(parsed.filter((a) => !isDeleted(a.id, a.name)));
+        } catch {
+          setActivities(INITIAL_ACTIVITIES.filter((a) => !isDeleted(a.id, a.name)));
+        }
       } else {
-        setActivities(INITIAL_ACTIVITIES);
+        setActivities(INITIAL_ACTIVITIES.filter((a) => !isDeleted(a.id, a.name)));
       }
 
       const storedSessions = localStorage.getItem(STORAGE_KEYS.SESSIONS);
@@ -241,16 +274,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (storedHabits) {
         try {
           const parsedHabits: Habit[] = JSON.parse(storedHabits);
-          const mergedHabits = [
-            ...parsedHabits,
-            ...INITIAL_HABITS.filter((ih) => !parsedHabits.some((p) => p.name.toLowerCase() === ih.name.toLowerCase() || p.id === ih.id)),
-          ];
-          setHabits(mergedHabits);
+          setHabits(parsedHabits.filter((h) => !isDeleted(h.id, h.name)));
         } catch {
-          setHabits(INITIAL_HABITS);
+          setHabits(INITIAL_HABITS.filter((h) => !isDeleted(h.id, h.name)));
         }
       } else {
-        setHabits(INITIAL_HABITS);
+        setHabits(INITIAL_HABITS.filter((h) => !isDeleted(h.id, h.name)));
       }
 
       const storedReviews = localStorage.getItem(STORAGE_KEYS.REVIEWS);
@@ -265,48 +294,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (storedTasks) {
         try {
           const parsedTasks: Task[] = JSON.parse(storedTasks);
-          const mergedTasks = [
-            ...parsedTasks,
-            ...INITIAL_TASKS.filter((it) => !parsedTasks.some((p) => p.title.toLowerCase() === it.title.toLowerCase() || p.id === it.id)),
-          ];
-          setTasks(mergedTasks);
+          setTasks(parsedTasks.filter((t) => !isDeleted(t.id, t.title)));
         } catch {
-          setTasks(INITIAL_TASKS);
+          setTasks(INITIAL_TASKS.filter((t) => !isDeleted(t.id, t.title)));
         }
       } else {
-        setTasks(INITIAL_TASKS);
+        setTasks(INITIAL_TASKS.filter((t) => !isDeleted(t.id, t.title)));
       }
 
       const storedGoals = localStorage.getItem(STORAGE_KEYS.GOALS);
       if (storedGoals) {
         try {
           const parsedGoals: Goal[] = JSON.parse(storedGoals);
-          const mergedGoals = [
-            ...parsedGoals,
-            ...INITIAL_GOALS.filter((ig) => !parsedGoals.some((p) => p.title.toLowerCase() === ig.title.toLowerCase() || p.id === ig.id)),
-          ];
-          setGoals(mergedGoals);
+          setGoals(parsedGoals.filter((g) => !isDeleted(g.id, g.title)));
         } catch {
-          setGoals(INITIAL_GOALS);
+          setGoals(INITIAL_GOALS.filter((g) => !isDeleted(g.id, g.title)));
         }
       } else {
-        setGoals(INITIAL_GOALS);
+        setGoals(INITIAL_GOALS.filter((g) => !isDeleted(g.id, g.title)));
       }
 
       const storedCountdowns = localStorage.getItem(STORAGE_KEYS.COUNTDOWNS);
       if (storedCountdowns) {
         try {
           const parsedCountdowns: CustomCountdown[] = JSON.parse(storedCountdowns);
-          const mergedCountdowns = [
-            ...parsedCountdowns,
-            ...INITIAL_COUNTDOWNS.filter((ic) => !parsedCountdowns.some((p) => p.title.toLowerCase() === ic.title.toLowerCase() || p.id === ic.id)),
-          ];
-          setCountdowns(mergedCountdowns);
+          setCountdowns(parsedCountdowns.filter((c) => !isDeleted(c.id, c.title)));
         } catch {
-          setCountdowns(INITIAL_COUNTDOWNS);
+          setCountdowns(INITIAL_COUNTDOWNS.filter((c) => !isDeleted(c.id, c.title)));
         }
       } else {
-        setCountdowns(INITIAL_COUNTDOWNS);
+        setCountdowns(INITIAL_COUNTDOWNS.filter((c) => !isDeleted(c.id, c.title)));
       }
 
       // Restore Timer State with exact epoch timestamps
@@ -411,10 +428,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       setSessions(mergedSessions);
 
-      // 4. Goals: Union by ID or title
-      const mergedGoals = [...current.goals];
+      // 4. Goals: Union by ID or title (ignoring tombstones)
+      const mergedGoals = [...current.goals].filter((g) => !isDeleted(g.id, g.title));
       if (Array.isArray(cloudData.goals)) {
         cloudData.goals.forEach((cg) => {
+          if (isDeleted(cg.id, cg.title)) return;
           const exists = mergedGoals.some(
             (lg) => lg.id === cg.id || lg.title.trim().toLowerCase() === cg.title.trim().toLowerCase()
           );
@@ -423,15 +441,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           }
         });
       }
-      if (current.goals.some((lg) => !cloudData.goals?.some((cg) => cg.id === lg.id || cg.title.trim().toLowerCase() === lg.title.trim().toLowerCase()))) {
-        hasLocalAdditions = true;
-      }
       setGoals(mergedGoals);
 
-      // 5. Countdowns: Union by ID or title
-      const mergedCountdowns = [...current.countdowns];
+      // 5. Countdowns: Union by ID or title (ignoring tombstones)
+      const mergedCountdowns = [...current.countdowns].filter((c) => !isDeleted(c.id, c.title));
       if (Array.isArray(cloudData.countdowns)) {
         cloudData.countdowns.forEach((cc) => {
+          if (isDeleted(cc.id, cc.title)) return;
           const exists = mergedCountdowns.some(
             (lc) => lc.id === cc.id || lc.title.trim().toLowerCase() === cc.title.trim().toLowerCase()
           );
@@ -440,15 +456,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           }
         });
       }
-      if (current.countdowns.some((lc) => !cloudData.countdowns?.some((cc) => cc.id === lc.id || cc.title.trim().toLowerCase() === lc.title.trim().toLowerCase()))) {
-        hasLocalAdditions = true;
-      }
       setCountdowns(mergedCountdowns);
 
-      // 6. Tasks: Union by ID or title
-      const mergedTasks = [...current.tasks];
+      // 6. Tasks: Union by ID or title (ignoring tombstones)
+      const mergedTasks = [...current.tasks].filter((t) => !isDeleted(t.id, t.title));
       if (Array.isArray(cloudData.tasks)) {
         cloudData.tasks.forEach((ct) => {
+          if (isDeleted(ct.id, ct.title)) return;
           const exists = mergedTasks.some(
             (lt) => lt.id === ct.id || lt.title.trim().toLowerCase() === ct.title.trim().toLowerCase()
           );
@@ -456,9 +470,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             mergedTasks.push(ct);
           }
         });
-      }
-      if (current.tasks.some((lt) => !cloudData.tasks?.some((ct) => ct.id === lt.id))) {
-        hasLocalAdditions = true;
       }
       setTasks(mergedTasks);
 
@@ -871,11 +882,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteTask = (id: string) => {
+    const target = tasks.find((t) => t.id === id);
+    recordDeletedId(id, target?.title);
     setTasks((prev) => prev.filter((t) => t.id !== id));
     daymarkApi.deleteTask(id).catch(() => null);
   };
 
   const addGoal = (goalData: Omit<Goal, 'id' | 'createdAt' | 'currentValue'>) => {
+    unmarkDeleted(goalData.title);
     const cleanTargetDate = goalData.targetDate ? normalizeDateStr(goalData.targetDate) : undefined;
     const newGoal: Goal = {
       ...goalData,
@@ -898,11 +912,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteGoal = (id: string) => {
+    const target = goals.find((g) => g.id === id);
+    recordDeletedId(id, target?.title);
     setGoals((prev) => prev.filter((g) => g.id !== id));
-    daymarkApi.deleteGoal(id).catch(() => null);
+    daymarkApi.deleteGoal(id, target?.title).catch(() => null);
   };
 
   const addCountdown = (cdData: Omit<CustomCountdown, 'id'>) => {
+    unmarkDeleted(cdData.title);
     const cleanTargetDate = normalizeDateStr(cdData.targetDate);
     const newCd: CustomCountdown = {
       ...cdData,
@@ -910,12 +927,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: `cd-${Date.now()}`,
     };
     setCountdowns((prev) => [...prev, newCd]);
-    daymarkApi.createCountdown({ ...cdData, targetDate: cleanTargetDate }).catch(() => null);
+    daymarkApi.createCountdown({ ...cdData, id: newCd.id, targetDate: cleanTargetDate }).catch(() => null);
   };
 
   const deleteCountdown = (id: string) => {
+    const target = countdowns.find((c) => c.id === id);
+    recordDeletedId(id, target?.title);
     setCountdowns((prev) => prev.filter((cd) => cd.id !== id));
-    daymarkApi.deleteCountdown(id).catch(() => null);
+    daymarkApi.deleteCountdown(id, target?.title).catch(() => null);
   };
 
   const saveDailyReview = (reviewData: Omit<DailyReview, 'id'>) => {

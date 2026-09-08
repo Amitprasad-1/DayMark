@@ -196,8 +196,9 @@ export const daymarkApi = {
       body: JSON.stringify({ delta }),
     });
   },
-  async deleteGoal(id: string): Promise<boolean> {
-    const res = await request(`/api/goals/${id}`, { method: 'DELETE' });
+  async deleteGoal(id: string, title?: string): Promise<boolean> {
+    const q = title ? `?title=${encodeURIComponent(title)}` : '';
+    const res = await request(`/api/goals/${id}${q}`, { method: 'DELETE' });
     return res !== null;
   },
 
@@ -205,14 +206,15 @@ export const daymarkApi = {
   async getCountdowns(): Promise<CustomCountdown[] | null> {
     return request<CustomCountdown[]>('/api/countdowns');
   },
-  async createCountdown(countdown: Omit<CustomCountdown, 'id'>): Promise<CustomCountdown | null> {
+  async createCountdown(countdown: Omit<CustomCountdown, 'id'> & { id?: string }): Promise<CustomCountdown | null> {
     return request<CustomCountdown>('/api/countdowns', {
       method: 'POST',
       body: JSON.stringify(countdown),
     });
   },
-  async deleteCountdown(id: string): Promise<boolean> {
-    const res = await request(`/api/countdowns/${id}`, { method: 'DELETE' });
+  async deleteCountdown(id: string, title?: string): Promise<boolean> {
+    const q = title ? `?title=${encodeURIComponent(title)}` : '';
+    const res = await request(`/api/countdowns/${id}${q}`, { method: 'DELETE' });
     return res !== null;
   },
 

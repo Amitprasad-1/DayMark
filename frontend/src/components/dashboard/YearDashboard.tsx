@@ -485,14 +485,15 @@ export const YearDashboard: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => {
-                          if (cd.isGoal) {
-                            deleteGoal(cd.id);
-                          } else {
-                            deleteCountdown(cd.id);
-                          }
+                          deleteGoal(cd.id);
+                          deleteCountdown(cd.id);
+                          const matchingGoal = goals.find((g) => g.title.toLowerCase() === cd.title.toLowerCase());
+                          if (matchingGoal) deleteGoal(matchingGoal.id);
+                          const matchingCd = countdowns.find((c) => c.title.toLowerCase() === cd.title.toLowerCase());
+                          if (matchingCd) deleteCountdown(matchingCd.id);
                         }}
                         className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-rose-400 transition-opacity p-1 cursor-pointer shrink-0"
-                        title={cd.isGoal ? "Delete Goal Target" : "Delete Milestone"}
+                        title="Delete Target Milestone"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
