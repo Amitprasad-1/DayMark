@@ -100,7 +100,8 @@ export const YearDashboard: React.FC = () => {
   } = useApp();
 
   const [currentYear] = useState<number>(new Date().getFullYear());
-  const [selectedQuarter, setSelectedQuarter] = useState<'ALL' | 'Q1' | 'Q2' | 'Q3' | 'Q4'>('ALL');
+  type CalendarViewMode = 'FROM_CURRENT' | 'REMAINING' | 'JAN_DEC' | 'Q1' | 'Q2' | 'Q3' | 'Q4';
+  const [calendarView, setCalendarView] = useState<CalendarViewMode>('FROM_CURRENT');
   const [showAddCountdown, setShowAddCountdown] = useState<boolean>(false);
   const [hoveredDay, setHoveredDay] = useState<HoveredDayInfo | null>(null);
 
@@ -269,14 +270,27 @@ export const YearDashboard: React.FC = () => {
     setShowAddCountdown(false);
   };
 
-  // Filter months based on quarter
+  const currentMonthIdx = now.getMonth();
+  const currentMonthShort = MONTH_NAMES[currentMonthIdx]?.slice(0, 3) || 'Now';
+
+  // Filter and order months dynamically starting with current month
   const visibleMonthIndices = () => {
-    switch (selectedQuarter) {
+    switch (calendarView) {
+      case 'FROM_CURRENT':
+        // Starts with current month (e.g. Sep, Oct, Nov, Dec, Jan, Feb... Aug)
+        return Array.from({ length: 12 }, (_, i) => (currentMonthIdx + i) % 12);
+      case 'REMAINING':
+        // Remaining months of the year starting from current (e.g. Sep -> Dec)
+        return Array.from({ length: 12 - currentMonthIdx }, (_, i) => currentMonthIdx + i);
+      case 'JAN_DEC':
+        // Traditional Jan -> Dec
+        return Array.from({ length: 12 }, (_, i) => i);
       case 'Q1': return [0, 1, 2];
       case 'Q2': return [3, 4, 5];
       case 'Q3': return [6, 7, 8];
       case 'Q4': return [9, 10, 11];
-      default: return Array.from({ length: 12 }, (_, i) => i);
+      default:
+        return Array.from({ length: 12 }, (_, i) => (currentMonthIdx + i) % 12);
     }
   };
 
@@ -694,26 +708,34 @@ export const YearDashboard: React.FC = () => {
             </p>
           </div>
 
-          {/* Quarter Filters with Sliding Active Pill */}
+          {/* Calendar Sequence & View Filters */}
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1 p-1 rounded-2xl bg-slate-950/80 border border-white/10 shadow-inner">
-              {(['ALL', 'Q1', 'Q2', 'Q3', 'Q4'] as const).map((q) => (
+            <div className="flex flex-wrap items-center gap-1 p-1 rounded-2xl bg-slate-950/80 border border-white/10 shadow-inner">
+              {[
+                { id: 'FROM_CURRENT', label: `From ${currentMonthShort} (Default)` },
+                { id: 'REMAINING', label: `${currentMonthShort}–Dec` },
+                { id: 'JAN_DEC', label: 'Jan–Dec' },
+                { id: 'Q1', label: 'Q1' },
+                { id: 'Q2', label: 'Q2' },
+                { id: 'Q3', label: 'Q3' },
+                { id: 'Q4', label: 'Q4' },
+              ].map((opt) => (
                 <button
-                  key={q}
+                  key={opt.id}
                   type="button"
-                  onClick={() => setSelectedQuarter(q)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-colors relative outline-none ${
-                    selectedQuarter === q ? 'text-white font-black' : 'text-slate-400 hover:text-white'
+                  onClick={() => setCalendarView(opt.id as CalendarViewMode)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-colors relative outline-none ${
+                    calendarView === opt.id ? 'text-white font-black' : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  {selectedQuarter === q && (
+                  {calendarView === opt.id && (
                     <motion.div
-                      layoutId="quarterActivePill"
+                      layoutId="calendarViewActivePill"
                       transition={{ type: 'spring', stiffness: 450, damping: 32 }}
                       className="absolute inset-0 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.4)]"
                     />
                   )}
-                  <span className="relative z-10">{q === 'ALL' ? 'All 12 Months' : q}</span>
+                  <span className="relative z-10">{opt.label}</span>
                 </button>
               ))}
             </div>
@@ -788,9 +810,27 @@ export const YearDashboard: React.FC = () => {
                 {/* Month Card Header with Live Stats */}
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-black text-white tracking-wide group-hover:text-indigo-300 transition-colors font-sans">
-                      {monthName}
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-black text-white tracking-wide group-hover:text-indigo-300 transition-colors font-sans">
+                        {monthName}
+                      </h3>
+                      {monthIdx === currentMonthIdx && (
+                        <span className="px-2 py-0.5 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[9px] font-black uppercase tracking-wider shadow-sm flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
+                          Current
+                        </span>
+                      )}
+                      {monthIdx > currentMonthIdx && (
+                        <span className="px-1.5 py-0.5 rounded-md bg-slate-800/60 text-slate-400 border border-white/[0.06] text-[9px] font-semibold">
+                          Upcoming
+                        </span>
+                      )}
+                      {monthIdx < currentMonthIdx && (
+                        <span className="px-1.5 py-0.5 rounded-md bg-slate-900/60 text-slate-500 border border-white/[0.04] text-[9px] font-semibold">
+                          Past
+                        </span>
+                      )}
+                    </div>
                     <span className="text-[10px] font-mono text-emerald-400 font-extrabold bg-emerald-950/50 px-2 py-0.5 rounded-lg border border-emerald-800/40 shadow-inner">
                       {stats.totalHours}h
                     </span>
