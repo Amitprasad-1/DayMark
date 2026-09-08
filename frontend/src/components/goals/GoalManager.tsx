@@ -145,8 +145,18 @@ export const GoalManager: React.FC = () => {
                 <input
                   type="date"
                   value={targetDate}
+                  onClick={(e) => {
+                    try {
+                      e.currentTarget.showPicker?.();
+                    } catch {}
+                  }}
+                  onFocus={(e) => {
+                    try {
+                      e.currentTarget.showPicker?.();
+                    } catch {}
+                  }}
                   onChange={(e) => setTargetDate(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-xs rounded-xl glass-input"
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl glass-input cursor-pointer [color-scheme:dark]"
                 />
               </div>
             </div>

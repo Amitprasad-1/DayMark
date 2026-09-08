@@ -415,9 +415,20 @@ export const YearDashboard: React.FC = () => {
                   <input
                     type="date"
                     value={newCdDate}
+                    onClick={(e) => {
+                      try {
+                        e.currentTarget.showPicker?.();
+                      } catch {}
+                    }}
+                    onFocus={(e) => {
+                      try {
+                        e.currentTarget.showPicker?.();
+                      } catch {}
+                    }}
                     onChange={(e) => setNewCdDate(e.target.value)}
-                    className="px-3.5 py-2 text-xs rounded-xl glass-input"
+                    className="px-3.5 py-2 text-xs rounded-xl glass-input cursor-pointer [color-scheme:dark] hover:border-amber-400/70 transition-colors"
                     required
+                    title="Click to open calendar and select date"
                   />
                   <motion.button
                     whileHover={{ scale: 1.02 }}
