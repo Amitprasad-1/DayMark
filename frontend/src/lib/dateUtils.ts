@@ -11,17 +11,12 @@ export function normalizeDateStr(dateInput: string | Date | null | undefined): s
   const trimmed = String(dateInput).trim();
   if (!trimmed) return '';
 
-  // If already YYYY-MM-DD
+  // If already plain YYYY-MM-DD without time
   if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
     return trimmed;
   }
 
-  // If contains T or space, take first part if it's YYYY-MM-DD
-  const firstPart = trimmed.split(/[T ]/)[0];
-  if (/^\d{4}-\d{2}-\d{2}$/.test(firstPart)) {
-    return firstPart;
-  }
-
+  // Try parsing ISO timestamp to respect the user's local timezone
   try {
     const parsed = parseISO(trimmed);
     if (isValid(parsed)) {
@@ -29,6 +24,12 @@ export function normalizeDateStr(dateInput: string | Date | null | undefined): s
     }
   } catch {
     // ignore
+  }
+
+  // Fallback: If contains T or space, take first part if it's YYYY-MM-DD
+  const firstPart = trimmed.split(/[T ]/)[0];
+  if (/^\d{4}-\d{2}-\d{2}$/.test(firstPart)) {
+    return firstPart;
   }
 
   return firstPart;

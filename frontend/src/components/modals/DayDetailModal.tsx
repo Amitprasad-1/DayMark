@@ -122,12 +122,14 @@ export const DayDetailModal: React.FC = () => {
     if (!targetActivityId) return;
 
     const durationSeconds = durationMinutes * 60;
-    const nowISO = new Date().toISOString();
+    const [y, m, d] = selectedDate.split('-').map(Number);
+    const sessionDate = new Date(y, m - 1, d, 12, 0, 0);
+    const sessionISO = sessionDate.toISOString();
 
     addSession({
       activityId: targetActivityId,
-      startTime: nowISO,
-      endTime: nowISO,
+      startTime: sessionISO,
+      endTime: new Date(sessionDate.getTime() + durationSeconds * 1000).toISOString(),
       durationSeconds,
       notes: sessionNotes || 'Manual session log',
       date: selectedDate,
