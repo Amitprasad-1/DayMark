@@ -257,22 +257,29 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   }
 }
 
-.animate-ticker {
-  display: flex;
-  width: max-content;
-  animation: tickerMarquee 38s linear infinite;
-}
-
-.animate-ticker-fast {
-  display: flex;
-  width: max-content;
-  animation: tickerMarquee 22s linear infinite;
-}
-
+.animate-ticker,
+.animate-ticker-fast,
 .animate-ticker-slow {
   display: flex;
   width: max-content;
-  animation: tickerMarquee 58s linear infinite;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translate3d(0, 0, 0);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.animate-ticker {
+  animation: tickerMarquee 95s linear infinite;
+}
+
+.animate-ticker-fast {
+  animation: tickerMarquee 65s linear infinite;
+}
+
+.animate-ticker-slow {
+  animation: tickerMarquee 145s linear infinite;
 }
 
 .pause-on-hover:hover {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Flame,
   Sparkles,
@@ -21,6 +21,7 @@ import {
   FastForward,
   Hand,
   Activity,
+  ZoomIn,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { ManageQuotesModal } from '@/components/modals/ManageQuotesModal';
@@ -39,19 +40,25 @@ const ICON_COMPONENTS: Record<string, React.FC<{ className?: string; style?: Rea
   Compass,
 };
 
+export type QuoteBannerMode = 'zoom' | 'moving';
+
 export const MovingQuoteBanner: React.FC = () => {
   const { quotes } = useApp();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [speed, setSpeed] = useState<'normal' | 'fast' | 'slow'>('normal');
-  const [displayMode, setDisplayMode] = useState<'moving' | 'hands-on'>('moving');
+  const [displayMode, setDisplayMode] = useState<QuoteBannerMode>('zoom');
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Word-by-Word Zoom Reading State
+  const [activeWordIndex, setActiveWordIndex] = useState(0);
+  const [isHoldingSentence, setIsHoldingSentence] = useState(false);
 
   // Hydrate display mode preference from localStorage
   useEffect(() => {
     try {
-      const savedMode = localStorage.getItem('daymark_quote_banner_mode');
-      if (savedMode === 'hands-on' || savedMode === 'moving') {
+      const savedMode = localStorage.getItem('daymark_quote_banner_mode') as QuoteBannerMode | null;
+      if (savedMode === 'zoom' || savedMode === 'moving') {
         setDisplayMode(savedMode);
       }
     } catch {}
@@ -63,8 +70,50 @@ export const MovingQuoteBanner: React.FC = () => {
   const safeIndex = activeQuotes.length > 0 ? currentIndex % activeQuotes.length : 0;
   const currentQuote = activeQuotes[safeIndex];
 
-  const handleToggleMode = (mode: 'moving' | 'hands-on') => {
+  // Split current quote into words
+  const words = currentQuote ? currentQuote.text.trim().split(/\s+/) : [];
+
+  // Reset word reading state when quote changes
+  useEffect(() => {
+    setActiveWordIndex(0);
+    setIsHoldingSentence(false);
+  }, [currentIndex, safeIndex]);
+
+  // Word-by-Word Focus Reading Timer Engine (Kept exactly as it is)
+  useEffect(() => {
+    if (displayMode !== 'zoom' || isPaused || words.length === 0) return;
+
+    // Word interval by speed setting
+    const wordIntervalMs = speed === 'slow' ? 440 : speed === 'fast' ? 210 : 310;
+    const holdDurationMs = speed === 'slow' ? 3200 : speed === 'fast' ? 1800 : 2500;
+
+    let timer: NodeJS.Timeout;
+
+    if (isHoldingSentence) {
+      // Hold the completed sentence so the reader absorbs the full quote stress-free
+      timer = setTimeout(() => {
+        setIsHoldingSentence(false);
+        setActiveWordIndex(0);
+        setCurrentIndex((prev) => (prev + 1) % activeQuotes.length);
+      }, holdDurationMs);
+    } else {
+      timer = setTimeout(() => {
+        if (activeWordIndex < words.length - 1) {
+          setActiveWordIndex((prev) => prev + 1);
+        } else {
+          // Finished reading the sentence! Enter hold state
+          setIsHoldingSentence(true);
+        }
+      }, wordIntervalMs);
+    }
+
+    return () => clearTimeout(timer);
+  }, [displayMode, isPaused, activeWordIndex, isHoldingSentence, words.length, speed, activeQuotes.length]);
+
+  const handleToggleMode = (mode: QuoteBannerMode) => {
     setDisplayMode(mode);
+    setActiveWordIndex(0);
+    setIsHoldingSentence(false);
     try {
       localStorage.setItem('daymark_quote_banner_mode', mode);
     } catch {}
@@ -73,16 +122,20 @@ export const MovingQuoteBanner: React.FC = () => {
   const handlePrev = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (activeQuotes.length === 0) return;
+    setActiveWordIndex(0);
+    setIsHoldingSentence(false);
     setCurrentIndex((prev) => (prev > 0 ? prev - 1 : activeQuotes.length - 1));
   };
 
   const handleNext = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (activeQuotes.length === 0) return;
+    setActiveWordIndex(0);
+    setIsHoldingSentence(false);
     setCurrentIndex((prev) => (prev + 1) % activeQuotes.length);
   };
 
-  // Speed class mapping
+  // Speed class mapping for marquee
   const getSpeedClass = () => {
     switch (speed) {
       case 'fast':
@@ -104,11 +157,11 @@ export const MovingQuoteBanner: React.FC = () => {
   return (
     <>
       <div className="w-full relative group">
-        {/* Ambient Backlight Glow */}
+        {/* Subtle Ambient Backlight Glow */}
         <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-indigo-500/20 rounded-2xl blur-md opacity-40 group-hover:opacity-75 transition duration-500 pointer-events-none" />
 
-        <div className="relative glass-panel-luxury rounded-2xl sm:rounded-3xl border border-white/[0.14] bg-[#090E1C]/90 shadow-[0_10px_30px_rgba(0,0,0,0.5)] backdrop-blur-2xl overflow-hidden flex items-center min-h-[4.25rem] sm:min-h-[4.75rem] py-2 sm:py-2.5">
-          {/* Main Content Area (Utilizes full width without the left badge taking space) */}
+        <div className="relative glass-panel-luxury rounded-2xl sm:rounded-3xl border border-white/[0.14] bg-[#090E1C]/90 shadow-[0_10px_30px_rgba(0,0,0,0.5)] backdrop-blur-2xl overflow-hidden flex items-center min-h-[4.5rem] sm:min-h-[5rem] py-2 sm:py-2.5">
+          {/* Main Content Area */}
           {tickerItems.length === 0 ? (
             <div
               className="flex-1 px-6 text-sm text-slate-300 italic flex items-center gap-2.5 cursor-pointer"
@@ -117,8 +170,93 @@ export const MovingQuoteBanner: React.FC = () => {
               <QuoteIcon className="w-4 h-4 text-amber-400" />
               <span>No active quotes. Click "Edit Quotes" to add your motivational reminders!</span>
             </div>
-          ) : displayMode === 'moving' ? (
-            /* 1. CONTINUOUS MOVING TICKER (Full width from edge to edge) */
+          ) : displayMode === 'zoom' ? (
+            /* 1. WORD-BY-WORD SEQUENTIAL ZOOM READING (Kept exactly as it is) */
+            <div className="flex-1 flex items-center justify-between px-1.5 sm:px-6 py-1 overflow-hidden select-none gap-1 sm:gap-4">
+              {/* Prev Button */}
+              <button
+                type="button"
+                onClick={handlePrev}
+                className="p-1.5 sm:p-2.5 rounded-xl text-slate-400 hover:text-amber-300 hover:bg-amber-500/15 border border-white/[0.08] hover:border-amber-500/30 transition shrink-0 cursor-pointer active:scale-95"
+                title="Previous Quote"
+              >
+                <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
+
+              {/* Center: Sequential Word Zoom Sentence */}
+              <div
+                className="flex-1 flex items-center justify-center cursor-pointer min-w-0 px-1"
+                onClick={() => setIsModalOpen(true)}
+                title="Click to edit quotes"
+              >
+                <div className="flex items-center justify-center gap-1.5 sm:gap-3.5 flex-wrap text-center max-w-4xl py-1">
+                  {/* Badge Pill */}
+                  <span
+                    className="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wider flex items-center gap-1 sm:gap-1.5 shadow-sm shrink-0"
+                    style={{
+                      backgroundColor: `${currentQuote.color || '#F59E0B'}25`,
+                      color: currentQuote.color || '#F59E0B',
+                      border: `1px solid ${currentQuote.color || '#F59E0B'}50`,
+                    }}
+                  >
+                    {renderIcon(currentQuote.icon, currentQuote.color || '#F59E0B')}
+                    <span>{currentQuote.category || 'Focus'}</span>
+                  </span>
+
+                  {/* Words rendered with sequential zoom & spotlight */}
+                  <span className="text-xs sm:text-base lg:text-xl font-bold tracking-wide flex flex-wrap items-center justify-center gap-x-1.5 sm:gap-x-2 gap-y-0.5 sm:gap-y-1">
+                    <span className="text-amber-400/50 select-none">“</span>
+                    {words.map((word, wIdx) => {
+                      const isActive = wIdx === activeWordIndex && !isHoldingSentence;
+                      const isRead = wIdx < activeWordIndex || isHoldingSentence;
+
+                      return (
+                        <motion.span
+                          key={`${currentQuote.id}-word-${wIdx}`}
+                          animate={
+                            isActive
+                              ? { scale: [1, 1.24, 1.18], y: -2 }
+                              : isHoldingSentence
+                              ? { scale: 1, y: 0 }
+                              : { scale: 1, y: 0 }
+                          }
+                          transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                          className={`inline-block transition-all duration-200 ${
+                            isActive
+                              ? 'text-amber-300 font-black drop-shadow-[0_0_18px_rgba(245,158,11,0.95)] z-10 px-0.5'
+                              : isRead
+                              ? 'text-white font-extrabold opacity-95'
+                              : 'text-slate-500 font-semibold opacity-40'
+                          }`}
+                        >
+                          {word}
+                        </motion.span>
+                      );
+                    })}
+                    <span className="text-amber-400/50 select-none">”</span>
+                  </span>
+
+                  {/* Author / Note */}
+                  {currentQuote.author && (
+                    <span className="text-[10px] sm:text-sm font-semibold text-slate-300 font-sans shrink-0 hidden xs:inline">
+                      &bull; {currentQuote.author}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Next Button */}
+              <button
+                type="button"
+                onClick={handleNext}
+                className="p-1.5 sm:p-2.5 rounded-xl text-slate-400 hover:text-amber-300 hover:bg-amber-500/15 border border-white/[0.08] hover:border-amber-500/30 transition shrink-0 cursor-pointer active:scale-95"
+                title="Next Quote"
+              >
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
+            </div>
+          ) : (
+            /* 2. CONTINUOUS MOVING TICKER (Ultra-smooth, easily readable drift) */
             <div
               className="flex-1 overflow-hidden relative ticker-mask cursor-pointer py-1 select-none"
               onClick={() => setIsModalOpen(true)}
@@ -130,17 +268,15 @@ export const MovingQuoteBanner: React.FC = () => {
                   animationPlayState: isPaused ? 'paused' : undefined,
                 }}
               >
-                {/* Repeat list multiple times to achieve seamless infinite loop */}
-                {[...tickerItems, ...tickerItems, ...tickerItems, ...tickerItems].map((q, idx) => {
+                {[...tickerItems, ...tickerItems, ...tickerItems, ...tickerItems, ...tickerItems, ...tickerItems].map((q, idx) => {
                   const quoteColor = q.color || '#F59E0B';
                   return (
                     <div
                       key={`${q.id}-${idx}`}
-                      className="flex items-center gap-3.5 px-8 shrink-0 group/item transition-colors hover:text-white"
+                      className="flex items-center gap-3 sm:gap-4 px-8 sm:px-16 shrink-0 group/item transition-colors hover:text-white"
                     >
-                      {/* Badge Pill */}
                       <span
-                        className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-sm shrink-0"
+                        className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm shrink-0"
                         style={{
                           backgroundColor: `${quoteColor}25`,
                           color: quoteColor,
@@ -151,20 +287,17 @@ export const MovingQuoteBanner: React.FC = () => {
                         {q.category || 'Focus'}
                       </span>
 
-                      {/* Quote Text - Large, Bold & Fully Visible */}
-                      <span className="text-sm sm:text-base lg:text-lg font-extrabold text-slate-100 group-hover/item:text-amber-200 transition-colors tracking-wide drop-shadow-sm">
+                      <span className="text-sm sm:text-lg lg:text-xl font-extrabold text-white group-hover/item:text-amber-200 transition-colors tracking-wide drop-shadow-md">
                         "{q.text}"
                       </span>
 
-                      {/* Author / Note */}
                       {q.author && (
-                        <span className="text-xs sm:text-sm font-semibold text-slate-300 font-sans shrink-0">
+                        <span className="text-[11px] sm:text-sm font-semibold text-slate-300 font-sans shrink-0">
                           &bull; {q.author}
                         </span>
                       )}
 
-                      {/* Inter-quote separator bullet */}
-                      <span className="text-amber-400/60 font-black text-sm sm:text-base ml-4 select-none">
+                      <span className="text-amber-400/70 font-black text-xs sm:text-base ml-4 sm:ml-6 select-none">
                         ✦
                       </span>
                     </div>
@@ -172,136 +305,66 @@ export const MovingQuoteBanner: React.FC = () => {
                 })}
               </div>
             </div>
-          ) : (
-            /* 2. HANDS-ON / STATIC MODE (Stationary, full-sentence view with manual Prev/Next arrows) */
-            <div className="flex-1 flex items-center justify-between px-3 sm:px-6 py-1 overflow-hidden select-none gap-2 sm:gap-4">
-              {/* Prev Button */}
-              <button
-                type="button"
-                onClick={handlePrev}
-                className="p-2 sm:p-2.5 rounded-xl text-slate-400 hover:text-amber-300 hover:bg-amber-500/15 border border-white/[0.08] hover:border-amber-500/30 transition shrink-0 cursor-pointer active:scale-95"
-                title="Previous Quote (Click or Hands-on)"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-
-              {/* Centered Static Quote */}
-              <div
-                className="flex-1 flex items-center justify-center cursor-pointer min-w-0"
-                onClick={() => setIsModalOpen(true)}
-                title="Click to manage quotes"
-              >
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={currentQuote.id}
-                    initial={{ opacity: 0, y: 8, scale: 0.98 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -8, scale: 0.98 }}
-                    transition={{ duration: 0.22 }}
-                    className="flex items-center justify-center gap-3 sm:gap-4 flex-wrap text-center max-w-4xl"
-                  >
-                    {/* Badge Pill */}
-                    <span
-                      className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-sm shrink-0"
-                      style={{
-                        backgroundColor: `${currentQuote.color || '#F59E0B'}25`,
-                        color: currentQuote.color || '#F59E0B',
-                        border: `1px solid ${currentQuote.color || '#F59E0B'}50`,
-                      }}
-                    >
-                      {renderIcon(currentQuote.icon, currentQuote.color || '#F59E0B')}
-                      {currentQuote.category || 'Focus'}
-                    </span>
-
-                    {/* Quote Text - Large & Stationary */}
-                    <span className="text-sm sm:text-base lg:text-lg font-extrabold text-slate-100 tracking-wide drop-shadow-sm break-words">
-                      "{currentQuote.text}"
-                    </span>
-
-                    {/* Author / Note */}
-                    {currentQuote.author && (
-                      <span className="text-xs sm:text-sm font-semibold text-slate-400 font-sans shrink-0">
-                        &bull; {currentQuote.author}
-                      </span>
-                    )}
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-
-              {/* Next Button */}
-              <button
-                type="button"
-                onClick={handleNext}
-                className="p-2 sm:p-2.5 rounded-xl text-slate-400 hover:text-amber-300 hover:bg-amber-500/15 border border-white/[0.08] hover:border-amber-500/30 transition shrink-0 cursor-pointer active:scale-95"
-                title="Next Quote (Click or Hands-on)"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
           )}
 
-          {/* Right Controls: Mode Toggle, Speed/Counter, and Edit Button */}
-          <div className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 bg-[#090E1C]/95 border-l border-white/[0.10] shrink-0 z-20">
-            {/* Mode Switcher: Moving vs Hands-on */}
+          {/* Right Controls: Mode Toggle (Focus vs Moving), Speed/Pause, and Edit Button */}
+          <div className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 bg-[#090E1C]/95 border-l border-white/[0.10] shrink-0 z-20">
+            {/* Mode Switcher: Focus vs Moving */}
             <div className="flex items-center bg-white/[0.04] p-0.5 rounded-xl border border-white/[0.08]">
               <button
                 type="button"
+                onClick={() => handleToggleMode('zoom')}
+                className={`flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-bold transition ${
+                  displayMode === 'zoom'
+                    ? 'bg-amber-500 text-slate-950 shadow-md font-black'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+                title="Word-by-word Focus reading (Stress-free sequential focus)"
+              >
+                <ZoomIn className="w-3.5 h-3.5" />
+                <span className="hidden xs:inline">Focus</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => handleToggleMode('moving')}
-                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition ${
+                className={`flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-bold transition ${
                   displayMode === 'moving'
                     ? 'bg-amber-500 text-slate-950 shadow-md font-black'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
-                title="Moving mode (Infinite scrolling marquee)"
+                title="Moving mode (Smooth scrolling marquee)"
               >
                 <Activity className="w-3.5 h-3.5" />
-                <span className="hidden lg:inline">Moving</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleToggleMode('hands-on')}
-                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition ${
-                  displayMode === 'hands-on'
-                    ? 'bg-amber-500 text-slate-950 shadow-md font-black'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-                title="Hands-on mode (Stationary full quote with Next/Prev controls)"
-              >
-                <Hand className="w-3.5 h-3.5" />
-                <span className="hidden lg:inline">Hands-on</span>
+                <span className="hidden xs:inline">Moving</span>
               </button>
             </div>
 
-            {/* In Moving Mode: Speed & Pause Controls */}
-            {displayMode === 'moving' && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSpeed((prev) => (prev === 'normal' ? 'fast' : prev === 'fast' ? 'slow' : 'normal'));
-                  }}
-                  className="px-2 py-1.5 rounded-xl text-xs font-mono font-bold text-slate-300 hover:text-white bg-white/[0.05] hover:bg-white/[0.10] border border-white/[0.08] transition hidden sm:flex items-center gap-1"
-                  title={`Speed: ${speed.toUpperCase()} (Click to toggle)`}
-                >
-                  <FastForward className="w-3.5 h-3.5 text-amber-400" />
-                  <span>{speed === 'fast' ? '2x' : speed === 'slow' ? '0.5x' : '1x'}</span>
-                </button>
+            {/* Speed & Pause Controls */}
+            <button
+              type="button"
+              onClick={() => {
+                setSpeed((prev) => (prev === 'normal' ? 'fast' : prev === 'fast' ? 'slow' : 'normal'));
+              }}
+              className="px-2 py-1.5 rounded-xl text-xs font-mono font-bold text-slate-300 hover:text-white bg-white/[0.05] hover:bg-white/[0.10] border border-white/[0.08] transition hidden sm:flex items-center gap-1"
+              title={`Speed: ${speed.toUpperCase()} (Click to toggle)`}
+            >
+              <FastForward className="w-3.5 h-3.5 text-amber-400" />
+              <span>{speed === 'fast' ? '1.5x' : speed === 'slow' ? '0.5x' : '1x'}</span>
+            </button>
 
-                <button
-                  type="button"
-                  onClick={() => setIsPaused((prev) => !prev)}
-                  className="p-2 rounded-xl text-slate-300 hover:text-white bg-white/[0.05] hover:bg-white/[0.10] border border-white/[0.08] transition"
-                  title={isPaused ? 'Resume scrolling' : 'Pause scrolling'}
-                >
-                  {isPaused ? <Play className="w-4 h-4 text-emerald-400" /> : <Pause className="w-4 h-4" />}
-                </button>
-              </>
-            )}
+            <button
+              type="button"
+              onClick={() => setIsPaused((prev) => !prev)}
+              className="p-1.5 sm:p-2 rounded-xl text-slate-300 hover:text-white bg-white/[0.05] hover:bg-white/[0.10] border border-white/[0.08] transition"
+              title={isPaused ? 'Resume' : 'Pause'}
+            >
+              {isPaused ? <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" /> : <Pause className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+            </button>
 
-            {/* In Hands-on Mode: Index Indicator */}
-            {displayMode === 'hands-on' && activeQuotes.length > 0 && (
-              <span className="px-2 py-1 rounded-lg bg-slate-800/80 border border-white/10 text-xs font-mono font-bold text-slate-300">
+            {/* Quote Index Indicator */}
+            {activeQuotes.length > 0 && (
+              <span className="px-1.5 sm:px-2 py-1 rounded-lg bg-slate-800/80 border border-white/10 text-[11px] sm:text-xs font-mono font-bold text-slate-300 hidden md:inline">
                 {safeIndex + 1}/{activeQuotes.length}
               </span>
             )}
@@ -310,12 +373,12 @@ export const MovingQuoteBanner: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsModalOpen(true)}
-              className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500/25 to-orange-500/25 hover:from-amber-500/40 hover:to-orange-500/40 text-amber-300 font-extrabold text-xs sm:text-sm border border-amber-500/50 shadow-sm hover:scale-[1.02] active:scale-98 transition cursor-pointer"
+              className="flex items-center gap-1.5 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-amber-500/25 to-orange-500/25 hover:from-amber-500/40 hover:to-orange-500/40 text-amber-300 font-extrabold text-xs sm:text-sm border border-amber-500/50 shadow-sm hover:scale-[1.02] active:scale-98 transition cursor-pointer"
               title="Edit & Manage Quotes"
             >
-              <Edit3 className="w-4 h-4" />
+              <Edit3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               <span className="hidden md:inline">Edit Quotes</span>
-              <span className="px-1.5 py-0.5 rounded-md bg-amber-500/35 text-xs font-mono font-bold text-amber-200">
+              <span className="px-1.5 py-0.5 rounded-md bg-amber-500/35 text-[10px] sm:text-xs font-mono font-bold text-amber-200">
                 {activeQuotes.length}
               </span>
             </button>
@@ -328,3 +391,4 @@ export const MovingQuoteBanner: React.FC = () => {
     </>
   );
 };
+
