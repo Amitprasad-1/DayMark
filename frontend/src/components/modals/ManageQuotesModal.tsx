@@ -165,7 +165,7 @@ export const ManageQuotesModal: React.FC<ManageQuotesModalProps> = ({ isOpen, on
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#050811]/85 backdrop-blur-xl animate-fadeIn overflow-y-auto"
+      className="fixed inset-0 z-[150] flex items-center justify-center p-3 sm:p-4 bg-[#050811]/85 backdrop-blur-xl animate-fadeIn overflow-y-auto"
     >
       <motion.div
         onClick={(e) => e.stopPropagation()}

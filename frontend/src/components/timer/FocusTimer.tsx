@@ -21,6 +21,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { isSameCalendarDay } from '@/lib/dateUtils';
 import { VintageAlarmClock } from './VintageAlarmClock';
+import { MovingQuoteBanner } from '@/components/dashboard/MovingQuoteBanner';
 
 export const FocusTimer: React.FC = () => {
   const {
@@ -291,11 +292,11 @@ export const FocusTimer: React.FC = () => {
   // Reusable Electric Spark Dial SVG Renderer
   const renderDialSvg = (isZen: boolean = false) => {
     const svgClass = isZen
-      ? 'w-72 h-72 sm:w-96 sm:h-96 md:w-[460px] md:h-[460px] lg:w-[500px] lg:h-[500px] overflow-visible drop-shadow-[0_0_50px_rgba(0,0,0,0.9)]'
+      ? 'w-64 h-64 sm:w-80 sm:h-80 md:w-[400px] md:h-[400px] lg:w-[440px] lg:h-[440px] overflow-visible drop-shadow-[0_0_50px_rgba(0,0,0,0.9)]'
       : 'w-60 h-60 sm:w-72 sm:h-72 md:w-[330px] md:h-[330px] overflow-visible drop-shadow-[0_0_35px_rgba(0,0,0,0.9)]';
 
     const digitsClass = isZen
-      ? 'text-6xl sm:text-8xl md:text-9xl lg:text-[112px] font-black font-mono tracking-tight text-white drop-shadow-[0_16px_36px_rgba(0,0,0,0.95)] select-none'
+      ? 'text-5xl sm:text-7xl md:text-8xl lg:text-[100px] font-black font-mono tracking-tight text-white drop-shadow-[0_16px_36px_rgba(0,0,0,0.95)] select-none'
       : 'text-5xl sm:text-6xl md:text-7xl font-black font-mono tracking-tight text-white drop-shadow-[0_12px_28px_rgba(0,0,0,0.95)] select-none';
 
     return (
@@ -666,7 +667,10 @@ export const FocusTimer: React.FC = () => {
 
   return (
     <>
-      <div className="space-y-8">
+      <div className="space-y-6 sm:space-y-8 pb-12">
+        {/* Dynamic Motivational Moving Quote Banner */}
+        <MovingQuoteBanner />
+
         {/* Top Timer Controls Bar */}
         <div className="flex flex-wrap items-center justify-between gap-4 glass-panel-luxury p-4 lg:p-5 rounded-3xl border border-white/[0.09] shadow-2xl bg-[#090E1C]/80">
           {/* Mode Selector */}
@@ -1044,7 +1048,7 @@ export const FocusTimer: React.FC = () => {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.99 }}
             transition={{ duration: 0.25 }}
-            className="fixed inset-0 z-[100] bg-[#02050E] text-white flex flex-col justify-between p-6 sm:p-8 lg:p-12 select-none overflow-hidden"
+            className="fixed inset-0 z-[100] bg-[#02050E] text-white flex flex-col justify-between p-4 sm:p-6 lg:p-8 select-none overflow-y-auto min-h-screen"
           >
             {/* Cinematic Ambient Breathing Aura */}
             <div
@@ -1194,6 +1198,11 @@ export const FocusTimer: React.FC = () => {
                   <span>Exit <kbd className="text-[10px] font-mono text-slate-400 bg-white/10 px-1.5 py-0.5 rounded ml-0.5">Esc</kbd></span>
                 </motion.button>
               </div>
+            </div>
+
+            {/* Motivational Quote Banner during Focus Session */}
+            <div className="relative z-10 w-full max-w-5xl mx-auto my-3 sm:my-4 shrink-0">
+              <MovingQuoteBanner />
             </div>
 
             {/* Zen Centerpiece Dial */}
