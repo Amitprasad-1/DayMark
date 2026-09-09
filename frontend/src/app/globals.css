@@ -257,9 +257,10 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   }
 }
 
-.animate-ticker,
-.animate-ticker-fast,
-.animate-ticker-slow {
+.animate-ticker-025,
+.animate-ticker-050,
+.animate-ticker-075,
+.animate-ticker-100 {
   display: flex;
   width: max-content;
   will-change: transform;
@@ -270,16 +271,20 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   -moz-osx-font-smoothing: grayscale;
 }
 
-.animate-ticker {
-  animation: tickerMarquee 95s linear infinite;
+.animate-ticker-025 {
+  animation: tickerMarquee 200s linear infinite;
 }
 
-.animate-ticker-fast {
-  animation: tickerMarquee 65s linear infinite;
+.animate-ticker-050 {
+  animation: tickerMarquee 150s linear infinite;
 }
 
-.animate-ticker-slow {
-  animation: tickerMarquee 145s linear infinite;
+.animate-ticker-075 {
+  animation: tickerMarquee 110s linear infinite;
+}
+
+.animate-ticker-100 {
+  animation: tickerMarquee 80s linear infinite;
 }
 
 .pause-on-hover:hover {
