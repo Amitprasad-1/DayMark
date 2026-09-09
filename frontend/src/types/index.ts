@@ -103,3 +103,15 @@ export interface DayActivityData {
   completedTasksCount: number;
   hasReview: boolean;
 }
+
+export interface MotivationalQuote {
+  id: string;
+  text: string;
+  category?: string;
+  author?: string;
+  color?: string; // HEX or Tailwind color
+  icon?: string; // Lucide icon name
+  isActive: boolean;
+  createdAt: string;
+}
+

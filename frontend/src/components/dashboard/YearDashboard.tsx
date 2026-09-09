@@ -38,6 +38,7 @@ import {
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
 import { isSameCalendarDay, normalizeDateStr, getCalendarDaysRemaining } from '@/lib/dateUtils';
+import { MovingQuoteBanner } from '@/components/dashboard/MovingQuoteBanner';
 
 const MONTH_NAMES = [
   'January',
@@ -291,7 +292,10 @@ export const YearDashboard: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-6 sm:space-y-8 pb-12">
+      {/* Dynamic Motivational Moving Quote Banner */}
+      <MovingQuoteBanner />
+
       {/* 1. TOP HERO SECTION */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left 2 Cols: Year Progress & Real-Time Countdown */}

@@ -13,6 +13,7 @@ import {
   ActiveTab,
   TimerMode,
   DayActivityData,
+  MotivationalQuote,
 } from '@/types';
 import {
   INITIAL_SETTINGS,
@@ -21,6 +22,7 @@ import {
   INITIAL_TASKS,
   INITIAL_GOALS,
   INITIAL_COUNTDOWNS,
+  INITIAL_QUOTES,
   generateSeedData,
 } from '@/lib/initialData';
 import { soundEngine } from '@/lib/audio';
@@ -81,6 +83,15 @@ interface AppContextType {
   reviews: DailyReview[];
   saveDailyReview: (review: Omit<DailyReview, 'id'>) => void;
 
+  // Motivational Quotes Ticker
+  quotes: MotivationalQuote[];
+  addQuote: (quote: Omit<MotivationalQuote, 'id' | 'createdAt'>) => void;
+  updateQuote: (id: string, updates: Partial<MotivationalQuote>) => void;
+  deleteQuote: (id: string) => void;
+  toggleQuoteActive: (id: string) => void;
+  reorderQuotes: (quotes: MotivationalQuote[]) => void;
+  resetQuotesToDefault: () => void;
+
   // Global Resilient Focus Timer Engine
   timerMode: TimerMode;
   setTimerMode: (mode: TimerMode) => void;
@@ -120,6 +131,7 @@ const STORAGE_KEYS = {
   GOALS: 'daymark_goals',
   COUNTDOWNS: 'daymark_countdowns',
   REVIEWS: 'daymark_reviews',
+  QUOTES: 'daymark_motivational_quotes',
   TIMER: 'daymark_timer_state_v2',
   DELETED_IDS: 'daymark_deleted_item_ids_v1',
 };
@@ -172,6 +184,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [goals, setGoals] = useState<Goal[]>(INITIAL_GOALS);
   const [countdowns, setCountdowns] = useState<CustomCountdown[]>(INITIAL_COUNTDOWNS);
   const [reviews, setReviews] = useState<DailyReview[]>([]);
+  const [quotes, setQuotes] = useState<MotivationalQuote[]>(INITIAL_QUOTES);
 
   // Global Resilient Timer States
   const [timerMode, setTimerModeState] = useState<TimerMode>('POMODORO');
@@ -202,6 +215,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     goals,
     countdowns,
     reviews,
+    quotes,
   });
 
   useEffect(() => {
@@ -214,8 +228,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       goals,
       countdowns,
       reviews,
+      quotes,
     };
-  }, [settings, activities, sessions, habits, tasks, goals, countdowns, reviews]);
+  }, [settings, activities, sessions, habits, tasks, goals, countdowns, reviews, quotes]);
 
   // Hydrate from localStorage on mount (Each entity hydrates independently!)
   useEffect(() => {
@@ -324,6 +339,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
       } else {
         setCountdowns(INITIAL_COUNTDOWNS.filter((c) => !isDeleted(c.id, c.title)));
+      }
+
+      const storedQuotes = localStorage.getItem(STORAGE_KEYS.QUOTES);
+      if (storedQuotes) {
+        try {
+          const parsedQuotes: MotivationalQuote[] = JSON.parse(storedQuotes);
+          if (Array.isArray(parsedQuotes) && parsedQuotes.length > 0) {
+            setQuotes(parsedQuotes.filter((q) => !isDeleted(q.id, q.text)));
+          } else {
+            setQuotes(INITIAL_QUOTES.filter((q) => !isDeleted(q.id, q.text)));
+          }
+        } catch {
+          setQuotes(INITIAL_QUOTES.filter((q) => !isDeleted(q.id, q.text)));
+        }
+      } else {
+        setQuotes(INITIAL_QUOTES.filter((q) => !isDeleted(q.id, q.text)));
       }
 
       // Restore Timer State with exact epoch timestamps
@@ -570,10 +601,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       localStorage.setItem(STORAGE_KEYS.GOALS, JSON.stringify(goals));
       localStorage.setItem(STORAGE_KEYS.COUNTDOWNS, JSON.stringify(countdowns));
       localStorage.setItem(STORAGE_KEYS.REVIEWS, JSON.stringify(reviews));
+      localStorage.setItem(STORAGE_KEYS.QUOTES, JSON.stringify(quotes));
     } catch (e) {
       console.error('Failed to save to localStorage:', e);
     }
-  }, [settings, activities, sessions, habits, tasks, goals, countdowns, reviews, isHydrated]);
+  }, [settings, activities, sessions, habits, tasks, goals, countdowns, reviews, quotes, isHydrated]);
 
   // Persist Timer State to localStorage
   useEffect(() => {
@@ -950,6 +982,42 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     daymarkApi.saveReview(reviewData).catch(() => null);
   };
 
+  // Motivational Quote Handlers
+  const addQuote = (quoteData: Omit<MotivationalQuote, 'id' | 'createdAt'>) => {
+    unmarkDeleted(quoteData.text);
+    const newQuote: MotivationalQuote = {
+      ...quoteData,
+      id: `quote-${Date.now()}`,
+      createdAt: format(new Date(), 'yyyy-MM-dd'),
+    };
+    setQuotes((prev) => [newQuote, ...prev]);
+  };
+
+  const updateQuote = (id: string, updates: Partial<MotivationalQuote>) => {
+    setQuotes((prev) => prev.map((q) => (q.id === id ? { ...q, ...updates } : q)));
+  };
+
+  const deleteQuote = (id: string) => {
+    const target = quotes.find((q) => q.id === id);
+    recordDeletedId(id, target?.text);
+    setQuotes((prev) => prev.filter((q) => q.id !== id));
+  };
+
+  const toggleQuoteActive = (id: string) => {
+    setQuotes((prev) => prev.map((q) => (q.id === id ? { ...q, isActive: !q.isActive } : q)));
+  };
+
+  const reorderQuotes = (newQuotes: MotivationalQuote[]) => {
+    setQuotes(newQuotes);
+  };
+
+  const resetQuotesToDefault = () => {
+    setQuotes(INITIAL_QUOTES);
+    try {
+      localStorage.setItem(STORAGE_KEYS.QUOTES, JSON.stringify(INITIAL_QUOTES));
+    } catch {}
+  };
+
   // Helper for date stats
   const getDayActivityData = (dateStr: string): DayActivityData => {
     const daySessions = sessions.filter((s) => isSameCalendarDay(s.date, s.startTime, dateStr));
@@ -985,6 +1053,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       goals,
       countdowns,
       reviews,
+      quotes,
       exportedAt: new Date().toISOString(),
     };
     return JSON.stringify(data, null, 2);
@@ -1001,6 +1070,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (parsed.goals) setGoals(parsed.goals);
       if (parsed.countdowns) setCountdowns(parsed.countdowns);
       if (parsed.reviews) setReviews(parsed.reviews);
+      if (parsed.quotes && Array.isArray(parsed.quotes)) setQuotes(parsed.quotes);
       return true;
     } catch (e) {
       console.error('Invalid JSON import file:', e);
@@ -1019,6 +1089,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setTasks(INITIAL_TASKS);
     setGoals(INITIAL_GOALS);
     setCountdowns(INITIAL_COUNTDOWNS);
+    setQuotes(INITIAL_QUOTES);
     resetTimer();
   };
 
@@ -1067,6 +1138,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         deleteCountdown,
         reviews,
         saveDailyReview,
+        quotes,
+        addQuote,
+        updateQuote,
+        deleteQuote,
+        toggleQuoteActive,
+        reorderQuotes,
+        resetQuotesToDefault,
         timerMode,
         setTimerMode,
         timerStatus,

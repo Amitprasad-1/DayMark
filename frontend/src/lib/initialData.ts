@@ -1,4 +1,4 @@
-import { Activity, Habit, Task, Goal, CustomCountdown, UserSettings, DailyReview, StudySession } from '@/types';
+import { Activity, Habit, Task, Goal, CustomCountdown, UserSettings, DailyReview, StudySession, MotivationalQuote } from '@/types';
 import { format, subDays } from 'date-fns';
 
 export const INITIAL_SETTINGS: UserSettings = {
@@ -266,6 +266,50 @@ export const INITIAL_COUNTDOWNS: CustomCountdown[] = [
     icon: 'Target',
   },
 ];
+
+export const INITIAL_QUOTES: MotivationalQuote[] = [
+  {
+    id: 'quote-job-parents',
+    text: 'Jaldi Job Lelo or Mammy & Papa ko Proud feel karwaoo nhi to phir kisko proud karwaoo ge',
+    category: 'Parents & Pride',
+    author: 'Self Reminder',
+    color: '#F59E0B',
+    icon: 'Heart',
+    isActive: true,
+    createdAt: format(new Date(), 'yyyy-MM-dd'),
+  },
+  {
+    id: 'quote-career-focus',
+    text: 'Every hour of deep focus today brings your dream offer one step closer.',
+    category: 'Placement Target',
+    author: 'DayMark',
+    color: '#06B6D4',
+    icon: 'Target',
+    isActive: true,
+    createdAt: format(new Date(), 'yyyy-MM-dd'),
+  },
+  {
+    id: 'quote-silent-hustle',
+    text: 'Mehnat itni shanti se karo ki tumhari kamyabi shor macha de.',
+    category: 'Silent Hustle',
+    author: 'Wisdom',
+    color: '#10B981',
+    icon: 'Flame',
+    isActive: true,
+    createdAt: format(new Date(), 'yyyy-MM-dd'),
+  },
+  {
+    id: 'quote-future-self',
+    text: 'Your future self and family will thank you for not giving up today.',
+    category: 'Discipline',
+    author: 'Focus Mindset',
+    color: '#8B5CF6',
+    icon: 'Sparkles',
+    isActive: true,
+    createdAt: format(new Date(), 'yyyy-MM-dd'),
+  },
+];
+
 
 // Helper to generate seed historical data so the full year visual calendar has realistic heatmaps!
 export function generateSeedData(): {

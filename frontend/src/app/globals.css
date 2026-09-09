@@ -243,3 +243,56 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.32);
 }
+
+/* ============================================================================
+   TICKER / CONTINUOUS MOVING BANNER ANIMATIONS
+   ============================================================================ */
+
+@keyframes tickerMarquee {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.animate-ticker {
+  display: flex;
+  width: max-content;
+  animation: tickerMarquee 38s linear infinite;
+}
+
+.animate-ticker-fast {
+  display: flex;
+  width: max-content;
+  animation: tickerMarquee 22s linear infinite;
+}
+
+.animate-ticker-slow {
+  display: flex;
+  width: max-content;
+  animation: tickerMarquee 58s linear infinite;
+}
+
+.pause-on-hover:hover {
+  animation-play-state: paused !important;
+}
+
+.ticker-mask {
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 4%,
+    black 96%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 4%,
+    black 96%,
+    transparent 100%
+  );
+}
+
