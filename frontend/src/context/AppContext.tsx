@@ -265,24 +265,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         parsedSessions = seed.sessions;
         setReviews(seed.reviews);
       }
-      // Ensure today's 1-hour focus session is restored if missing
-      const todayStr = format(new Date(), 'yyyy-MM-dd');
-      const hasToday = parsedSessions.some((s) => isSameCalendarDay(s.date, s.startTime, todayStr));
-      if (!hasToday) {
-        const morningStart = new Date();
-        morningStart.setHours(9, 0, 0, 0);
-        const morningEnd = new Date();
-        morningEnd.setHours(10, 0, 0, 0);
-        parsedSessions.unshift({
-          id: `sess-today-morning`,
-          activityId: 'act-coding-dsa',
-          startTime: morningStart.toISOString(),
-          endTime: morningEnd.toISOString(),
-          durationSeconds: 3600,
-          notes: 'Morning Study Session (1h Focus)',
-          date: todayStr,
-        });
-      }
+      // Purge any artificial fake today sessions from previous seeds or injections
+      parsedSessions = parsedSessions.filter(
+        (s) => s.id !== 'sess-today-morning' && !s.id.startsWith('sess-today-')
+      );
+      try {
+        localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(parsedSessions));
+      } catch {}
+      // Clean up from remote cloud if present
+      daymarkApi.deleteSession('sess-today-morning').catch(() => null);
       setSessions(parsedSessions);
 
       const storedHabits = localStorage.getItem(STORAGE_KEYS.HABITS);
@@ -435,10 +426,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       setActivities(mergedActs);
 
-      // 3. Sessions: Union by ID or (cleanDate + duration + startTime)
-      const mergedSessions = [...current.sessions];
+      // 3. Sessions: Union by ID or (cleanDate + duration + startTime), strictly excluding artificial dummy sessions
+      const mergedSessions = [...current.sessions].filter(
+        (s) => s.id !== 'sess-today-morning' && !s.id.startsWith('sess-today-')
+      );
       if (Array.isArray(cloudData.sessions)) {
         cloudData.sessions.forEach((cs) => {
+          if (cs.id === 'sess-today-morning' || cs.id.startsWith('sess-today-')) return;
           const csCleanDate = normalizeDateStr(cs.date || cs.startTime);
           const exists = mergedSessions.some((ls) => {
             if (ls.id === cs.id) return true;
