@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Circle, Palette, Sparkles, SlidersHorizontal, Check, Disc3, ShieldAlert } from 'lucide-react';
+import { Bell, Circle, Palette, Sparkles, SlidersHorizontal, Check, Disc3, ShieldAlert, Compass, CircleDot } from 'lucide-react';
 
 interface VintageAlarmClockProps {
   timerStatus: 'IDLE' | 'RUNNING' | 'PAUSED';
@@ -1186,25 +1186,28 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
             <div className="flex items-center justify-between border-b border-white/10 pb-2">
               <div className="flex items-center gap-1">
                 {[
-                  { id: 'colors', label: '🎨 Hand Colors', icon: '🎨' },
-                  { id: 'hands', label: '🗡️ Hand ("Nobe") Styles', icon: '🗡️' },
-                  { id: 'nobe', label: '🔘 Center Cap', icon: '🔘' },
-                  { id: 'dial', label: '✨ Dial Edition', icon: '✨' },
-                ].map((tab) => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setActiveCustomizerTab(tab.id as any)}
-                    className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
-                      activeCustomizerTab === tab.id
-                        ? 'bg-amber-500/25 text-amber-300 border border-amber-400/50 shadow-inner'
-                        : 'text-slate-400 hover:text-white hover:bg-white/5'
-                    }`}
-                  >
-                    <span>{tab.icon}</span>
-                    <span>{tab.label}</span>
-                  </button>
-                ))}
+                  { id: 'colors', label: 'Hand Colors', icon: Palette },
+                  { id: 'hands', label: 'Hand ("Nobe") Styles', icon: Compass },
+                  { id: 'nobe', label: 'Center Cap', icon: CircleDot },
+                  { id: 'dial', label: 'Dial Edition', icon: Sparkles },
+                ].map((tab) => {
+                  const Icon = tab.icon;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setActiveCustomizerTab(tab.id as any)}
+                      className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                        activeCustomizerTab === tab.id
+                          ? 'bg-amber-500/25 text-amber-300 border border-amber-400/50 shadow-inner'
+                          : 'text-slate-400 hover:text-white hover:bg-white/5'
+                      }`}
+                    >
+                      <Icon className="w-3.5 h-3.5" />
+                      <span>{tab.label}</span>
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Luminescent Hand Aura Toggle */}
