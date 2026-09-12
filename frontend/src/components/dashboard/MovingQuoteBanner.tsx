@@ -295,11 +295,11 @@ export const MovingQuoteBanner: React.FC<MovingQuoteBannerProps> = ({ className 
 
   return (
     <>
-      <div className={`w-full relative group ${className}`}>
+      <div className={`w-full relative group ${className} z-30`}>
         {/* Subtle Ambient Backlight Glow */}
         <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-indigo-500/20 rounded-2xl sm:rounded-3xl blur-md opacity-40 group-hover:opacity-75 transition duration-500 pointer-events-none" />
 
-        <div className="relative glass-panel-luxury rounded-2xl sm:rounded-3xl border border-white/[0.14] bg-[#090E1C]/90 shadow-[0_10px_30px_rgba(0,0,0,0.5)] backdrop-blur-2xl overflow-hidden flex flex-col sm:flex-row sm:items-center min-h-[4.5rem] sm:min-h-[5rem]">
+        <div className="relative glass-panel-luxury rounded-2xl sm:rounded-3xl border border-white/[0.14] bg-[#090E1C]/90 shadow-[0_10px_30px_rgba(0,0,0,0.5)] backdrop-blur-2xl overflow-visible flex flex-col sm:flex-row sm:items-center min-h-[4.5rem] sm:min-h-[5rem]">
           {/* Main Content Area (Full width on mobile, flexible on desktop) */}
           <div className="flex-1 min-w-0 w-full flex items-center py-2 sm:py-2.5">
             {tickerItems.length === 0 ? (
@@ -549,7 +549,7 @@ export const MovingQuoteBanner: React.FC<MovingQuoteBannerProps> = ({ className 
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -6, scale: 0.95 }}
                     transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-                    className="absolute top-full right-0 mt-1.5 w-52 sm:w-56 rounded-2xl bg-[#090E1C]/98 border border-white/[0.14] p-1.5 shadow-[0_15px_35px_rgba(0,0,0,0.7)] backdrop-blur-3xl z-50 space-y-1"
+                    className="absolute top-full right-0 mt-2 w-56 sm:w-60 rounded-2xl bg-[#090E1C] border border-white/[0.16] p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.9)] backdrop-blur-3xl z-50 space-y-1 ring-1 ring-white/10"
                   >
                     <div className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-white/[0.06] flex items-center justify-between">
                       <span>Transition Mode</span>
