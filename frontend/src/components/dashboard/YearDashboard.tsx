@@ -1007,10 +1007,7 @@ export const YearDashboard: React.FC = () => {
                           </span>
                         )}
 
-                        {/* Review Indicator Dot */}
-                        {data.hasReview && (
-                          <span className="absolute bottom-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-rose-400 shadow-[0_0_6px_rgba(244,63,94,0.8)] z-10" />
-                        )}
+
                       </motion.button>
                     );
                   })}
