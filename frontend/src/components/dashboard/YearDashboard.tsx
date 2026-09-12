@@ -200,32 +200,23 @@ export const YearDashboard: React.FC = () => {
     const hours = data.totalSeconds / 3600;
     const isDateToday = dateStr === todayStr;
 
-    // Today with or without milestone: vibrant neon golden amber flame + hour achievement
+    // Today (styled with sleek interior; the infinite moving laser line will outline it):
     if (isDateToday) {
       if (hours >= 4) {
-        return 'bg-gradient-to-tr from-emerald-400 via-teal-300 to-cyan-400 border-2 border-white text-slate-950 font-black ring-4 ring-amber-400 shadow-[0_0_24px_rgba(245,158,11,0.9)] scale-105 z-20';
+        return 'bg-gradient-to-tr from-emerald-400 via-teal-300 to-cyan-400 text-slate-950 font-black scale-105 z-20 shadow-[0_0_20px_rgba(52,211,153,0.7)]';
       }
       if (hours >= 2) {
-        return 'bg-gradient-to-tr from-cyan-500 via-blue-500 to-indigo-600 border-2 border-white text-white font-black ring-4 ring-amber-400 shadow-[0_0_24px_rgba(245,158,11,0.9)] scale-105 z-20';
+        return 'bg-gradient-to-tr from-cyan-500 via-blue-500 to-indigo-600 text-white font-black scale-105 z-20 shadow-[0_0_20px_rgba(6,182,212,0.7)]';
       }
       if (hours > 0) {
-        return 'bg-gradient-to-tr from-amber-400 via-orange-500 to-amber-500 border-2 border-amber-100 text-slate-950 font-black ring-4 ring-amber-300 shadow-[0_0_22px_rgba(245,158,11,0.85)] scale-105 z-20';
+        return 'bg-gradient-to-tr from-amber-400 via-orange-500 to-amber-500 text-slate-950 font-black scale-105 z-20 shadow-[0_0_18px_rgba(245,158,11,0.7)]';
       }
-      return 'bg-gradient-to-tr from-amber-500/35 via-orange-600/30 to-amber-950/60 border-2 border-amber-400 text-amber-200 font-black ring-4 ring-amber-400/80 shadow-[0_0_20px_rgba(245,158,11,0.75)] scale-105 z-20';
+      return 'bg-gradient-to-b from-slate-900 via-slate-950 to-[#0b1020] text-amber-300 font-black scale-105 z-20 shadow-[0_0_16px_rgba(245,158,11,0.35)]';
     }
 
-    // Target Milestone day: distinct electric royal purple & magenta jewel cell (completely different from Today's amber!)
+    // Target Milestone day: Royal Purple / Fuchsia Jewel (completely distinct from Today!)
     if (hasMilestone) {
-      if (hours >= 4) {
-        return 'bg-gradient-to-tr from-emerald-400 via-teal-300 to-cyan-400 border-2 border-white text-slate-950 font-black ring-4 ring-purple-400 shadow-[0_0_24px_rgba(168,85,247,0.85)] scale-105 z-10';
-      }
-      if (hours >= 2) {
-        return 'bg-gradient-to-tr from-cyan-600 via-blue-600 to-indigo-600 border-2 border-white text-white font-black ring-4 ring-purple-400 shadow-[0_0_24px_rgba(168,85,247,0.85)] scale-105 z-10';
-      }
-      if (hours > 0) {
-        return 'bg-gradient-to-tr from-indigo-800 to-purple-800 border-2 border-purple-300 text-white font-bold ring-3 ring-purple-400/80 shadow-[0_0_18px_rgba(168,85,247,0.7)] scale-105 z-10';
-      }
-      return 'bg-gradient-to-br from-purple-950/70 via-indigo-950/80 to-purple-900/60 border-2 border-purple-400 text-purple-200 font-black ring-2 ring-purple-500/70 shadow-[0_0_18px_rgba(168,85,247,0.65)] hover:bg-purple-900/80 hover:border-purple-300 hover:text-white hover:scale-110 z-10';
+      return 'bg-gradient-to-br from-purple-500/30 via-fuchsia-600/20 to-purple-950/80 border-2 border-purple-400 text-purple-200 font-black ring-2 ring-purple-500/50 shadow-[0_0_18px_rgba(168,85,247,0.7)] hover:bg-purple-900/60 hover:border-purple-300 hover:text-white hover:scale-110 z-10';
     }
 
     if (isFutureDate) {
@@ -860,18 +851,31 @@ export const YearDashboard: React.FC = () => {
             <span className="text-[10px] font-black text-emerald-300">&gt;4h Deep Work</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3.5 h-3.5 rounded-md bg-gradient-to-br from-amber-500/40 to-orange-600/30 border-2 border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.7)] relative flex items-center justify-center">
-              <span className="text-[7px] leading-none select-none">🔥</span>
-            </div>
-            <span className="text-[10px] font-black text-amber-300">Today</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3.5 h-3.5 rounded-md bg-gradient-to-br from-purple-900/60 to-purple-950/80 border-2 border-purple-400 shadow-[0_0_12px_rgba(168,85,247,0.7)] relative flex items-center justify-center">
-              <span className="text-[7px] leading-none select-none">🎯</span>
+            <div className="w-3.5 h-3.5 rounded-md bg-gradient-to-br from-purple-500/40 to-fuchsia-600/30 border-2 border-purple-400 shadow-[0_0_14px_rgba(168,85,247,0.7)] relative">
+              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-purple-400 border border-slate-950 shadow-[0_0_6px_#C084FC]" />
             </div>
             <span className="text-[10px] font-black text-purple-300">Target Milestone</span>
           </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3.5 h-3.5 rounded-md bg-slate-900 border-2 border-amber-400 relative shadow-[0_0_12px_rgba(245,158,11,0.6)] flex items-center justify-center">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#38BDF8] animate-pulse" />
+            </div>
+            <span className="text-[10px] font-black text-amber-300">Today (Moving Line)</span>
+          </div>
         </div>
+
+        {/* SVG Defs for Today's Infinite Moving Border Laser Beam */}
+        <svg className="w-0 h-0 absolute pointer-events-none" aria-hidden="true">
+          <defs>
+            <linearGradient id="todayInfiniteLaserBeam" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#F59E0B" />
+              <stop offset="25%" stopColor="#FEF08A" />
+              <stop offset="60%" stopColor="#38BDF8" />
+              <stop offset="85%" stopColor="#818CF8" />
+              <stop offset="100%" stopColor="#F59E0B" />
+            </linearGradient>
+          </defs>
+        </svg>
 
         {/* 12-Month Matrix Grid */}
         <div
@@ -950,6 +954,7 @@ export const YearDashboard: React.FC = () => {
                     const dateObj = new Date(currentYear, monthIdx, dayNum);
                     const dateStr = format(dateObj, 'yyyy-MM-dd');
                     const isFutureDate = isAfter(dateObj, now) && !isSameDay(dateObj, now);
+                    const isDateToday = dateStr === todayStr;
                     const dayMilestones = allMilestones.filter((m) =>
                       isSameCalendarDay(m.targetDate, undefined, dateStr)
                     );
@@ -959,7 +964,7 @@ export const YearDashboard: React.FC = () => {
 
                     return (
                       <motion.button
-                        whileHover={{ scale: 1.25, zIndex: 30 }}
+                        whileHover={{ scale: 1.25, zIndex: 40 }}
                         whileTap={{ scale: 0.85 }}
                         transition={{ type: 'spring', stiffness: 500, damping: 25 }}
                         key={dateStr}
@@ -970,33 +975,48 @@ export const YearDashboard: React.FC = () => {
                           setSelectedDate(dateStr);
                           setIsDayDetailOpen(true);
                         }}
-                        className={`heatmap-cell w-full aspect-square rounded-lg flex items-center justify-center text-[10px] border transition-colors relative cursor-pointer outline-none ${intensityClass}`}
+                        className={`heatmap-cell w-full aspect-square rounded-lg flex items-center justify-center text-[10px] transition-colors relative cursor-pointer outline-none ${intensityClass} ${
+                          isDateToday ? 'overflow-visible' : ''
+                        }`}
                       >
-                        <span>{dayNum}</span>
-
-                        {/* Today Flame Jewel Badge (Golden Amber on top-left) */}
-                        {dateStr === todayStr && (
-                          <span
-                            className="absolute -top-1.5 -left-1.5 flex h-3.5 w-3.5 z-30 pointer-events-none items-center justify-center rounded-full bg-gradient-to-tr from-amber-400 to-orange-500 border border-slate-950 shadow-[0_0_10px_#F59E0B]"
-                            title="Today (Current Day)"
+                        {/* INFINITE MOVING BORDER LASER BEAM (TODAY ACTIVE DATE) */}
+                        {isDateToday && (
+                          <svg
+                            className="absolute -inset-[3.5px] w-[calc(100%+7px)] h-[calc(100%+7px)] pointer-events-none z-30 overflow-visible"
+                            aria-hidden="true"
                           >
-                            <span className="text-[7px] leading-none select-none">🔥</span>
-                          </span>
+                            <rect
+                              x="1.5"
+                              y="1.5"
+                              width="calc(100% - 3px)"
+                              height="calc(100% - 3px)"
+                              rx="9"
+                              ry="9"
+                              fill="none"
+                              stroke="url(#todayInfiniteLaserBeam)"
+                              strokeWidth="2.5"
+                              strokeDasharray="20 12"
+                              className="animate-infinite-border-laser"
+                            />
+                          </svg>
                         )}
 
-                        {/* Strategic Milestone Target Badge (Purple Jewel 🎯 on top-right) */}
+                        <span className="relative z-10">{dayNum}</span>
+
+                        {/* Strategic Milestone Jewel Badge (Purple Diamond) */}
                         {hasMilestone && (
                           <span
-                            className="absolute -top-1.5 -right-1.5 flex h-3.5 w-3.5 z-30 pointer-events-none items-center justify-center rounded-full bg-gradient-to-tr from-purple-500 to-pink-500 border border-slate-950 shadow-[0_0_10px_#A855F7]"
+                            className="absolute -top-1 -right-1 flex h-2.5 w-2.5 z-20 pointer-events-none"
                             title={`🎯 Target Milestone: ${dayMilestones.map((m) => m.title).join(', ')}`}
                           >
-                            <span className="text-[7px] leading-none select-none">🎯</span>
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75" />
+                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-purple-400 border border-slate-950 shadow-[0_0_8px_#C084FC]" />
                           </span>
                         )}
 
                         {/* Review Indicator Dot */}
                         {data.hasReview && (
-                          <span className="absolute bottom-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-rose-400 shadow-[0_0_6px_rgba(244,63,94,0.8)]" />
+                          <span className="absolute bottom-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-rose-400 shadow-[0_0_6px_rgba(244,63,94,0.8)] z-10" />
                         )}
                       </motion.button>
                     );

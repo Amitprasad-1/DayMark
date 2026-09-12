@@ -309,3 +309,22 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   );
 }
 
+/* ============================================================================
+   INFINITE MOVING BORDER LASER BEAM (TODAY ACTIVE CELL)
+   ============================================================================ */
+
+@keyframes infiniteBorderLaser {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -72;
+  }
+}
+
+.animate-infinite-border-laser {
+  animation: infiniteBorderLaser 2s linear infinite;
+  filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.85)) drop-shadow(0 0 12px rgba(56, 189, 248, 0.6));
+}
+
+
