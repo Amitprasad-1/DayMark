@@ -287,6 +287,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       parsedSessions = parsedSessions.filter((s) => {
         if (s.id.startsWith('seed-sess-')) return false;
         if (s.id === 'sess-today-morning' || s.id.startsWith('sess-today-')) return false;
+        // The user never studied on Sep 1 through Sep 9
+        if (s.date.startsWith('2026-09-') && parseInt(s.date.split('-')[2], 10) < 10) return false;
         // Purge any old generated sessions on dates where user didn't study
         if (s.id.startsWith('sess-real-') && !realSeedDates.has(s.date)) return false;
         return true;
