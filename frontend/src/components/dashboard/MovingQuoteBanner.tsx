@@ -81,7 +81,6 @@ const ICON_COMPONENTS: Record<string, React.FC<{ className?: string; style?: Rea
   Compass,
 };
 
-export type QuoteBannerMode = 'zoom' | 'typewriter' | 'cinematic' | 'moving';
 export type QuoteSpeed = '0.25x' | '0.50x' | '0.75x' | '1.00x';
 
 const SPEED_CONFIG: Record<

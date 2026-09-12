@@ -112,7 +112,7 @@ export const YearDashboard: React.FC = () => {
   const [newCdCategory, setNewCdCategory] = useState('Milestone');
 
   // Unified Target Milestones (combining Countdowns and Goals with a targetDate)
-  const allMilestones: UnifiedMilestone[] = [
+  const allMilestones: UnifiedMilestone[] = React.useMemo(() => [
     ...countdowns.map((cd) => ({
       id: cd.id,
       title: cd.title,
@@ -136,7 +136,44 @@ export const YearDashboard: React.FC = () => {
         currentValue: g.currentValue,
         targetValue: g.targetValue,
       })),
-  ];
+  ], [countdowns, goals]);
+
+  const now = new Date();
+  const dayOfYear = getDayOfYear(now);
+  const totalDaysInYear = getDaysInYear(now);
+  const daysLeftInYear = totalDaysInYear - dayOfYear;
+  const yearProgressPercent = ((dayOfYear / totalDaysInYear) * 100).toFixed(1);
+  const todayStr = format(now, 'yyyy-MM-dd');
+
+  // Sort Strategic Target Milestones:
+  // 1. Real-time / upcoming deadlines come first, chronologically ordered by nearest target date
+  // 2. Past / passed or completed milestones move down to the last, with most recently passed first
+  const sortedMilestones = React.useMemo(() => {
+    return [...allMilestones].sort((a, b) => {
+      const { daysRemaining: remA, isPassed: passedA } = getCalendarDaysRemaining(a.targetDate, now);
+      const { daysRemaining: remB, isPassed: passedB } = getCalendarDaysRemaining(b.targetDate, now);
+
+      const isCompletedA = a.isGoal && typeof a.targetValue === 'number' && (a.currentValue || 0) >= a.targetValue;
+      const isCompletedB = b.isGoal && typeof b.targetValue === 'number' && (b.currentValue || 0) >= b.targetValue;
+
+      const isDoneOrPastA = passedA || isCompletedA;
+      const isDoneOrPastB = passedB || isCompletedB;
+
+      // Active / Upcoming comes before Done / Past
+      if (!isDoneOrPastA && isDoneOrPastB) return -1;
+      if (isDoneOrPastA && !isDoneOrPastB) return 1;
+
+      // Both are Active / Upcoming: nearest deadline first (ascending daysRemaining)
+      if (!isDoneOrPastA && !isDoneOrPastB) {
+        if (remA !== remB) return remA - remB;
+        return a.title.localeCompare(b.title);
+      }
+
+      // Both are Done / Past: most recently passed first (e.g. -2d before -60d)
+      if (remA !== remB) return remB - remA;
+      return a.title.localeCompare(b.title);
+    });
+  }, [allMilestones, todayStr]);
 
   // Year End Real-Time Countdown
   const [timeToNewYear, setTimeToNewYear] = useState<{
@@ -148,9 +185,9 @@ export const YearDashboard: React.FC = () => {
 
   useEffect(() => {
     const updateCountdown = () => {
-      const now = new Date();
-      const newYearDate = endOfYear(now);
-      const totalSec = Math.max(0, differenceInSeconds(newYearDate, now));
+      const currentNow = new Date();
+      const newYearDate = endOfYear(currentNow);
+      const totalSec = Math.max(0, differenceInSeconds(newYearDate, currentNow));
 
       const days = Math.floor(totalSec / 86400);
       const hours = Math.floor((totalSec % 86400) / 3600);
@@ -165,14 +202,7 @@ export const YearDashboard: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const now = new Date();
-  const dayOfYear = getDayOfYear(now);
-  const totalDaysInYear = getDaysInYear(now);
-  const daysLeftInYear = totalDaysInYear - dayOfYear;
-  const yearProgressPercent = ((dayOfYear / totalDaysInYear) * 100).toFixed(1);
-
   // Today's summary stats
-  const todayStr = format(now, 'yyyy-MM-dd');
   const todayData = getDayActivityData(todayStr);
   const todayFocusMinutes = Math.round(todayData.totalSeconds / 60);
   const targetMinutes = settings.dailyTargetMinutes || 360;
@@ -448,41 +478,53 @@ export const YearDashboard: React.FC = () => {
 
             {/* 2-Column Balanced Responsive Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              {allMilestones.map((cd) => {
+              {sortedMilestones.map((cd) => {
                 const { daysRemaining, isPassed, formattedTarget } = getCalendarDaysRemaining(cd.targetDate, now);
+                const isCompletedGoal = cd.isGoal && typeof cd.targetValue === 'number' && (cd.currentValue || 0) >= cd.targetValue;
+                const isDoneOrPast = isPassed || isCompletedGoal;
 
                 return (
                   <motion.div
                     key={cd.id}
                     whileHover={{ scale: 1.015, y: -2 }}
-                    className="w-full flex items-center justify-between gap-3.5 p-4 rounded-2xl bg-gradient-to-br from-slate-900/95 via-[#0d1326]/90 to-amber-950/25 border border-amber-500/25 hover:border-amber-400/80 transition-all duration-300 group shadow-lg shadow-amber-500/5 hover:shadow-amber-500/20 border-t border-t-amber-400/30"
+                    className={`w-full flex items-center justify-between gap-3.5 p-4 rounded-2xl transition-all duration-300 group shadow-lg ${
+                      isDoneOrPast
+                        ? 'bg-slate-900/60 border border-white/[0.07] hover:border-slate-700 opacity-75 hover:opacity-100 shadow-slate-950/40'
+                        : 'bg-gradient-to-br from-slate-900/95 via-[#0d1326]/90 to-amber-950/25 border border-amber-500/25 hover:border-amber-400/80 shadow-amber-500/5 hover:shadow-amber-500/20 border-t border-t-amber-400/30'
+                    }`}
                   >
                     <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className={`p-2.5 rounded-xl border shadow-[0_0_12px_rgba(245,158,11,0.25)] shrink-0 ${
-                        cd.isGoal
-                          ? 'bg-gradient-to-br from-purple-500/25 to-indigo-500/20 text-purple-400 border-purple-500/40'
-                          : 'bg-gradient-to-br from-amber-500/25 to-orange-500/20 text-amber-400 border-amber-500/40'
+                      <div className={`p-2.5 rounded-xl border shrink-0 ${
+                        isDoneOrPast
+                          ? 'bg-slate-800/80 text-slate-400 border-slate-700/80 shadow-sm'
+                          : cd.isGoal
+                          ? 'bg-gradient-to-br from-purple-500/25 to-indigo-500/20 text-purple-400 border-purple-500/40 shadow-[0_0_12px_rgba(168,85,247,0.25)]'
+                          : 'bg-gradient-to-br from-amber-500/25 to-orange-500/20 text-amber-400 border-amber-500/40 shadow-[0_0_12px_rgba(245,158,11,0.25)]'
                       }`}>
                         <Target className="w-4 h-4" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h4 className="text-xs sm:text-sm font-black text-white tracking-wide truncate">
+                          <h4 className={`text-xs sm:text-sm font-black tracking-wide truncate ${
+                            isDoneOrPast ? 'text-slate-300' : 'text-white'
+                          }`}>
                             {cd.title}
                           </h4>
                           <span className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded-md border shrink-0 ${
-                            cd.isGoal
+                            isDoneOrPast
+                              ? 'text-slate-400 bg-slate-800/60 border-slate-700'
+                              : cd.isGoal
                               ? 'text-purple-300 bg-purple-500/20 border-purple-500/40'
                               : 'text-amber-300 bg-amber-500/20 border-amber-500/40'
                           }`}>
                             {cd.isGoal ? '🎯 Goal Target' : (cd.category || 'Milestone')}
                           </span>
                         </div>
-                        <p className="text-[10px] text-slate-300 mt-1 font-mono font-semibold flex items-center gap-1.5">
-                          <CalendarIcon className="w-3 h-3 text-slate-400 shrink-0" />
+                        <p className="text-[10px] text-slate-400 mt-1 font-mono font-semibold flex items-center gap-1.5">
+                          <CalendarIcon className="w-3 h-3 text-slate-500 shrink-0" />
                           <span>{formattedTarget}</span>
                           {cd.isGoal && typeof cd.targetValue === 'number' && (
-                            <span className="ml-1 text-purple-400">
+                            <span className={`ml-1 ${isDoneOrPast ? 'text-slate-400' : 'text-purple-400'}`}>
                               ({cd.currentValue || 0}/{cd.targetValue} {cd.goalType === 'TIME' ? 'hrs' : 'units'})
                             </span>
                           )}
@@ -494,10 +536,20 @@ export const YearDashboard: React.FC = () => {
                         className={`text-xs font-black font-mono px-3 py-1.5 rounded-xl shadow-md whitespace-nowrap shrink-0 ${
                           isPassed
                             ? 'bg-slate-800 text-slate-400 border border-slate-700'
+                            : isCompletedGoal
+                            ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/50 shadow-[0_0_12px_rgba(16,185,129,0.35)]'
+                            : daysRemaining === 0
+                            ? 'bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 text-slate-950 font-black border border-amber-200 shadow-[0_0_16px_rgba(245,158,11,0.6)] animate-pulse'
                             : 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black border border-amber-300 shadow-[0_0_14px_rgba(245,158,11,0.45)]'
                         }`}
                       >
-                        {isPassed ? 'Passed' : `${daysRemaining}d left`}
+                        {isPassed
+                          ? 'Passed'
+                          : isCompletedGoal
+                          ? 'Completed'
+                          : daysRemaining === 0
+                          ? '⚡ Due Today'
+                          : `${daysRemaining}d left`}
                       </span>
                       <button
                         type="button"
@@ -520,7 +572,7 @@ export const YearDashboard: React.FC = () => {
               })}
 
               {/* When odd milestone count, render an elegant Add Milestone card to keep grid perfectly 2x2 and balanced */}
-              {allMilestones.length % 2 !== 0 && (
+              {sortedMilestones.length % 2 !== 0 && (
                 <motion.button
                   whileHover={{ scale: 1.015, y: -2 }}
                   whileTap={{ scale: 0.98 }}
@@ -548,7 +600,7 @@ export const YearDashboard: React.FC = () => {
               )}
 
               {/* Empty state if 0 milestones */}
-              {allMilestones.length === 0 && (
+              {sortedMilestones.length === 0 && (
                 <motion.button
                   whileHover={{ scale: 1.015, y: -2 }}
                   whileTap={{ scale: 0.98 }}
