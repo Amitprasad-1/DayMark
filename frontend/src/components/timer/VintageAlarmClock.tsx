@@ -41,13 +41,14 @@ interface FinishPalette {
   dialGrad2: string;
   bezelTrim1: string;
   bezelTrim2: string;
-  handFaceLight: string;
-  handFaceDark: string;
+  handMetalLight: string;
+  handMetalMid: string;
+  handMetalDark: string;
   secondHand: string;
   secondTip: string;
-  knobChrome1: string;
-  knobChrome2: string;
-  knobChrome3: string;
+  nobeBallHighlight: string;
+  nobeBallMid: string;
+  nobeBallShadow: string;
 }
 
 const LUXURY_FINISHES: Record<LuxuryFinish, FinishPalette> = {
@@ -67,13 +68,14 @@ const LUXURY_FINISHES: Record<LuxuryFinish, FinishPalette> = {
     dialGrad2: '#06080D',
     bezelTrim1: '#FFFFFF',
     bezelTrim2: '#94A3B8',
-    handFaceLight: '#FFFFFF',
-    handFaceDark: '#CBD5E1',
+    handMetalLight: '#FFFFFF',
+    handMetalMid: '#E2E8F0',
+    handMetalDark: '#94A3B8',
     secondHand: '#38BDF8',
     secondTip: '#0284C7',
-    knobChrome1: '#FFFFFF',
-    knobChrome2: '#CBD5E1',
-    knobChrome3: '#475569',
+    nobeBallHighlight: '#FFFFFF',
+    nobeBallMid: '#CBD5E1',
+    nobeBallShadow: '#334155',
   },
   royalGold: {
     id: 'royalGold',
@@ -91,13 +93,14 @@ const LUXURY_FINISHES: Record<LuxuryFinish, FinishPalette> = {
     dialGrad2: '#06070B',
     bezelTrim1: '#FDE68A',
     bezelTrim2: '#B45309',
-    handFaceLight: '#FEF08A',
-    handFaceDark: '#CA8A04',
+    handMetalLight: '#FEF9C3',
+    handMetalMid: '#FDE047',
+    handMetalDark: '#CA8A04',
     secondHand: '#FDE047',
     secondTip: '#EF4444',
-    knobChrome1: '#FFFBEB',
-    knobChrome2: '#FCD34D',
-    knobChrome3: '#78350F',
+    nobeBallHighlight: '#FFFBEB',
+    nobeBallMid: '#FCD34D',
+    nobeBallShadow: '#78350F',
   },
   midnightSapphire: {
     id: 'midnightSapphire',
@@ -115,13 +118,14 @@ const LUXURY_FINISHES: Record<LuxuryFinish, FinishPalette> = {
     dialGrad2: '#040711',
     bezelTrim1: '#E2E8F0',
     bezelTrim2: '#64748B',
-    handFaceLight: '#FFFFFF',
-    handFaceDark: '#94A3B8',
+    handMetalLight: '#FFFFFF',
+    handMetalMid: '#E0F2FE',
+    handMetalDark: '#94A3B8',
     secondHand: '#38BDF8',
     secondTip: '#F43F5E',
-    knobChrome1: '#FFFFFF',
-    knobChrome2: '#93C5FD',
-    knobChrome3: '#1E3A8A',
+    nobeBallHighlight: '#FFFFFF',
+    nobeBallMid: '#93C5FD',
+    nobeBallShadow: '#1E3A8A',
   },
   racingEmerald: {
     id: 'racingEmerald',
@@ -139,13 +143,14 @@ const LUXURY_FINISHES: Record<LuxuryFinish, FinishPalette> = {
     dialGrad2: '#040907',
     bezelTrim1: '#FDE68A',
     bezelTrim2: '#047857',
-    handFaceLight: '#A7F3D0',
-    handFaceDark: '#059669',
+    handMetalLight: '#ECFDF5',
+    handMetalMid: '#A7F3D0',
+    handMetalDark: '#059669',
     secondHand: '#34D399',
     secondTip: '#F59E0B',
-    knobChrome1: '#FFFFFF',
-    knobChrome2: '#6EE7B7',
-    knobChrome3: '#064E3B',
+    nobeBallHighlight: '#FFFFFF',
+    nobeBallMid: '#6EE7B7',
+    nobeBallShadow: '#064E3B',
   },
 };
 
@@ -346,7 +351,6 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
   });
 
   // 60 Perimeter Tick Marks matching Reference Image 2
-  // 12 Major ticks at hours (longer and bolder), 48 minor ticks at minutes
   const tickOuterRadius = dialRadius - 6; // 144
   const majorTickInnerRadius = dialRadius - 19; // 131 (length 13px)
   const minorTickInnerRadius = dialRadius - 14; // 136 (length 8px)
@@ -371,7 +375,6 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
   const startTimeStr = sessionStartTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const endTimeStr = sessionEndTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  // ViewBox adapts based on whether twin bells are shown
   const viewBoxStr = isWithBells ? '0 0 400 450' : '0 0 400 400';
 
   const svgSizeClass = isZen
@@ -382,7 +385,7 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
     <div className="relative flex flex-col items-center justify-center select-none z-10">
       {/* Top Controls: Mode Badge, Finish Selector, Hand Style & Frame Style */}
       <div className="mb-4 flex flex-wrap items-center justify-center gap-2 z-20 max-w-2xl px-2">
-        {/* Live Real-Time Focus Session Badge */}
+        {/* Live Focus Session Badge */}
         <div className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-2xl bg-[#0B0E17]/90 border border-white/10 shadow-2xl backdrop-blur-xl">
           <span className="relative flex h-2 w-2">
             {timerStatus === 'RUNNING' && (
@@ -417,7 +420,7 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
           </span>
         </div>
 
-        {/* Hand Style Selector: Vintage Spade (Image 3) vs Modern Studio (Image 2) */}
+        {/* Hand Style Selector */}
         <div className="flex items-center gap-1 p-1 rounded-2xl bg-[#0B0E17]/90 border border-white/10 shadow-2xl backdrop-blur-xl">
           <button
             type="button"
@@ -447,7 +450,7 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
           </button>
         </div>
 
-        {/* Frame Style Toggle: Circular Dial (Image 2) vs Twin Bell */}
+        {/* Frame Style Toggle */}
         <div className="flex items-center gap-1 p-1 rounded-2xl bg-[#0B0E17]/90 border border-white/10 shadow-2xl backdrop-blur-xl">
           <button
             type="button"
@@ -506,7 +509,7 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
       <div className="relative flex items-center justify-center">
         <svg viewBox={viewBoxStr} className={svgSizeClass}>
           <defs>
-            {/* Dynamic Outer Bezel Case Gradient */}
+            {/* Outer Bezel Case Gradient */}
             <radialGradient id="vluxCaseGrad" cx="35%" cy="30%" r="80%">
               <stop offset="0%" stopColor={activePal.caseGrad1} />
               <stop offset="45%" stopColor={activePal.caseGrad2} />
@@ -539,41 +542,36 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
 
             {/* Crystal Glare Gradient */}
             <linearGradient id="vluxCrystalGlare" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.14" />
-              <stop offset="35%" stopColor="#FFFFFF" stopOpacity="0.04" />
+              <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.12" />
+              <stop offset="35%" stopColor="#FFFFFF" stopOpacity="0.03" />
               <stop offset="70%" stopColor="#FFFFFF" stopOpacity="0" />
             </linearGradient>
 
-            {/* 3D SPHERICAL POLISHED CHROME DOME KNOB ("NOBE") GRADIENT (Image 3) */}
-            {/* Creates a photorealistic 3D metallic sphere with upper-left specular reflection */}
-            <radialGradient id="vluxChromeSphereNobe" cx="30%" cy="26%" r="72%">
+            {/* HIGH-PRECISION POLISHED HAND METALLIC GRADIENT (Image 3) */}
+            {/* Pure, smooth, radiant metallic gradient giving authentic depth */}
+            <linearGradient id="vluxHandMetalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#FFFFFF" />
-              <stop offset="25%" stopColor={activePal.knobChrome1} />
-              <stop offset="55%" stopColor={activePal.knobChrome2} />
-              <stop offset="85%" stopColor={activePal.knobChrome3} />
-              <stop offset="100%" stopColor="#0F172A" />
+              <stop offset="20%" stopColor={activePal.handMetalLight} />
+              <stop offset="60%" stopColor={activePal.handMetalMid} />
+              <stop offset="90%" stopColor={activePal.handMetalDark} />
+              <stop offset="100%" stopColor="#475569" />
+            </linearGradient>
+
+            {/* 3D SPHERICAL POLISHED CHROME DOME KNOB ("NOBE") GRADIENT (Image 3) */}
+            <radialGradient id="vluxChromeSphereNobe" cx="32%" cy="28%" r="70%">
+              <stop offset="0%" stopColor="#FFFFFF" />
+              <stop offset="25%" stopColor={activePal.nobeBallHighlight} />
+              <stop offset="60%" stopColor={activePal.nobeBallMid} />
+              <stop offset="88%" stopColor={activePal.nobeBallShadow} />
+              <stop offset="100%" stopColor="#0B0F19" />
             </radialGradient>
 
-            {/* Stepped Collar Ring Metallic Gradient */}
+            {/* Stepped Collar Ring Gradient */}
             <linearGradient id="vluxCollarGrad" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#FFFFFF" />
-              <stop offset="35%" stopColor={activePal.bezelTrim1} />
-              <stop offset="70%" stopColor={activePal.bezelTrim2} />
+              <stop offset="40%" stopColor={activePal.bezelTrim1} />
+              <stop offset="80%" stopColor={activePal.bezelTrim2} />
               <stop offset="100%" stopColor="#1E293B" />
-            </linearGradient>
-
-            {/* 3D Hand Light Facet Gradient */}
-            <linearGradient id="vluxHandFacetLight" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#FFFFFF" />
-              <stop offset="50%" stopColor={activePal.handFaceLight} />
-              <stop offset="100%" stopColor={activePal.accentGrad1} />
-            </linearGradient>
-
-            {/* 3D Hand Shadow Facet Gradient */}
-            <linearGradient id="vluxHandFacetDark" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor={activePal.handFaceDark} />
-              <stop offset="60%" stopColor="#475569" stopOpacity="0.9" />
-              <stop offset="100%" stopColor="#0F172A" />
             </linearGradient>
 
             {/* Laser Glow Filter */}
@@ -585,14 +583,19 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
               </feMerge>
             </filter>
 
-            {/* Volumetric Soft Drop Shadow */}
+            {/* Hand Realistic Drop Shadow */}
+            <filter id="vluxHandDropShadow" x="-30%" y="-30%" width="160%" height="160%">
+              <feDropShadow dx="1" dy="3.5" stdDeviation="3" floodColor="#000000" floodOpacity="0.85" />
+            </filter>
+
+            {/* Volumetric Clock Shadow */}
             <filter id="vluxClockVolumetricShadow" x="-30%" y="-30%" width="160%" height="160%">
               <feDropShadow dx="0" dy="8" stdDeviation="10" floodColor="#000000" floodOpacity="0.9" />
             </filter>
 
             {/* Nobe Drop Shadow */}
             <filter id="vluxNobeShadow" x="-30%" y="-30%" width="160%" height="160%">
-              <feDropShadow dx="0" dy="2.5" stdDeviation="2.5" floodColor="#000000" floodOpacity="0.75" />
+              <feDropShadow dx="0.5" dy="2" stdDeviation="1.8" floodColor="#000000" floodOpacity="0.8" />
             </filter>
           </defs>
 
@@ -685,19 +688,19 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
             {/* Outer Deep Slate / Obsidian Bezel Ring */}
             <circle cx={cx} cy={cy} r={dialRadius + 22} fill="url(#vluxCaseGrad)" stroke="#040609" strokeWidth="4" />
 
-            {/* Specular Polished Chrome / Platinum Outer Bevel */}
+            {/* Specular Polished Chrome Outer Bevel */}
             <circle cx={cx} cy={cy} r={dialRadius + 21} fill="none" stroke="url(#vluxBezelRimGrad)" strokeWidth="2" strokeOpacity="0.9" />
 
             {/* Inset Precision Step */}
             <circle cx={cx} cy={cy} r={dialRadius + 8} fill="#090C14" stroke="#000000" strokeWidth="1.5" />
 
-            {/* High-Reflectivity Inner Bezel Rim */}
+            {/* Inner Bezel Rim */}
             <circle cx={cx} cy={cy} r={dialRadius + 6} fill="none" stroke="url(#vluxBezelRimGrad)" strokeWidth="2.5" strokeOpacity="0.8" />
 
             {/* Pure Matte Black Watch Face Dial (Image 2) */}
             <circle cx={cx} cy={cy} r={dialRadius} fill="url(#vluxDialGrad)" />
 
-            {/* Subtle Inner Dial Depth Vignette Rim */}
+            {/* Inner Dial Edge Highlight */}
             <circle cx={cx} cy={cy} r={dialRadius - 1} fill="none" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="1.2" />
           </g>
 
@@ -875,68 +878,81 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
               ========================================================================= */}
           {handStyle === 'vintageSpade' ? (
             /* =====================================================================
-               STYLE A: VINTAGE SPADE / POIRE HANDS (Reference Image 3)
-               Slender stems expanding into ornate pear/spade teardrops with fine tips
+               STYLE A: AUTHENTIC VINTAGE SPADE / POIRE HANDS (Reference Image 3)
+               Curved pear/spade teardrop silhouettes with slender spear needle tips
+               and pristine polished silver metallic finish
                ===================================================================== */
-            <g filter="url(#vluxClockVolumetricShadow)">
-              {/* Hour Hand (Vintage Spade) */}
-              <g transform={`rotate(${hourHandAngle} ${cx} ${cy})`}>
+            <g filter="url(#vluxHandDropShadow)">
+              {/* --- HOUR HAND (VINTAGE SPADE - IMAGE 3) --- */}
+              <g transform={`translate(${cx}, ${cy}) rotate(${hourHandAngle})`}>
                 {/* Counterweight Tail */}
-                <rect x={cx - 2.5} y={cy} width="5" height="24" rx="2.5" fill="url(#vluxHandFacetLight)" stroke="#1F2937" strokeWidth="0.8" />
+                <path
+                  d="M -1.8,0 L -1.5,16 C -1.5,19.5 0,21 0,21 C 0,21 1.5,19.5 1.5,16 L 1.8,0 Z"
+                  fill="url(#vluxHandMetalGrad)"
+                  stroke="rgba(0,0,0,0.4)"
+                  strokeWidth="0.6"
+                />
 
-                {/* Left Beveled Facet */}
+                {/* Main Vintage Spade Body: Slender stem -> teardrop pear bulb -> spear tip */}
                 <path
-                  d={`M ${cx - 3} ${cy}
-                     L ${cx - 2} ${cy - 40}
-                     C ${cx - 6.5} ${cy - 46}, ${cx - 7.5} ${cy - 56}, ${cx} ${cy - 70}
-                     L ${cx} ${cy} Z`}
-                  fill="url(#vluxHandFacetLight)"
+                  d="M -1.2,-6
+                     L -1.2,-36
+                     C -1.2,-41 -5.6,-44 -5.6,-49
+                     C -5.6,-54 -3.0,-57 -1.2,-60
+                     L -0.4,-68
+                     C 0,-70 0,-70 0.4,-68
+                     L 1.2,-60
+                     C 3.0,-57 5.6,-54 5.6,-49
+                     C 5.6,-44 1.2,-41 1.2,-36
+                     L 1.2,-6 Z"
+                  fill="url(#vluxHandMetalGrad)"
+                  stroke="rgba(0, 0, 0, 0.45)"
+                  strokeWidth="0.7"
                 />
-                {/* Right Beveled Facet */}
-                <path
-                  d={`M ${cx} ${cy}
-                     L ${cx} ${cy - 70}
-                     C ${cx + 7.5} ${cy - 56}, ${cx + 6.5} ${cy - 46}, ${cx + 2} ${cy - 40}
-                     L ${cx + 3} ${cy} Z`}
-                  fill="url(#vluxHandFacetDark)"
-                />
-                {/* Center Ridge Crease */}
-                <line x1={cx} y1={cy} x2={cx} y2={cy - 70} stroke="#FFFFFF" strokeWidth="0.8" strokeOpacity="0.8" />
+
+                {/* Subtle polished specular centerline spine for authentic 3D horology reflection */}
+                <line x1="0" y1="-8" x2="0" y2="-66" stroke="#FFFFFF" strokeWidth="0.8" strokeOpacity="0.8" />
               </g>
 
-              {/* Minute Hand (Vintage Spade) */}
-              <g transform={`rotate(${minuteHandAngle} ${cx} ${cy})`}>
+              {/* --- MINUTE HAND (VINTAGE SPADE - IMAGE 3) --- */}
+              <g transform={`translate(${cx}, ${cy}) rotate(${minuteHandAngle})`}>
                 {/* Counterweight Tail */}
-                <rect x={cx - 2.2} y={cy} width="4.4" height="28" rx="2.2" fill="url(#vluxHandFacetLight)" stroke="#1F2937" strokeWidth="0.8" />
+                <path
+                  d="M -1.8,0 L -1.5,20 C -1.5,24 0,25.5 0,25.5 C 0,25.5 1.5,24 1.5,20 L 1.8,0 Z"
+                  fill="url(#vluxHandMetalGrad)"
+                  stroke="rgba(0,0,0,0.4)"
+                  strokeWidth="0.6"
+                />
 
-                {/* Left Beveled Facet */}
+                {/* Main Vintage Spade Body: Long slender stem -> teardrop pear bulb -> spear tip */}
                 <path
-                  d={`M ${cx - 2.8} ${cy}
-                     L ${cx - 1.8} ${cy - 68}
-                     C ${cx - 7.5} ${cy - 76}, ${cx - 8.5} ${cy - 88}, ${cx} ${cy - 108}
-                     L ${cx} ${cy} Z`}
-                  fill="url(#vluxHandFacetLight)"
+                  d="M -1.2,-6
+                     L -1.2,-70
+                     C -1.2,-75 -5.8,-78 -5.8,-83
+                     C -5.8,-88 -3.2,-91 -1.2,-95
+                     L -0.4,-108
+                     C 0,-110 0,-110 0.4,-108
+                     L 1.2,-95
+                     C 3.2,-91 5.8,-88 5.8,-83
+                     C 5.8,-78 1.2,-75 1.2,-70
+                     L 1.2,-6 Z"
+                  fill="url(#vluxHandMetalGrad)"
+                  stroke="rgba(0, 0, 0, 0.45)"
+                  strokeWidth="0.7"
                 />
-                {/* Right Beveled Facet */}
-                <path
-                  d={`M ${cx} ${cy}
-                     L ${cx} ${cy - 108}
-                     C ${cx + 8.5} ${cy - 88}, ${cx + 7.5} ${cy - 76}, ${cx + 1.8} ${cy - 68}
-                     L ${cx + 2.8} ${cy} Z`}
-                  fill="url(#vluxHandFacetDark)"
-                />
-                {/* Center Ridge Crease */}
-                <line x1={cx} y1={cy} x2={cx} y2={cy - 108} stroke="#FFFFFF" strokeWidth="0.8" strokeOpacity="0.85" />
+
+                {/* Specular centerline spine */}
+                <line x1="0" y1="-8" x2="0" y2="-106" stroke="#FFFFFF" strokeWidth="0.8" strokeOpacity="0.85" />
               </g>
 
-              {/* Second Hand (Slender Needle with Counterbalance) */}
-              <g transform={`rotate(${secondHandAngle} ${cx} ${cy})`}>
-                {/* Slender Needle Shaft */}
-                <line x1={cx} y1={cy + 34} x2={cx} y2={cy - 116} stroke={activePal.secondHand} strokeWidth="1.8" strokeLinecap="round" />
+              {/* --- SECOND HAND (SLENDER NEEDLE - IMAGE 3) --- */}
+              <g transform={`translate(${cx}, ${cy}) rotate(${secondHandAngle})`}>
+                {/* Slender polished needle shaft */}
+                <line x1="0" y1="28" x2="0" y2="-116" stroke={activePal.secondHand} strokeWidth="1.6" strokeLinecap="round" />
                 {/* Counterbalance Disc */}
-                <circle cx={cx} cy={cy + 24} r="4.5" fill="url(#vluxCollarGrad)" stroke="#1F2937" strokeWidth="1" />
-                {/* Luminous Active Arrow / Pip Tip */}
-                <circle cx={cx} cy={cy - 106} r="2.8" fill={activePal.secondTip} filter="url(#vluxLaserGlow)" />
+                <circle cx="0" cy="18" r="3.6" fill="url(#vluxCollarGrad)" stroke="#1F2937" strokeWidth="0.8" />
+                {/* Active Indicator Tip */}
+                <circle cx="0" cy="-108" r="2.4" fill={activePal.secondTip} filter="url(#vluxLaserGlow)" />
               </g>
             </g>
           ) : (
@@ -944,55 +960,29 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
                STYLE B: MODERN STUDIO BATON HANDS (Reference Image 2)
                Pure white rounded capsules with electric blue second hand & center ring
                ===================================================================== */
-            <g filter="url(#vluxClockVolumetricShadow)">
+            <g filter="url(#vluxHandDropShadow)">
               {/* Hour Hand (Thick Rounded White Baton - Image 2) */}
-              <g transform={`rotate(${hourHandAngle} ${cx} ${cy})`}>
-                {/* Counterweight Tail */}
-                <rect x={cx - 4.5} y={cy} width="9" height="14" rx="4.5" fill="#FFFFFF" />
-                {/* Main Body */}
-                <rect
-                  x={cx - 4.5}
-                  y={cy - 72}
-                  width="9"
-                  height="76"
-                  rx="4.5"
-                  fill="#FFFFFF"
-                  stroke="#0A0E17"
-                  strokeWidth="1.2"
-                />
+              <g transform={`translate(${cx}, ${cy}) rotate(${hourHandAngle})`}>
+                <rect x="-4" y="-72" width="8" height="84" rx="4" fill="#FFFFFF" stroke="#0A0E17" strokeWidth="1.2" />
               </g>
 
               {/* Minute Hand (Longer Thick Rounded White Baton - Image 2) */}
-              <g transform={`rotate(${minuteHandAngle} ${cx} ${cy})`}>
-                {/* Counterweight Tail */}
-                <rect x={cx - 4} y={cy} width="8" height="16" rx="4" fill="#FFFFFF" />
-                {/* Main Body */}
-                <rect
-                  x={cx - 4}
-                  y={cy - 112}
-                  width="8"
-                  height="116"
-                  rx="4"
-                  fill="#FFFFFF"
-                  stroke="#0A0E17"
-                  strokeWidth="1.2"
-                />
+              <g transform={`translate(${cx}, ${cy}) rotate(${minuteHandAngle})`}>
+                <rect x="-3.5" y="-112" width="7" height="126" rx="3.5" fill="#FFFFFF" stroke="#0A0E17" strokeWidth="1.2" />
               </g>
 
               {/* Second Hand (Vibrant Electric Blue Hand with Center Ring - Image 2) */}
-              <g transform={`rotate(${secondHandAngle} ${cx} ${cy})`}>
-                {/* Blue Needle Stem */}
-                <line x1={cx} y1={cy + 36} x2={cx} y2={cy - 118} stroke="#0284C7" strokeWidth="3" strokeLinecap="round" />
-                <line x1={cx} y1={cy + 36} x2={cx} y2={cy - 118} stroke="#38BDF8" strokeWidth="2.2" strokeLinecap="round" />
-
+              <g transform={`translate(${cx}, ${cy}) rotate(${secondHandAngle})`}>
+                <line x1="0" y1="34" x2="0" y2="-118" stroke="#0284C7" strokeWidth="2.8" strokeLinecap="round" />
+                <line x1="0" y1="34" x2="0" y2="-118" stroke="#38BDF8" strokeWidth="2" strokeLinecap="round" />
                 {/* Open Center Ring (Doughnut) around Hub - Image 2 */}
-                <circle cx={cx} cy={cy} r="8.5" fill="none" stroke="#38BDF8" strokeWidth="2.5" />
+                <circle cx="0" cy="0" r="7.5" fill="none" stroke="#38BDF8" strokeWidth="2.4" />
               </g>
             </g>
           )}
 
           {/* =========================================================================
-              SAPPHIRE CRYSTAL GLASS REFLECTION (Curved Upper Diagonal Glare)
+              SAPPHIRE CRYSTAL GLASS REFLECTION
               ========================================================================= */}
           <path
             d={`M ${cx - dialRadius + 18} ${cy - 15} A ${dialRadius - 6} ${dialRadius - 6} 0 0 1 ${cx + dialRadius - 18} ${cy - 15} C ${cx + 75} ${cy - 85}, ${cx - 75} ${cy - 85}, ${cx - dialRadius + 18} ${cy - 15} Z`}
@@ -1001,31 +991,28 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
           />
 
           {/* =========================================================================
-              THE "NOBE" (KNOB / CENTER HUB) EXACTLY MATCHING REFERENCE IMAGE 3!
-              Photorealistic 3D polished chrome sphere dome nut with stepped collar rings
+              THE "NOBE" (CENTER KNOB / ARBOR CAP) EXACTLY MATCHING REFERENCE IMAGE 3!
+              Realistic compact 3D chrome sphere dome nut with stepped collar washer
               ========================================================================= */}
           <g filter="url(#vluxNobeShadow)">
-            {/* Step 1: Base Stepped Collar Ring (Outer Bevel) */}
-            <circle cx={cx} cy={cy} r="12" fill="url(#vluxCollarGrad)" stroke="#090D14" strokeWidth="1.8" />
+            {/* Stepped Metallic Collar Washer Ring */}
+            <circle cx={cx} cy={cy} r="8.5" fill="url(#vluxCollarGrad)" stroke="#111827" strokeWidth="1" />
+            <circle cx={cx} cy={cy} r="6.8" fill="#E2E8F0" stroke="#475569" strokeWidth="0.6" strokeOpacity="0.8" />
 
-            {/* Step 2: Intermediate Raised Collar Ring */}
-            <circle cx={cx} cy={cy} r="8.5" fill="url(#vluxBezelRimGrad)" stroke="#1F2937" strokeWidth="1" />
+            {/* 3D Chrome Spherical Dome Nut ("Nobe") - Image 3 */}
+            <circle cx={cx} cy={cy} r="5.2" fill="url(#vluxChromeSphereNobe)" stroke="#1E293B" strokeWidth="0.6" />
 
-            {/* Step 3: Polished Chrome 3D Sphere Dome Nut ("Nobe") - Image 3 */}
-            <circle cx={cx} cy={cy} r="6.2" fill="url(#vluxChromeSphereNobe)" stroke="#0F172A" strokeWidth="0.8" />
-
-            {/* Specular Glint Highlight on 3D Dome Sphere */}
+            {/* Specular Highlight Glint on Upper Left of Dome Sphere */}
             <ellipse
-              cx={cx - 1.8}
-              cy={cy - 2}
-              rx="2.2"
-              ry="1.4"
-              transform={`rotate(-32 ${cx - 1.8} ${cy - 2})`}
+              cx={cx - 1.5}
+              cy={cy - 1.6}
+              rx="1.8"
+              ry="1.1"
+              transform={`rotate(-35 ${cx - 1.5} ${cy - 1.6})`}
               fill="#FFFFFF"
               fillOpacity="0.95"
             />
-            {/* Ambient Micro-Sparkle */}
-            <circle cx={cx - 1.2} cy={cy - 1.2} r="0.6" fill="#FFFFFF" />
+            <circle cx={cx - 1} cy={cy - 1} r="0.5" fill="#FFFFFF" />
           </g>
         </svg>
       </div>
