@@ -147,7 +147,10 @@ const recordDeletedId = (id: string, title?: string) => {
     const raw = localStorage.getItem(STORAGE_KEYS.DELETED_IDS);
     const set: string[] = raw ? JSON.parse(raw) : [];
     if (id && !set.includes(id)) set.push(id);
-    if (title && !set.includes(title.toLowerCase().trim())) set.push(title.toLowerCase().trim());
+    if (title) {
+      const clean = title.toLowerCase().trim();
+      if (clean && !set.includes(clean)) set.push(clean);
+    }
     localStorage.setItem(STORAGE_KEYS.DELETED_IDS, JSON.stringify(set));
   } catch {}
 };
@@ -158,18 +161,21 @@ const isDeleted = (id?: string, title?: string): boolean => {
     if (!raw) return false;
     const set: string[] = JSON.parse(raw);
     if (id && set.includes(id)) return true;
-    if (title && set.includes(title.toLowerCase().trim())) return true;
+    if (title) {
+      const clean = title.toLowerCase().trim();
+      if (clean && set.includes(clean)) return true;
+    }
   } catch {}
   return false;
 };
 
-const unmarkDeleted = (title?: string) => {
-  if (!title) return;
+const unmarkDeleted = (title?: string, id?: string) => {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.DELETED_IDS);
     if (!raw) return;
     const set: string[] = JSON.parse(raw);
-    const updated = set.filter((x) => x !== title.toLowerCase().trim());
+    const clean = title?.toLowerCase().trim();
+    const updated = set.filter((x) => x !== id && (!clean || x !== clean));
     localStorage.setItem(STORAGE_KEYS.DELETED_IDS, JSON.stringify(updated));
   } catch {}
 };
@@ -250,6 +256,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, [settings, activities, sessions, habits, tasks, goals, countdowns, reviews, quotes]);
 
+  // Helper to immediately push clean state snapshot to cloud and backup snapshots
+  const pushCurrentSnapshot = (overrides?: Partial<typeof latestStateRef.current>) => {
+    try {
+      const current = { ...latestStateRef.current, ...(overrides || {}) };
+      const cleanPayload = {
+        settings: current.settings,
+        activities: current.activities.filter((a) => !isDeleted(a.id, a.name)),
+        sessions: current.sessions.filter((s) => !isDeleted(s.id)),
+        habits: current.habits.filter((h) => !isDeleted(h.id, h.name)),
+        tasks: current.tasks.filter((t) => !isDeleted(t.id, t.title)),
+        goals: current.goals.filter((g) => !isDeleted(g.id, g.title)),
+        countdowns: current.countdowns.filter((c) => !isDeleted(c.id, c.title)),
+        reviews: current.reviews,
+        quotes: current.quotes.filter((q) => !isDeleted(q.id, q.text)),
+      };
+      cloudSync.push(cleanPayload).catch(() => null);
+      cloudSync.saveSnapshot(cleanPayload);
+      setBackupSnapshots(cloudSync.getSnapshots());
+      if (process.env.NEXT_PUBLIC_API_URL) {
+        daymarkApi.syncFull(cleanPayload).catch(() => null);
+      }
+    } catch {}
+  };
+
   // Hydrate from localStorage on mount (Each entity hydrates independently!)
   useEffect(() => {
     try {
@@ -274,7 +304,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         try {
           const parsed = JSON.parse(storedSessions);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            parsedSessions = parsed;
+            parsedSessions = parsed.filter((s: StudySession) => !isDeleted(s.id));
           }
         } catch {}
       }
@@ -294,6 +324,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       // Filter out any mock sessions or false seed sessions on days the user didn't study (Sep 1-7)
       parsedSessions = parsedSessions.filter((s) => {
+        if (isDeleted(s.id)) return false;
         if (s.id.startsWith('seed-sess-')) return false;
         if (s.id === 'sess-today-morning' || s.id.startsWith('sess-today-')) return false;
         if (unstudiedDays.has(s.date)) return false;
@@ -302,10 +333,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return true;
       });
 
-      // Ensure real study sessions for Sep 8, 9, 10 and 11 exist
+      // Ensure real study sessions for Sep 8, 9, 10 and 11 exist unless deleted
       const existingKeys = new Set(parsedSessions.map((s) => `${s.date}-${s.activityId}`));
       for (const realSess of realSeed.sessions) {
-        if (!existingKeys.has(`${realSess.date}-${realSess.activityId}`)) {
+        if (!isDeleted(realSess.id) && !existingKeys.has(`${realSess.date}-${realSess.activityId}`)) {
           parsedSessions.push(realSess);
         }
       }
@@ -315,7 +346,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } catch {}
       // Clean up from remote cloud if present
       daymarkApi.deleteSession('sess-today-morning').catch(() => null);
-      setSessions(parsedSessions);
+      setSessions(parsedSessions.filter((s) => !isDeleted(s.id)));
 
       const storedHabits = localStorage.getItem(STORAGE_KEYS.HABITS);
       if (storedHabits) {
@@ -523,10 +554,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setSettings((prev) => ({ ...prev, ...cloudData.settings }));
       }
 
-      // 2. Activities: Union by ID or name
-      const mergedActs = [...current.activities];
+      // 2. Activities: Union by ID or name (respecting tombstones)
+      const mergedActs = [...current.activities].filter((a) => !isDeleted(a.id, a.name));
       if (Array.isArray(cloudData.activities)) {
         cloudData.activities.forEach((ca: any) => {
+          if (isDeleted(ca.id, ca.name)) return;
           if (!mergedActs.some((la) => la.id === ca.id || la.name.toLowerCase() === ca.name.toLowerCase())) {
             mergedActs.push(ca);
           }
@@ -534,7 +566,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       setActivities(mergedActs);
 
-      // 3. Sessions: Union by ID or (cleanDate + duration + startTime), strictly excluding artificial dummy sessions
+      // 3. Sessions: Union by ID or (cleanDate + duration + startTime), strictly excluding deleted or dummy sessions
       const validSeedDates = new Set(['2026-09-08', '2026-09-09', '2026-09-10', '2026-09-11']);
       const cloudUnstudiedDays = new Set([
         '2026-09-01',
@@ -546,10 +578,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         '2026-09-07',
       ]);
       const mergedSessions = [...current.sessions].filter(
-        (s) => s.id !== 'sess-today-morning' && !s.id.startsWith('sess-today-') && !s.id.startsWith('seed-sess-') && !(s.id.startsWith('sess-real-') && !validSeedDates.has(s.date)) && !cloudUnstudiedDays.has(s.date)
+        (s) =>
+          !isDeleted(s.id) &&
+          s.id !== 'sess-today-morning' &&
+          !s.id.startsWith('sess-today-') &&
+          !s.id.startsWith('seed-sess-') &&
+          !(s.id.startsWith('sess-real-') && !validSeedDates.has(s.date)) &&
+          !cloudUnstudiedDays.has(s.date)
       );
       if (Array.isArray(cloudData.sessions)) {
         cloudData.sessions.forEach((cs: any) => {
+          if (isDeleted(cs.id)) return;
           if (cs.id === 'sess-today-morning' || cs.id.startsWith('sess-today-')) return;
           if (cs.id.startsWith('seed-sess-')) return;
           if (cs.id.startsWith('sess-real-') && !validSeedDates.has(cs.date)) return;
@@ -570,9 +609,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             mergedSessions.push({ ...cs, date: csCleanDate });
           }
         });
-      }
-      if (current.sessions.some((ls) => !cloudData.sessions?.some((cs: any) => cs.id === ls.id))) {
-        hasLocalAdditions = true;
       }
       setSessions(mergedSessions);
 
@@ -621,10 +657,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       setTasks(mergedTasks);
 
-      // 7. Habits: Union by ID or name
-      const mergedHabits = [...current.habits];
+      // 7. Habits: Union by ID or name (ignoring tombstones)
+      const mergedHabits = [...current.habits].filter((h) => !isDeleted(h.id, h.name));
       if (Array.isArray(cloudData.habits)) {
         cloudData.habits.forEach((ch: any) => {
+          if (isDeleted(ch.id, ch.name)) return;
           const existingIdx = mergedHabits.findIndex(
             (lh) => lh.id === ch.id || lh.name.trim().toLowerCase() === ch.name.trim().toLowerCase()
           );
@@ -660,6 +697,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       setReviews(mergedReviews);
 
+      // 9. Motivational Quotes: Union (ignoring tombstones)
+      const mergedQuotes = [...current.quotes].filter((q) => !isDeleted(q.id, q.text));
+      if (Array.isArray(cloudData.quotes)) {
+        cloudData.quotes.forEach((cq: any) => {
+          if (isDeleted(cq.id, cq.text)) return;
+          const exists = mergedQuotes.some(
+            (lq) => lq.id === cq.id || lq.text.trim().toLowerCase() === cq.text.trim().toLowerCase()
+          );
+          if (!exists) {
+            mergedQuotes.push(cq);
+          }
+        });
+      }
+      setQuotes(mergedQuotes);
+
       // Persist merged data immediately to localStorage
       try {
         localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(mergedSessions));
@@ -669,6 +721,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         localStorage.setItem(STORAGE_KEYS.HABITS, JSON.stringify(mergedHabits));
         localStorage.setItem(STORAGE_KEYS.ACTIVITIES, JSON.stringify(mergedActs));
         localStorage.setItem(STORAGE_KEYS.REVIEWS, JSON.stringify(mergedReviews));
+        localStorage.setItem(STORAGE_KEYS.QUOTES, JSON.stringify(mergedQuotes));
       } catch (storageErr) {
         console.warn('LocalStorage merge write warning:', storageErr);
       }
@@ -683,17 +736,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         tasks: mergedTasks,
         habits: mergedHabits,
         reviews: mergedReviews,
+        quotes: mergedQuotes,
       };
 
       cloudSync.saveSnapshot(syncPayload);
       setBackupSnapshots(cloudSync.getSnapshots());
 
-      // If local had additions or changes, broadcast to room & API
-      if (hasLocalAdditions) {
-        cloudSync.push(syncPayload).catch(() => null);
-        if (process.env.NEXT_PUBLIC_API_URL) {
-          daymarkApi.syncFull(syncPayload).catch(() => null);
-        }
+      // Always push sanitized clean payload to cloud room so deleted items are purged everywhere
+      cloudSync.push(syncPayload).catch(() => null);
+      if (process.env.NEXT_PUBLIC_API_URL) {
+        daymarkApi.syncFull(syncPayload).catch(() => null);
       }
 
       setCloudSyncStatus('synced');
@@ -934,25 +986,45 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setStopwatchElapsed(0);
   };
 
-  // Actions (Immediate 0ms local update + background cloud push)
+  // Actions (Immediate 0ms local update + synchronous localStorage write + background cloud push)
   const updateSettings = (newSettings: Partial<UserSettings>) => {
-    setSettings((prev) => ({ ...prev, ...newSettings }));
+    setSettings((prev) => {
+      const updated = { ...prev, ...newSettings };
+      try {
+        localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(updated));
+      } catch {}
+      pushCurrentSnapshot({ settings: updated });
+      return updated;
+    });
     daymarkApi.updateSettings(newSettings).catch(() => null);
   };
 
   const addActivity = (activityData: Omit<Activity, 'id'>): Activity => {
+    unmarkDeleted(activityData.name);
     const newAct: Activity = {
       ...activityData,
       id: `act-${Date.now()}`,
     };
-    setActivities((prev) => [...prev, newAct]);
+    const updated = [...activities, newAct];
+    setActivities(updated);
+    try {
+      localStorage.setItem(STORAGE_KEYS.ACTIVITIES, JSON.stringify(updated));
+    } catch {}
     daymarkApi.createActivity(activityData).catch(() => null);
+    pushCurrentSnapshot({ activities: updated });
     return newAct;
   };
 
   const deleteActivity = (id: string) => {
-    setActivities((prev) => prev.filter((a) => a.id !== id));
+    const target = activities.find((a) => a.id === id);
+    recordDeletedId(id, target?.name);
+    const updated = activities.filter((a) => a.id !== id);
+    setActivities(updated);
+    try {
+      localStorage.setItem(STORAGE_KEYS.ACTIVITIES, JSON.stringify(updated));
+    } catch {}
     daymarkApi.deleteActivity(id).catch(() => null);
+    pushCurrentSnapshot({ activities: updated });
   };
 
   const addSession = (sessionData: Omit<StudySession, 'id'>) => {
@@ -962,36 +1034,43 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: `sess-${Date.now()}`,
       date: cleanDate,
     };
-    setSessions((prev) => [newSession, ...prev]);
+    const updated = [newSession, ...sessions];
+    setSessions(updated);
+    try {
+      localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(updated));
+    } catch {}
     daymarkApi.createSession({ ...sessionData, date: cleanDate }).catch(() => null);
 
     const durationHours = Math.round(sessionData.durationSeconds / 3600);
+    let updatedGoals = goals;
     if (durationHours > 0) {
-      setGoals((prevGoals) =>
-        prevGoals.map((g) => {
-          if (g.type === 'TIME') {
-            return { ...g, currentValue: g.currentValue + durationHours };
-          }
-          return g;
-        })
-      );
+      updatedGoals = goals.map((g) => {
+        if (g.type === 'TIME') {
+          return { ...g, currentValue: g.currentValue + durationHours };
+        }
+        return g;
+      });
+      setGoals(updatedGoals);
+      try {
+        localStorage.setItem(STORAGE_KEYS.GOALS, JSON.stringify(updatedGoals));
+      } catch {}
     }
-
-    // Auto-broadcast new session to cloud room so phone/laptop syncs in real-time
-    setTimeout(() => {
-      const current = latestStateRef.current;
-      cloudSync.saveSnapshot(current);
-      setBackupSnapshots(cloudSync.getSnapshots());
-      cloudSync.push(current).catch(() => null);
-    }, 150);
+    pushCurrentSnapshot({ sessions: updated, goals: updatedGoals });
   };
 
   const deleteSession = (id: string) => {
-    setSessions((prev) => prev.filter((s) => s.id !== id));
+    recordDeletedId(id);
+    const updated = sessions.filter((s) => s.id !== id);
+    setSessions(updated);
+    try {
+      localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(updated));
+    } catch {}
     daymarkApi.deleteSession(id).catch(() => null);
+    pushCurrentSnapshot({ sessions: updated });
   };
 
   const addHabit = (habitData: Omit<Habit, 'id' | 'createdAt' | 'logs'>) => {
+    unmarkDeleted(habitData.name);
     const newHabit: Habit = {
       ...habitData,
       id: `hab-${Date.now()}`,
@@ -999,73 +1078,108 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       isActive: true,
       logs: {},
     };
-    setHabits((prev) => [...prev, newHabit]);
+    const updated = [...habits, newHabit];
+    setHabits(updated);
+    try {
+      localStorage.setItem(STORAGE_KEYS.HABITS, JSON.stringify(updated));
+    } catch {}
     daymarkApi.createHabit(habitData).catch(() => null);
+    pushCurrentSnapshot({ habits: updated });
   };
 
   const toggleHabit = (habitId: string, dateStr?: string) => {
     const targetDate = dateStr || format(new Date(), 'yyyy-MM-dd');
-    setHabits((prev) =>
-      prev.map((h) => {
-        if (h.id !== habitId) return h;
-        const currentVal = !!h.logs[targetDate];
-        const updatedLogs = { ...h.logs, [targetDate]: !currentVal };
-        return { ...h, logs: updatedLogs };
-      })
-    );
+    const updated = habits.map((h) => {
+      if (h.id !== habitId) return h;
+      const currentVal = !!h.logs[targetDate];
+      const updatedLogs = { ...h.logs, [targetDate]: !currentVal };
+      return { ...h, logs: updatedLogs };
+    });
+    setHabits(updated);
+    try {
+      localStorage.setItem(STORAGE_KEYS.HABITS, JSON.stringify(updated));
+    } catch {}
     daymarkApi.toggleHabit(habitId, targetDate).catch(() => null);
+    pushCurrentSnapshot({ habits: updated });
   };
 
   const updateHabit = (id: string, updates: Partial<Habit>) => {
-    setHabits((prev) =>
-      prev.map((h) => (h.id === id ? { ...h, ...updates } : h))
-    );
+    const updated = habits.map((h) => (h.id === id ? { ...h, ...updates } : h));
+    setHabits(updated);
+    try {
+      localStorage.setItem(STORAGE_KEYS.HABITS, JSON.stringify(updated));
+    } catch {}
     daymarkApi.updateHabit(id, updates).catch(() => null);
+    pushCurrentSnapshot({ habits: updated });
   };
 
   const deleteHabit = (id: string) => {
-    setHabits((prev) => prev.filter((h) => h.id !== id));
-    daymarkApi.deleteHabit(id).catch(() => null);
+    const target = habits.find((h) => h.id === id);
+    recordDeletedId(id, target?.name);
+    const updated = habits.filter((h) => h.id !== id);
+    setHabits(updated);
+    try {
+      localStorage.setItem(STORAGE_KEYS.HABITS, JSON.stringify(updated));
+    } catch {}
+    daymarkApi.deleteHabit(id, target?.name).catch(() => null);
+    pushCurrentSnapshot({ habits: updated });
   };
 
   const addTask = (taskData: Omit<Task, 'id' | 'createdAt' | 'completed'>) => {
+    unmarkDeleted(taskData.title);
     const newTask: Task = {
       ...taskData,
       id: `task-${Date.now()}`,
       createdAt: format(new Date(), 'yyyy-MM-dd'),
       completed: false,
     };
-    setTasks((prev) => [newTask, ...prev]);
+    const updated = [newTask, ...tasks];
+    setTasks(updated);
+    try {
+      localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(updated));
+    } catch {}
     daymarkApi.createTask(taskData).catch(() => null);
+    pushCurrentSnapshot({ tasks: updated });
   };
 
   const toggleTask = (taskId: string) => {
-    setTasks((prev) =>
-      prev.map((t) => {
-        if (t.id !== taskId) return t;
-        const isNowCompleted = !t.completed;
-        if (isNowCompleted) {
-          setGoals((prevGoals) =>
-            prevGoals.map((g) =>
-              g.type === 'TASK' ? { ...g, currentValue: g.currentValue + 1 } : g
-            )
-          );
-        }
-        return {
-          ...t,
-          completed: isNowCompleted,
-          completedAt: isNowCompleted ? new Date().toISOString() : undefined,
-        };
-      })
-    );
+    let updatedGoals = goals;
+    const updated = tasks.map((t) => {
+      if (t.id !== taskId) return t;
+      const isNowCompleted = !t.completed;
+      if (isNowCompleted) {
+        updatedGoals = goals.map((g) =>
+          g.type === 'TASK' ? { ...g, currentValue: g.currentValue + 1 } : g
+        );
+        setGoals(updatedGoals);
+        try {
+          localStorage.setItem(STORAGE_KEYS.GOALS, JSON.stringify(updatedGoals));
+        } catch {}
+      }
+      return {
+        ...t,
+        completed: isNowCompleted,
+        completedAt: isNowCompleted ? new Date().toISOString() : undefined,
+      };
+    });
+    setTasks(updated);
+    try {
+      localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(updated));
+    } catch {}
     daymarkApi.toggleTask(taskId).catch(() => null);
+    pushCurrentSnapshot({ tasks: updated, goals: updatedGoals });
   };
 
   const deleteTask = (id: string) => {
     const target = tasks.find((t) => t.id === id);
     recordDeletedId(id, target?.title);
-    setTasks((prev) => prev.filter((t) => t.id !== id));
-    daymarkApi.deleteTask(id).catch(() => null);
+    const updated = tasks.filter((t) => t.id !== id);
+    setTasks(updated);
+    try {
+      localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(updated));
+    } catch {}
+    daymarkApi.deleteTask(id, target?.title).catch(() => null);
+    pushCurrentSnapshot({ tasks: updated });
   };
 
   const addGoal = (goalData: Omit<Goal, 'id' | 'createdAt' | 'currentValue'>) => {
@@ -1078,24 +1192,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       createdAt: format(new Date(), 'yyyy-MM-dd'),
       currentValue: 0,
     };
-    setGoals((prev) => [...prev, newGoal]);
+    const updated = [...goals, newGoal];
+    setGoals(updated);
+    try {
+      localStorage.setItem(STORAGE_KEYS.GOALS, JSON.stringify(updated));
+    } catch {}
     daymarkApi.createGoal({ ...goalData, targetDate: cleanTargetDate }).catch(() => null);
+    pushCurrentSnapshot({ goals: updated });
   };
 
   const updateGoalProgress = (id: string, delta: number) => {
-    setGoals((prev) =>
-      prev.map((g) =>
-        g.id === id ? { ...g, currentValue: Math.max(0, g.currentValue + delta) } : g
-      )
+    const updated = goals.map((g) =>
+      g.id === id ? { ...g, currentValue: Math.max(0, g.currentValue + delta) } : g
     );
+    setGoals(updated);
+    try {
+      localStorage.setItem(STORAGE_KEYS.GOALS, JSON.stringify(updated));
+    } catch {}
     daymarkApi.updateGoalProgress(id, delta).catch(() => null);
+    pushCurrentSnapshot({ goals: updated });
   };
 
   const deleteGoal = (id: string) => {
     const target = goals.find((g) => g.id === id);
     recordDeletedId(id, target?.title);
-    setGoals((prev) => prev.filter((g) => g.id !== id));
+    const updated = goals.filter((g) => g.id !== id);
+    setGoals(updated);
+    try {
+      localStorage.setItem(STORAGE_KEYS.GOALS, JSON.stringify(updated));
+    } catch {}
     daymarkApi.deleteGoal(id, target?.title).catch(() => null);
+    pushCurrentSnapshot({ goals: updated });
   };
 
   const addCountdown = (cdData: Omit<CustomCountdown, 'id'>) => {
@@ -1106,28 +1233,42 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       targetDate: cleanTargetDate,
       id: `cd-${Date.now()}`,
     };
-    setCountdowns((prev) => [...prev, newCd]);
+    const updated = [...countdowns, newCd];
+    setCountdowns(updated);
+    try {
+      localStorage.setItem(STORAGE_KEYS.COUNTDOWNS, JSON.stringify(updated));
+    } catch {}
     daymarkApi.createCountdown({ ...cdData, id: newCd.id, targetDate: cleanTargetDate }).catch(() => null);
+    pushCurrentSnapshot({ countdowns: updated });
   };
 
   const deleteCountdown = (id: string) => {
     const target = countdowns.find((c) => c.id === id);
     recordDeletedId(id, target?.title);
-    setCountdowns((prev) => prev.filter((cd) => cd.id !== id));
+    const updated = countdowns.filter((c) => c.id !== id);
+    setCountdowns(updated);
+    try {
+      localStorage.setItem(STORAGE_KEYS.COUNTDOWNS, JSON.stringify(updated));
+    } catch {}
     daymarkApi.deleteCountdown(id, target?.title).catch(() => null);
+    pushCurrentSnapshot({ countdowns: updated });
   };
 
   const saveDailyReview = (reviewData: Omit<DailyReview, 'id'>) => {
-    setReviews((prev) => {
-      const existingIndex = prev.findIndex((r) => r.date === reviewData.date);
-      if (existingIndex >= 0) {
-        const updated = [...prev];
-        updated[existingIndex] = { ...reviewData, id: prev[existingIndex].id };
-        return updated;
-      }
-      return [{ ...reviewData, id: `rev-${Date.now()}` }, ...prev];
-    });
+    const existingIndex = reviews.findIndex((r) => r.date === reviewData.date);
+    let updated: DailyReview[];
+    if (existingIndex >= 0) {
+      updated = [...reviews];
+      updated[existingIndex] = { ...reviewData, id: reviews[existingIndex].id };
+    } else {
+      updated = [{ ...reviewData, id: `rev-${Date.now()}` }, ...reviews];
+    }
+    setReviews(updated);
+    try {
+      localStorage.setItem(STORAGE_KEYS.REVIEWS, JSON.stringify(updated));
+    } catch {}
     daymarkApi.saveReview(reviewData).catch(() => null);
+    pushCurrentSnapshot({ reviews: updated });
   };
 
   // Motivational Quote Handlers
@@ -1138,25 +1279,49 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: `quote-${Date.now()}`,
       createdAt: format(new Date(), 'yyyy-MM-dd'),
     };
-    setQuotes((prev) => [newQuote, ...prev]);
+    const updated = [newQuote, ...quotes];
+    setQuotes(updated);
+    try {
+      localStorage.setItem(STORAGE_KEYS.QUOTES, JSON.stringify(updated));
+    } catch {}
+    pushCurrentSnapshot({ quotes: updated });
   };
 
   const updateQuote = (id: string, updates: Partial<MotivationalQuote>) => {
-    setQuotes((prev) => prev.map((q) => (q.id === id ? { ...q, ...updates } : q)));
+    const updated = quotes.map((q) => (q.id === id ? { ...q, ...updates } : q));
+    setQuotes(updated);
+    try {
+      localStorage.setItem(STORAGE_KEYS.QUOTES, JSON.stringify(updated));
+    } catch {}
+    pushCurrentSnapshot({ quotes: updated });
   };
 
   const deleteQuote = (id: string) => {
     const target = quotes.find((q) => q.id === id);
     recordDeletedId(id, target?.text);
-    setQuotes((prev) => prev.filter((q) => q.id !== id));
+    const updated = quotes.filter((q) => q.id !== id);
+    setQuotes(updated);
+    try {
+      localStorage.setItem(STORAGE_KEYS.QUOTES, JSON.stringify(updated));
+    } catch {}
+    pushCurrentSnapshot({ quotes: updated });
   };
 
   const toggleQuoteActive = (id: string) => {
-    setQuotes((prev) => prev.map((q) => (q.id === id ? { ...q, isActive: !q.isActive } : q)));
+    const updated = quotes.map((q) => (q.id === id ? { ...q, isActive: !q.isActive } : q));
+    setQuotes(updated);
+    try {
+      localStorage.setItem(STORAGE_KEYS.QUOTES, JSON.stringify(updated));
+    } catch {}
+    pushCurrentSnapshot({ quotes: updated });
   };
 
   const reorderQuotes = (newQuotes: MotivationalQuote[]) => {
     setQuotes(newQuotes);
+    try {
+      localStorage.setItem(STORAGE_KEYS.QUOTES, JSON.stringify(newQuotes));
+    } catch {}
+    pushCurrentSnapshot({ quotes: newQuotes });
   };
 
   const resetQuotesToDefault = () => {
@@ -1164,6 +1329,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       localStorage.setItem(STORAGE_KEYS.QUOTES, JSON.stringify(INITIAL_QUOTES));
     } catch {}
+    pushCurrentSnapshot({ quotes: INITIAL_QUOTES });
   };
 
   // Helper for date stats

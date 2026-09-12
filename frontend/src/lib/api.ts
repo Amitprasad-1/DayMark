@@ -157,8 +157,9 @@ export const daymarkApi = {
       body: JSON.stringify(updates),
     });
   },
-  async deleteHabit(id: string): Promise<boolean> {
-    const res = await request(`/api/habits/${id}`, { method: 'DELETE' });
+  async deleteHabit(id: string, name?: string): Promise<boolean> {
+    const q = name ? `?name=${encodeURIComponent(name)}` : '';
+    const res = await request(`/api/habits/${id}${q}`, { method: 'DELETE' });
     return res !== null;
   },
 
@@ -175,8 +176,9 @@ export const daymarkApi = {
   async toggleTask(id: string): Promise<Task | null> {
     return request<Task>(`/api/tasks/${id}/toggle`, { method: 'POST' });
   },
-  async deleteTask(id: string): Promise<boolean> {
-    const res = await request(`/api/tasks/${id}`, { method: 'DELETE' });
+  async deleteTask(id: string, title?: string): Promise<boolean> {
+    const q = title ? `?title=${encodeURIComponent(title)}` : '';
+    const res = await request(`/api/tasks/${id}${q}`, { method: 'DELETE' });
     return res !== null;
   },
 

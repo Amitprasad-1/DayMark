@@ -352,15 +352,26 @@ app.put('/api/habits/:id', async (req: Request, res: Response) => {
 
 app.delete('/api/habits/:id', async (req: Request, res: Response) => {
   const id = getId(req);
+  const name = (req.query.name as string) || '';
   try {
     if (isDbConnected()) {
-      await prisma.habit.delete({ where: { id } }).catch(() => null);
+      await prisma.habit.deleteMany({
+        where: {
+          userId: 'default-user',
+          OR: [
+            { id },
+            ...(name ? [{ name: { equals: name, mode: 'insensitive' as const } }] : []),
+          ],
+        },
+      }).catch(() => null);
       return res.status(204).send();
     }
   } catch (e: any) {
     console.error('Habit delete fallback:', e.message);
   }
-  inMemoryStore.habits = inMemoryStore.habits.filter((h) => h.id !== id);
+  inMemoryStore.habits = inMemoryStore.habits.filter(
+    (h) => h.id !== id && (!name || h.name.toLowerCase() !== name.toLowerCase())
+  );
   res.status(204).send();
 });
 
@@ -431,15 +442,26 @@ app.post('/api/tasks/:id/toggle', async (req: Request, res: Response) => {
 
 app.delete('/api/tasks/:id', async (req: Request, res: Response) => {
   const id = getId(req);
+  const title = (req.query.title as string) || '';
   try {
     if (isDbConnected()) {
-      await prisma.task.delete({ where: { id } }).catch(() => null);
+      await prisma.task.deleteMany({
+        where: {
+          userId: 'default-user',
+          OR: [
+            { id },
+            ...(title ? [{ title: { equals: title, mode: 'insensitive' as const } }] : []),
+          ],
+        },
+      }).catch(() => null);
       return res.status(204).send();
     }
   } catch (e: any) {
     console.error('Task delete fallback:', e.message);
   }
-  inMemoryStore.tasks = inMemoryStore.tasks.filter((t) => t.id !== id);
+  inMemoryStore.tasks = inMemoryStore.tasks.filter(
+    (t) => t.id !== id && (!title || t.title.toLowerCase() !== title.toLowerCase())
+  );
   res.status(204).send();
 });
 
@@ -826,6 +848,80 @@ app.post('/api/sync/full', async (req: Request, res: Response) => {
               category: c.category || 'Milestone',
               color: c.color || '#8B5CF6',
               icon: c.icon || 'Rocket',
+            },
+          }).catch(() => null);
+        }
+      }
+
+      if (Array.isArray(tasks)) {
+        const currentTaskIds = tasks.map((t) => t.id).filter(Boolean);
+        await prisma.task.deleteMany({
+          where: {
+            userId: 'default-user',
+            id: { notIn: currentTaskIds },
+          },
+        }).catch(() => null);
+
+        for (const t of tasks) {
+          if (!t.id || !t.title) continue;
+          await prisma.task.upsert({
+            where: { id: t.id },
+            update: {
+              title: t.title,
+              description: t.description || null,
+              priority: t.priority || 'MEDIUM',
+              category: t.category || 'General',
+              dueDate: t.dueDate || null,
+              completed: !!t.completed,
+              completedAt: t.completedAt ? new Date(t.completedAt) : null,
+            },
+            create: {
+              id: t.id,
+              userId: 'default-user',
+              title: t.title,
+              description: t.description || null,
+              priority: t.priority || 'MEDIUM',
+              category: t.category || 'General',
+              dueDate: t.dueDate || null,
+              completed: !!t.completed,
+              completedAt: t.completedAt ? new Date(t.completedAt) : null,
+            },
+          }).catch(() => null);
+        }
+      }
+
+      if (Array.isArray(habits)) {
+        const currentHabitIds = habits.map((h) => h.id).filter(Boolean);
+        await prisma.habit.deleteMany({
+          where: {
+            userId: 'default-user',
+            id: { notIn: currentHabitIds },
+          },
+        }).catch(() => null);
+
+        for (const h of habits) {
+          if (!h.id || !h.name) continue;
+          await prisma.habit.upsert({
+            where: { id: h.id },
+            update: {
+              name: h.name,
+              category: h.category || 'Mindset',
+              icon: h.icon || 'Zap',
+              color: h.color || '#3B82F6',
+              frequency: h.frequency || 'daily',
+              targetDaysPerWeek: h.targetDaysPerWeek || 7,
+              isActive: h.isActive !== false,
+            },
+            create: {
+              id: h.id,
+              userId: 'default-user',
+              name: h.name,
+              category: h.category || 'Mindset',
+              icon: h.icon || 'Zap',
+              color: h.color || '#3B82F6',
+              frequency: h.frequency || 'daily',
+              targetDaysPerWeek: h.targetDaysPerWeek || 7,
+              isActive: h.isActive !== false,
             },
           }).catch(() => null);
         }
