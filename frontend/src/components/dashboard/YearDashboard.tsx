@@ -211,8 +211,8 @@ export const YearDashboard: React.FC = () => {
       if (hours > 0) {
         return 'bg-gradient-to-tr from-indigo-800 via-purple-800 to-pink-800 text-white font-black scale-110 z-20 shadow-[0_0_22px_rgba(168,85,247,0.85)]';
       }
-      // Highlighted luminous deep sapphire / cosmic purple interior with glowing white text
-      return 'bg-gradient-to-br from-indigo-950/95 via-[#0c122c] to-purple-950/95 text-white font-black scale-110 z-20 shadow-[0_0_22px_rgba(0,229,255,0.6),inset_0_0_14px_rgba(255,0,122,0.3)] border border-cyan-400/40';
+      // Crisp, crystal clear dark interior with sharp contrast and zero haze
+      return 'bg-slate-900 border border-white/20 text-white font-bold scale-105 z-20';
     }
 
     // Target Milestone day: Golden Trophy / Amber Crown (same as previous)
@@ -982,43 +982,29 @@ export const YearDashboard: React.FC = () => {
                           isDateToday ? 'overflow-visible' : ''
                         }`}
                       >
-                        {/* INFINITE MOVING COLORFUL RAINBOW BORDER (TODAY ACTIVE DATE) */}
+                        {/* INFINITE MOVING COLORFUL RAINBOW BORDER (TODAY ACTIVE DATE - CRISP & ZERO HAZE) */}
                         {isDateToday && (
-                          <>
-                            {/* Ambient colorful aura glow behind the cell */}
-                            <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-pink-500/35 via-cyan-400/35 to-amber-400/35 blur-md pointer-events-none animate-pulse z-0" />
-
-                            {/* Infinite Moving Colorful Laser Beam Border */}
-                            <svg
-                              className="absolute -inset-[3.5px] w-[calc(100%+7px)] h-[calc(100%+7px)] pointer-events-none z-30 overflow-visible"
-                              aria-hidden="true"
-                            >
-                              <rect
-                                x="1.5"
-                                y="1.5"
-                                width="calc(100% - 3px)"
-                                height="calc(100% - 3px)"
-                                rx="9"
-                                ry="9"
-                                fill="none"
-                                stroke="url(#todayInfiniteLaserBeam)"
-                                strokeWidth="3.2"
-                                strokeDasharray="16 8"
-                                className="animate-infinite-border-laser"
-                              />
-                            </svg>
-
-                            {/* Live Active Today Neon Beacon */}
-                            <span className="absolute -top-1 -left-1 flex h-2 w-2 z-30 pointer-events-none">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-90" />
-                              <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-300 border border-slate-950 shadow-[0_0_8px_#00E5FF]" />
-                            </span>
-                          </>
+                          <svg
+                            className="absolute -inset-[2px] w-[calc(100%+4px)] h-[calc(100%+4px)] pointer-events-none z-30 overflow-visible"
+                            aria-hidden="true"
+                          >
+                            <rect
+                              x="1"
+                              y="1"
+                              width="calc(100% - 2px)"
+                              height="calc(100% - 2px)"
+                              rx="8"
+                              ry="8"
+                              fill="none"
+                              stroke="url(#todayInfiniteLaserBeam)"
+                              strokeWidth="2.5"
+                              strokeDasharray="14 7"
+                              className="animate-infinite-border-laser"
+                            />
+                          </svg>
                         )}
 
-                        <span className={`relative z-10 ${isDateToday ? 'text-white font-black drop-shadow-[0_0_8px_rgba(255,255,255,0.9)] scale-110' : ''}`}>
-                          {dayNum}
-                        </span>
+                        <span className="relative z-10 text-white font-bold">{dayNum}</span>
 
                         {/* Strategic Milestone Jewel Badge (Golden Diamond) */}
                         {hasMilestone && (
