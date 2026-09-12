@@ -21,6 +21,7 @@ import {
   FastForward,
   Activity,
   ZoomIn,
+  Type,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { ManageQuotesModal } from '@/components/modals/ManageQuotesModal';
@@ -39,17 +40,24 @@ const ICON_COMPONENTS: Record<string, React.FC<{ className?: string; style?: Rea
   Compass,
 };
 
-export type QuoteBannerMode = 'zoom' | 'moving';
+export type QuoteBannerMode = 'zoom' | 'typewriter' | 'cinematic' | 'moving';
 export type QuoteSpeed = '0.25x' | '0.50x' | '0.75x' | '1.00x';
 
 const SPEED_CONFIG: Record<
   QuoteSpeed,
-  { wordIntervalMs: number; holdDurationMs: number; marqueeClass: string; label: string }
+  {
+    wordIntervalMs: number;
+    charIntervalMs: number;
+    holdDurationMs: number;
+    cinematicHoldMs: number;
+    marqueeClass: string;
+    label: string;
+  }
 > = {
-  '0.25x': { wordIntervalMs: 620, holdDurationMs: 3800, marqueeClass: 'animate-ticker-025', label: '0.25x' },
-  '0.50x': { wordIntervalMs: 460, holdDurationMs: 3000, marqueeClass: 'animate-ticker-050', label: '0.50x' },
-  '0.75x': { wordIntervalMs: 340, holdDurationMs: 2400, marqueeClass: 'animate-ticker-075', label: '0.75x' },
-  '1.00x': { wordIntervalMs: 240, holdDurationMs: 1800, marqueeClass: 'animate-ticker-100', label: '1.00x' },
+  '0.25x': { wordIntervalMs: 620, charIntervalMs: 55, holdDurationMs: 4200, cinematicHoldMs: 6500, marqueeClass: 'animate-ticker-025', label: '0.25x' },
+  '0.50x': { wordIntervalMs: 440, charIntervalMs: 38, holdDurationMs: 3200, cinematicHoldMs: 5000, marqueeClass: 'animate-ticker-050', label: '0.50x' },
+  '0.75x': { wordIntervalMs: 320, charIntervalMs: 25, holdDurationMs: 2400, cinematicHoldMs: 3800, marqueeClass: 'animate-ticker-075', label: '0.75x' },
+  '1.00x': { wordIntervalMs: 220, charIntervalMs: 16, holdDurationMs: 1800, cinematicHoldMs: 2800, marqueeClass: 'animate-ticker-100', label: '1.00x' },
 };
 
 interface MovingQuoteBannerProps {
@@ -63,16 +71,20 @@ export const MovingQuoteBanner: React.FC<MovingQuoteBannerProps> = ({ className 
   const [speed, setSpeed] = useState<QuoteSpeed>('0.50x');
   const [displayMode, setDisplayMode] = useState<QuoteBannerMode>('zoom');
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [direction, setDirection] = useState<number>(1);
 
   // Word-by-Word Zoom Reading State
   const [activeWordIndex, setActiveWordIndex] = useState(0);
   const [isHoldingSentence, setIsHoldingSentence] = useState(false);
 
+  // Typewriter Mode State
+  const [typedCharIndex, setTypedCharIndex] = useState(0);
+
   // Hydrate display mode & speed preferences from localStorage
   useEffect(() => {
     try {
       const savedMode = localStorage.getItem('daymark_quote_banner_mode') as QuoteBannerMode | null;
-      if (savedMode === 'zoom' || savedMode === 'moving') {
+      if (savedMode && ['zoom', 'typewriter', 'cinematic', 'moving'].includes(savedMode)) {
         setDisplayMode(savedMode);
       }
       const savedSpeed = localStorage.getItem('daymark_quote_banner_speed') as QuoteSpeed | null;
@@ -91,13 +103,14 @@ export const MovingQuoteBanner: React.FC<MovingQuoteBannerProps> = ({ className 
   // Split current quote into words
   const words = currentQuote ? currentQuote.text.trim().split(/\s+/) : [];
 
-  // Reset word reading state when quote changes
+  // Reset internal animation states when active quote changes
   useEffect(() => {
     setActiveWordIndex(0);
+    setTypedCharIndex(0);
     setIsHoldingSentence(false);
   }, [currentIndex, safeIndex]);
 
-  // Word-by-Word Focus Reading Timer Engine
+  // 1. Word-by-Word Focus Reading Engine
   useEffect(() => {
     if (displayMode !== 'zoom' || isPaused || words.length === 0) return;
 
@@ -109,6 +122,7 @@ export const MovingQuoteBanner: React.FC<MovingQuoteBannerProps> = ({ className 
       timer = setTimeout(() => {
         setIsHoldingSentence(false);
         setActiveWordIndex(0);
+        setDirection(1);
         setCurrentIndex((prev) => (prev + 1) % activeQuotes.length);
       }, currentConfig.holdDurationMs);
     } else {
@@ -125,9 +139,51 @@ export const MovingQuoteBanner: React.FC<MovingQuoteBannerProps> = ({ className 
     return () => clearTimeout(timer);
   }, [displayMode, isPaused, activeWordIndex, isHoldingSentence, words.length, speed, activeQuotes.length]);
 
+  // 2. Typewriter Live Typing Engine
+  useEffect(() => {
+    if (displayMode !== 'typewriter' || isPaused || !currentQuote) return;
+
+    const currentConfig = SPEED_CONFIG[speed] || SPEED_CONFIG['0.50x'];
+    const textLen = currentQuote.text.length;
+    let timer: NodeJS.Timeout;
+
+    if (isHoldingSentence) {
+      timer = setTimeout(() => {
+        setIsHoldingSentence(false);
+        setTypedCharIndex(0);
+        setDirection(1);
+        setCurrentIndex((prev) => (prev + 1) % activeQuotes.length);
+      }, currentConfig.holdDurationMs);
+    } else {
+      timer = setTimeout(() => {
+        if (typedCharIndex < textLen) {
+          setTypedCharIndex((prev) => prev + 1);
+        } else {
+          setIsHoldingSentence(true);
+        }
+      }, currentConfig.charIntervalMs);
+    }
+
+    return () => clearTimeout(timer);
+  }, [displayMode, isPaused, typedCharIndex, isHoldingSentence, currentQuote, speed, activeQuotes.length]);
+
+  // 3. Cinematic Wave Timer Engine
+  useEffect(() => {
+    if (displayMode !== 'cinematic' || isPaused || activeQuotes.length <= 1) return;
+
+    const currentConfig = SPEED_CONFIG[speed] || SPEED_CONFIG['0.50x'];
+    const timer = setTimeout(() => {
+      setDirection(1);
+      setCurrentIndex((prev) => (prev + 1) % activeQuotes.length);
+    }, currentConfig.cinematicHoldMs);
+
+    return () => clearTimeout(timer);
+  }, [displayMode, isPaused, currentIndex, speed, activeQuotes.length]);
+
   const handleToggleMode = (mode: QuoteBannerMode) => {
     setDisplayMode(mode);
     setActiveWordIndex(0);
+    setTypedCharIndex(0);
     setIsHoldingSentence(false);
     try {
       localStorage.setItem('daymark_quote_banner_mode', mode);
@@ -152,7 +208,9 @@ export const MovingQuoteBanner: React.FC<MovingQuoteBannerProps> = ({ className 
   const handlePrev = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (activeQuotes.length === 0) return;
+    setDirection(-1);
     setActiveWordIndex(0);
+    setTypedCharIndex(0);
     setIsHoldingSentence(false);
     setCurrentIndex((prev) => (prev > 0 ? prev - 1 : activeQuotes.length - 1));
   };
@@ -160,7 +218,9 @@ export const MovingQuoteBanner: React.FC<MovingQuoteBannerProps> = ({ className 
   const handleNext = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (activeQuotes.length === 0) return;
+    setDirection(1);
     setActiveWordIndex(0);
+    setTypedCharIndex(0);
     setIsHoldingSentence(false);
     setCurrentIndex((prev) => (prev + 1) % activeQuotes.length);
   };
@@ -190,8 +250,8 @@ export const MovingQuoteBanner: React.FC<MovingQuoteBannerProps> = ({ className 
                 <QuoteIcon className="w-4 h-4 text-amber-400" />
                 <span>No active quotes. Click "Edit Quotes" to add your motivational reminders!</span>
               </div>
-            ) : displayMode === 'zoom' ? (
-              /* 1. WORD-BY-WORD SEQUENTIAL ZOOM READING (Effortless, Stress-free, Highly Focused) */
+            ) : displayMode !== 'moving' ? (
+              /* CARD MODES (Focus, Type, Wave) with Directional Motion-Blur Transitions */
               <div className="flex-1 flex items-center justify-between px-2 sm:px-6 py-1 overflow-hidden select-none gap-2 sm:gap-4 w-full">
                 {/* Prev Button */}
                 <button
@@ -203,66 +263,137 @@ export const MovingQuoteBanner: React.FC<MovingQuoteBannerProps> = ({ className 
                   <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
 
-                {/* Center: Sequential Word Zoom Sentence */}
+                {/* Center: Animated Quote Container with Directional Fluid Motion Blur */}
                 <div
-                  className="flex-1 flex items-center justify-center cursor-pointer min-w-0 px-1"
+                  className="flex-1 flex items-center justify-center cursor-pointer min-w-0 px-1 overflow-hidden"
                   onClick={() => setIsModalOpen(true)}
                   title="Click to edit quotes"
                 >
-                  <div className="flex items-center justify-center gap-2 sm:gap-3.5 flex-wrap text-center max-w-4xl py-1">
-                    {/* Badge Pill */}
-                    <span
-                      className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm shrink-0"
-                      style={{
-                        backgroundColor: `${currentQuote.color || '#F59E0B'}25`,
-                        color: currentQuote.color || '#F59E0B',
-                        border: `1px solid ${currentQuote.color || '#F59E0B'}50`,
+                  <AnimatePresence mode="wait" custom={direction}>
+                    <motion.div
+                      key={`quote-${currentQuote.id}-${safeIndex}-${displayMode}`}
+                      custom={direction}
+                      variants={{
+                        enter: (dir: number) => ({
+                          x: dir > 0 ? 30 : -30,
+                          opacity: 0,
+                          filter: 'blur(6px)',
+                          scale: 0.98,
+                        }),
+                        center: {
+                          x: 0,
+                          opacity: 1,
+                          filter: 'blur(0px)',
+                          scale: 1,
+                        },
+                        exit: (dir: number) => ({
+                          x: dir > 0 ? -30 : 30,
+                          opacity: 0,
+                          filter: 'blur(6px)',
+                          scale: 0.98,
+                        }),
                       }}
+                      initial="enter"
+                      animate="center"
+                      exit="exit"
+                      transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
+                      className="flex items-center justify-center gap-2 sm:gap-3.5 flex-wrap text-center max-w-4xl py-1 w-full"
                     >
-                      {renderIcon(currentQuote.icon, currentQuote.color || '#F59E0B')}
-                      <span>{currentQuote.category || 'Focus'}</span>
-                    </span>
-
-                    {/* Words rendered with sequential zoom & spotlight */}
-                    <span className="text-sm sm:text-lg lg:text-xl font-bold tracking-wide flex flex-wrap items-center justify-center gap-x-1.5 sm:gap-x-2 gap-y-0.5 sm:gap-y-1">
-                      <span className="text-amber-400/50 select-none">“</span>
-                      {words.map((word, wIdx) => {
-                        const isActive = wIdx === activeWordIndex && !isHoldingSentence;
-                        const isRead = wIdx < activeWordIndex || isHoldingSentence;
-
-                        return (
-                          <motion.span
-                            key={`${currentQuote.id}-word-${wIdx}`}
-                            animate={
-                              isActive
-                                ? { scale: [1, 1.24, 1.18], y: -2 }
-                                : isHoldingSentence
-                                ? { scale: 1, y: 0 }
-                                : { scale: 1, y: 0 }
-                            }
-                            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-                            className={`inline-block transition-all duration-200 ${
-                              isActive
-                                ? 'text-amber-300 font-black drop-shadow-[0_0_18px_rgba(245,158,11,0.95)] z-10 px-0.5'
-                                : isRead
-                                ? 'text-white font-extrabold opacity-95'
-                                : 'text-slate-500 font-semibold opacity-40'
-                            }`}
-                          >
-                            {word}
-                          </motion.span>
-                        );
-                      })}
-                      <span className="text-amber-400/50 select-none">”</span>
-                    </span>
-
-                    {/* Author / Note */}
-                    {currentQuote.author && (
-                      <span className="text-xs sm:text-sm font-semibold text-slate-300 font-sans shrink-0">
-                        &bull; {currentQuote.author}
+                      {/* Badge Pill */}
+                      <span
+                        className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm shrink-0"
+                        style={{
+                          backgroundColor: `${currentQuote.color || '#F59E0B'}25`,
+                          color: currentQuote.color || '#F59E0B',
+                          border: `1px solid ${currentQuote.color || '#F59E0B'}50`,
+                        }}
+                      >
+                        {renderIcon(currentQuote.icon, currentQuote.color || '#F59E0B')}
+                        <span>{currentQuote.category || 'Focus'}</span>
                       </span>
-                    )}
-                  </div>
+
+                      {/* 1. FOCUS MODE: Sequential Word Zoom & Spotlight */}
+                      {displayMode === 'zoom' && (
+                        <span className="text-sm sm:text-lg lg:text-xl font-bold tracking-wide flex flex-wrap items-center justify-center gap-x-1.5 sm:gap-x-2 gap-y-0.5 sm:gap-y-1">
+                          <span className="text-amber-400/50 select-none">“</span>
+                          {words.map((word, wIdx) => {
+                            const isActive = wIdx === activeWordIndex && !isHoldingSentence;
+                            const isRead = wIdx < activeWordIndex || isHoldingSentence;
+
+                            return (
+                              <motion.span
+                                key={`${currentQuote.id}-word-${wIdx}`}
+                                animate={
+                                  isActive
+                                    ? { scale: [1, 1.25, 1.18], y: -2 }
+                                    : isHoldingSentence
+                                    ? { scale: 1, y: 0 }
+                                    : { scale: 1, y: 0 }
+                                }
+                                transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                                className={`inline-block transition-all duration-200 ${
+                                  isActive
+                                    ? 'text-amber-300 font-black drop-shadow-[0_0_20px_rgba(245,158,11,1)] z-10 px-0.5'
+                                    : isRead
+                                    ? isHoldingSentence
+                                      ? 'text-amber-100 font-extrabold drop-shadow-[0_0_12px_rgba(245,158,11,0.35)]'
+                                      : 'text-white font-extrabold opacity-95'
+                                    : 'text-slate-500 font-semibold opacity-40'
+                                }`}
+                              >
+                                {word}
+                              </motion.span>
+                            );
+                          })}
+                          <span className="text-amber-400/50 select-none">”</span>
+                        </span>
+                      )}
+
+                      {/* 2. TYPEWRITER MODE: Live typing with neon pulsating cursor */}
+                      {displayMode === 'typewriter' && (
+                        <span className="text-sm sm:text-lg lg:text-xl font-extrabold tracking-wide text-white drop-shadow-md">
+                          <span className="text-amber-400/60 select-none">“</span>
+                          <span>{currentQuote.text.slice(0, typedCharIndex)}</span>
+                          <motion.span
+                            animate={{ opacity: [1, 0, 1] }}
+                            transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
+                            className="inline-block w-1.5 sm:w-2 h-4 sm:h-5 ml-1 rounded-sm bg-gradient-to-b from-amber-300 to-amber-500 shadow-[0_0_10px_#F59E0B] align-middle"
+                          />
+                          <span className="text-amber-400/60 select-none">”</span>
+                        </span>
+                      )}
+
+                      {/* 3. CINEMATIC WAVE MODE: Staggered floating ripple with radiant text */}
+                      {displayMode === 'cinematic' && (
+                        <span className="text-sm sm:text-lg lg:text-xl font-black tracking-wide flex flex-wrap items-center justify-center gap-x-1.5 sm:gap-x-2.5 gap-y-0.5 sm:gap-y-1">
+                          <span className="text-amber-400/60 select-none">“</span>
+                          {words.map((word, wIdx) => (
+                            <motion.span
+                              key={`${currentQuote.id}-cine-${wIdx}`}
+                              initial={{ opacity: 0, y: 16, scale: 0.92, filter: 'blur(4px)' }}
+                              animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+                              transition={{
+                                duration: 0.45,
+                                delay: wIdx * 0.045,
+                                ease: [0.16, 1, 0.3, 1],
+                              }}
+                              className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-white via-amber-100 to-amber-200 drop-shadow-[0_2px_10px_rgba(245,158,11,0.25)]"
+                            >
+                              {word}
+                            </motion.span>
+                          ))}
+                          <span className="text-amber-400/60 select-none">”</span>
+                        </span>
+                      )}
+
+                      {/* Author / Note */}
+                      {currentQuote.author && (
+                        <span className="text-xs sm:text-sm font-semibold text-slate-300 font-sans shrink-0">
+                          &bull; {currentQuote.author}
+                        </span>
+                      )}
+                    </motion.div>
+                  </AnimatePresence>
                 </div>
 
                 {/* Next Button */}
@@ -276,7 +407,7 @@ export const MovingQuoteBanner: React.FC<MovingQuoteBannerProps> = ({ className 
                 </button>
               </div>
             ) : (
-              /* 2. CONTINUOUS MOVING TICKER (Ultra-smooth, easily readable drift) */
+              /* 4. CONTINUOUS MOVING TICKER (Ultra-smooth, easily readable drift) */
               <div
                 className="flex-1 overflow-hidden relative ticker-mask cursor-pointer py-1 select-none w-full"
                 onClick={() => setIsModalOpen(true)}
@@ -328,19 +459,19 @@ export const MovingQuoteBanner: React.FC<MovingQuoteBannerProps> = ({ className 
             )}
           </div>
 
-          {/* Controls Bar: Neatly stacked on mobile, right-aligned on desktop */}
-          <div className="flex items-center justify-between sm:justify-end gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-[#070B16]/95 sm:bg-[#090E1C]/95 border-t sm:border-t-0 sm:border-l border-white/[0.08] sm:border-white/[0.10] shrink-0 z-20 w-full sm:w-auto">
-            {/* Mode Switcher: Focus vs Moving */}
+          {/* Controls Bar: Neatly organized & responsive */}
+          <div className="flex items-center justify-between sm:justify-end gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-[#070B16]/95 sm:bg-[#090E1C]/95 border-t sm:border-t-0 sm:border-l border-white/[0.08] sm:border-white/[0.10] shrink-0 z-20 w-full sm:w-auto flex-wrap sm:flex-nowrap">
+            {/* Mode Switcher: Focus, Type, Wave, Moving */}
             <div className="flex items-center bg-white/[0.04] p-0.5 rounded-xl border border-white/[0.08]">
               <button
                 type="button"
                 onClick={() => handleToggleMode('zoom')}
-                className={`flex items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-bold transition ${
+                className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition cursor-pointer ${
                   displayMode === 'zoom'
                     ? 'bg-amber-500 text-slate-950 shadow-md font-black'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
-                title="Word-by-word Focus reading (Stress-free sequential focus)"
+                title="Focus: Sequential kinetic word spotlight zoom"
               >
                 <ZoomIn className="w-3.5 h-3.5" />
                 <span>Focus</span>
@@ -348,13 +479,41 @@ export const MovingQuoteBanner: React.FC<MovingQuoteBannerProps> = ({ className 
 
               <button
                 type="button"
+                onClick={() => handleToggleMode('typewriter')}
+                className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition cursor-pointer ${
+                  displayMode === 'typewriter'
+                    ? 'bg-amber-500 text-slate-950 shadow-md font-black'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+                title="Typewriter: Live character-by-character author typing with neon cursor"
+              >
+                <Type className="w-3.5 h-3.5" />
+                <span>Type</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleToggleMode('cinematic')}
+                className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition cursor-pointer ${
+                  displayMode === 'cinematic'
+                    ? 'bg-amber-500 text-slate-950 shadow-md font-black'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+                title="Wave: Staggered cinematic ripple & floating golden gradient"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Wave</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => handleToggleMode('moving')}
-                className={`flex items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-bold transition ${
+                className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition cursor-pointer ${
                   displayMode === 'moving'
                     ? 'bg-amber-500 text-slate-950 shadow-md font-black'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
-                title="Moving mode (Smooth scrolling marquee)"
+                title="Moving: Continuous smooth marquee ticker"
               >
                 <Activity className="w-3.5 h-3.5" />
                 <span>Moving</span>
@@ -376,7 +535,7 @@ export const MovingQuoteBanner: React.FC<MovingQuoteBannerProps> = ({ className 
             <button
               type="button"
               onClick={() => setIsPaused((prev) => !prev)}
-              className="p-1.5 sm:p-2 rounded-xl text-slate-300 hover:text-white bg-white/[0.05] hover:bg-white/[0.10] border border-white/[0.08] transition active:scale-95"
+              className="p-1.5 sm:p-2 rounded-xl text-slate-300 hover:text-white bg-white/[0.05] hover:bg-white/[0.10] border border-white/[0.08] transition active:scale-95 cursor-pointer"
               title={isPaused ? 'Resume' : 'Pause'}
             >
               {isPaused ? <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" /> : <Pause className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
