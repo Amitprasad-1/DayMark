@@ -329,7 +329,7 @@ export function generateSeedData(): {
 
   const today = new Date();
 
-  // Real sessions strictly for the days the user actually studied (Sep 10: 4h, Sep 11: 2h)
+  // Real sessions strictly for the days the user actually studied (Sep 8: 2h, Sep 9: 4h, Sep 10: 4h, Sep 11: 2h)
   const REAL_STUDY_SCHEDULE: {
     daysAgo: number;
     sessions: {
@@ -386,6 +386,48 @@ export function generateSeedData(): {
         improve: 'Take short 5-minute movement breaks.',
         tomorrowFocus: 'Excel advanced formulas and placement aptitude.',
         productivityScore: 9,
+      },
+    },
+    {
+      daysAgo: 3, // 3 Days Ago (Sep 9) - 4 Hours Deep Work
+      sessions: [
+        {
+          activityId: 'act-data-analytics',
+          durationMinutes: 120, // 2 Hours
+          notes: 'Data Analytics - SQL Queries, joins, aggregations and grouping',
+          hourOffset: 10,
+        },
+        {
+          activityId: 'act-coding-dsa',
+          durationMinutes: 120, // 2 Hours (Total: 4 Hours)
+          notes: 'DSA Practice - Two pointer technique, string manipulation & recursion',
+          hourOffset: 15,
+        },
+      ],
+      habitsCompleted: ['hab-data-analytics', 'hab-coding-dsa'],
+      review: {
+        wentWell: 'Deep focus on SQL queries and DSA problem patterns.',
+        improve: 'Revise SQL window functions.',
+        tomorrowFocus: 'Pandas dataframes and arrays.',
+        productivityScore: 9,
+      },
+    },
+    {
+      daysAgo: 4, // 4 Days Ago (Sep 8) - 2 Hours
+      sessions: [
+        {
+          activityId: 'act-data-analytics',
+          durationMinutes: 120, // 2 Hours
+          notes: 'Data Analytics Course - Foundations of Business Intelligence and metrics',
+          hourOffset: 11,
+        },
+      ],
+      habitsCompleted: ['hab-data-analytics'],
+      review: {
+        wentWell: 'Completed BI overview and KPI metrics.',
+        improve: 'Practice more complex SQL joins.',
+        tomorrowFocus: 'SQL queries and DSA two-pointer exercises.',
+        productivityScore: 8,
       },
     },
   ];

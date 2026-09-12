@@ -830,15 +830,15 @@ export const YearDashboard: React.FC = () => {
             <span className="text-[10px] text-indigo-300 font-semibold">&lt;0.5h</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3.5 h-3.5 rounded-md bg-indigo-900 border-2 border-indigo-500/80 shadow-[0_0_8px_rgba(99,102,241,0.3)]" />
+            <div className="w-3.5 h-3.5 rounded-md bg-gradient-to-tr from-indigo-800 via-purple-800 to-indigo-900 border-2 border-indigo-400/80 shadow-[0_0_8px_rgba(99,102,241,0.3)]" />
             <span className="text-[10px] text-indigo-200 font-bold">0.5h - 2h</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3.5 h-3.5 rounded-md bg-gradient-to-tr from-indigo-500 via-purple-500 to-indigo-600 border-2 border-indigo-300 shadow-[0_0_12px_rgba(99,102,241,0.4)]" />
-            <span className="text-[10px] text-purple-200 font-black">2h - 4h</span>
+            <div className="w-3.5 h-3.5 rounded-md bg-gradient-to-tr from-cyan-600 via-blue-600 to-indigo-600 border-2 border-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.55)]" />
+            <span className="text-[10px] text-cyan-200 font-black">2h - 4h</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3.5 h-3.5 rounded-md bg-gradient-to-tr from-emerald-400 via-teal-400 to-cyan-400 border-2 border-emerald-200 shadow-[0_0_14px_rgba(52,211,153,0.55)]" />
+            <div className="w-3.5 h-3.5 rounded-md bg-gradient-to-tr from-emerald-400 via-teal-300 to-cyan-400 border-2 border-emerald-200 shadow-[0_0_14px_rgba(52,211,153,0.55)]" />
             <span className="text-[10px] font-black text-emerald-300">&gt;4h Deep Work</span>
           </div>
           <div className="flex items-center gap-1.5">

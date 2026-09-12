@@ -279,20 +279,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         } catch {}
       }
 
-      // Real seed data (strictly Sep 10: 4h, Sep 11: 2h)
+      // Real seed data (Sep 8: 2h, Sep 9: 4h, Sep 10: 4h, Sep 11: 2h)
       const realSeed = generateSeedData();
       const realSeedDates = new Set(realSeed.sessions.map((s) => s.date));
+      const unstudiedDays = new Set([
+        '2026-09-01',
+        '2026-09-02',
+        '2026-09-03',
+        '2026-09-04',
+        '2026-09-05',
+        '2026-09-06',
+        '2026-09-07',
+      ]);
 
-      // Filter out any mock sessions or false seed sessions on days the user didn't study
+      // Filter out any mock sessions or false seed sessions on days the user didn't study (Sep 1-7)
       parsedSessions = parsedSessions.filter((s) => {
         if (s.id.startsWith('seed-sess-')) return false;
         if (s.id === 'sess-today-morning' || s.id.startsWith('sess-today-')) return false;
+        if (unstudiedDays.has(s.date)) return false;
         // Purge any old generated sessions on dates where user didn't study
         if (s.id.startsWith('sess-real-') && !realSeedDates.has(s.date)) return false;
         return true;
       });
 
-      // Ensure real study sessions for Sep 10 and Sep 11 exist
+      // Ensure real study sessions for Sep 8, 9, 10 and 11 exist
       const existingKeys = new Set(parsedSessions.map((s) => `${s.date}-${s.activityId}`));
       for (const realSess of realSeed.sessions) {
         if (!existingKeys.has(`${realSess.date}-${realSess.activityId}`)) {
@@ -311,12 +321,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (storedHabits) {
         try {
           let parsedHabits: Habit[] = JSON.parse(storedHabits);
-          // Prune any false habit logs for days 1-9
+          // Prune any false habit logs for days 1-7
           parsedHabits = parsedHabits.map((h) => {
             const cleanedLogs: Record<string, boolean> = {};
-            // Keep real seed logs (Sep 10, Sep 11) and today
             Object.entries(h.logs || {}).forEach(([dateStr, done]) => {
-              if (realSeedDates.has(dateStr) || dateStr === format(new Date(), 'yyyy-MM-dd')) {
+              if (!unstudiedDays.has(dateStr)) {
                 cleanedLogs[dateStr] = done;
               }
             });
@@ -343,23 +352,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
 
       const storedReviews = localStorage.getItem(STORAGE_KEYS.REVIEWS);
+      let parsedReviews: DailyReview[] = [];
       if (storedReviews) {
         try {
           const parsed = JSON.parse(storedReviews);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            setReviews(parsed);
-          } else {
-            const realSeed = generateSeedData();
-            setReviews(realSeed.reviews);
+            parsedReviews = parsed.filter((r) => !unstudiedDays.has(r.date));
           }
-        } catch {
-          const realSeed = generateSeedData();
-          setReviews(realSeed.reviews);
-        }
-      } else {
-        const realSeed = generateSeedData();
-        setReviews(realSeed.reviews);
+        } catch {}
       }
+      for (const rev of realSeed.reviews) {
+        if (!parsedReviews.some((r) => r.date === rev.date)) {
+          parsedReviews.push(rev);
+        }
+      }
+      setReviews(parsedReviews);
 
       const storedTasks = localStorage.getItem(STORAGE_KEYS.TASKS);
       if (storedTasks) {
@@ -528,9 +535,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setActivities(mergedActs);
 
       // 3. Sessions: Union by ID or (cleanDate + duration + startTime), strictly excluding artificial dummy sessions
-      const validSeedDates = new Set(['2026-09-10', '2026-09-11']);
+      const validSeedDates = new Set(['2026-09-08', '2026-09-09', '2026-09-10', '2026-09-11']);
+      const cloudUnstudiedDays = new Set([
+        '2026-09-01',
+        '2026-09-02',
+        '2026-09-03',
+        '2026-09-04',
+        '2026-09-05',
+        '2026-09-06',
+        '2026-09-07',
+      ]);
       const mergedSessions = [...current.sessions].filter(
-        (s) => s.id !== 'sess-today-morning' && !s.id.startsWith('sess-today-') && !s.id.startsWith('seed-sess-') && !(s.id.startsWith('sess-real-') && !validSeedDates.has(s.date))
+        (s) => s.id !== 'sess-today-morning' && !s.id.startsWith('sess-today-') && !s.id.startsWith('seed-sess-') && !(s.id.startsWith('sess-real-') && !validSeedDates.has(s.date)) && !cloudUnstudiedDays.has(s.date)
       );
       if (Array.isArray(cloudData.sessions)) {
         cloudData.sessions.forEach((cs: any) => {
@@ -538,8 +554,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           if (cs.id.startsWith('seed-sess-')) return;
           if (cs.id.startsWith('sess-real-') && !validSeedDates.has(cs.date)) return;
           const csCleanDate = normalizeDateStr(cs.date || cs.startTime);
-          // Also check if artificial early September mock session
-          if (csCleanDate.startsWith('2026-09-') && parseInt(csCleanDate.split('-')[2], 10) < 10) return;
+          // Only discard unstudied days 1 to 7
+          if (cloudUnstudiedDays.has(csCleanDate)) return;
 
           const exists = mergedSessions.some((ls) => {
             if (ls.id === cs.id) return true;
@@ -615,8 +631,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const combinedLogs = { ...(ch.logs || {}), ...(existingIdx !== -1 ? mergedHabits[existingIdx].logs || {} : {}) };
           const cleanLogs: Record<string, boolean> = {};
           Object.entries(combinedLogs).forEach(([dateStr, val]) => {
-            // Drop false habit marks for days 1-9
-            if (dateStr.startsWith('2026-09-') && parseInt(dateStr.split('-')[2], 10) < 10) return;
+            // Drop false habit marks for unstudied days 1-7
+            if (cloudUnstudiedDays.has(dateStr)) return;
             cleanLogs[dateStr] = Boolean(val);
           });
 
@@ -633,11 +649,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       setHabits(mergedHabits);
 
-      // 8. Reviews: Union by date
-      const mergedReviews = [...current.reviews];
+      // 8. Reviews: Union by date (excluding unstudied days)
+      const mergedReviews = [...current.reviews].filter((r) => !cloudUnstudiedDays.has(r.date));
       if (Array.isArray(cloudData.reviews)) {
         cloudData.reviews.forEach((cr: any) => {
-          if (!mergedReviews.some((lr) => lr.date === cr.date)) {
+          if (!cloudUnstudiedDays.has(cr.date) && !mergedReviews.some((lr) => lr.date === cr.date)) {
             mergedReviews.push(cr);
           }
         });
