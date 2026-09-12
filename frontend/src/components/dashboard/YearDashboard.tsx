@@ -223,16 +223,16 @@ export const YearDashboard: React.FC = () => {
       return 'bg-slate-950/50 border border-white/[0.06] text-slate-500 font-medium hover:border-indigo-400/50 hover:text-slate-200 hover:bg-slate-900';
     }
 
-    // Level 4 (>= 4 Hours or 3+ habits): Electric Rolex Emerald & Cyan
-    if (hours >= 4 || data.completedHabitsCount >= 3) {
+    // Level 4 (>= 4 Hours): Electric Rolex Emerald & Cyan
+    if (hours >= 4) {
       return 'bg-gradient-to-tr from-emerald-400 via-teal-300 to-cyan-400 border-2 border-emerald-200 text-slate-950 font-black shadow-[0_0_18px_rgba(52,211,153,0.65)]';
     }
-    // Level 3 (>= 2 Hours or 2+ habits): Electric Azure Cyan
-    if (hours >= 2 || data.completedHabitsCount >= 2) {
+    // Level 3 (>= 2 Hours): Electric Azure Cyan
+    if (hours >= 2) {
       return 'bg-gradient-to-tr from-cyan-600 via-blue-600 to-indigo-600 border-2 border-cyan-300 text-white font-black shadow-[0_0_14px_rgba(6,182,212,0.55)]';
     }
-    // Level 2 (>= 0.5 Hours or 1+ habit): Electric Violet Indigo
-    if (hours >= 0.5 || data.completedHabitsCount >= 1) {
+    // Level 2 (>= 0.5 Hours): Electric Violet Indigo
+    if (hours >= 0.5) {
       return 'bg-gradient-to-tr from-indigo-800 via-purple-800 to-indigo-900 border-2 border-indigo-400/80 text-indigo-100 font-bold shadow-[0_0_10px_rgba(99,102,241,0.4)]';
     }
     // Level 1 (> 0 Hours): Deep Sapphire

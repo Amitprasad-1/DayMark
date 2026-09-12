@@ -279,31 +279,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         } catch {}
       }
 
-      // Automatically purge any old mock sessions (seed-sess-*) from previous versions
-      const hasMockSessions = parsedSessions.some((s) => s.id.startsWith('seed-sess-'));
-      if (hasMockSessions || parsedSessions.length === 0) {
-        const realSeed = generateSeedData();
-        // Keep any manually logged real sessions by the user
-        const nonMockSessions = parsedSessions.filter(
-          (s) =>
-            !s.id.startsWith('seed-sess-') &&
-            s.id !== 'sess-today-morning' &&
-            !s.id.startsWith('sess-today-')
-        );
-        const existingKeys = new Set(nonMockSessions.map((s) => `${s.date}-${s.activityId}-${s.durationSeconds}`));
-        const merged = [...nonMockSessions];
-        for (const realSess of realSeed.sessions) {
-          if (!existingKeys.has(`${realSess.date}-${realSess.activityId}-${realSess.durationSeconds}`)) {
-            merged.push(realSess);
-          }
+      // Real seed data (strictly Sep 10: 4h, Sep 11: 2h)
+      const realSeed = generateSeedData();
+      const realSeedDates = new Set(realSeed.sessions.map((s) => s.date));
+
+      // Filter out any mock sessions or false seed sessions on days the user didn't study
+      parsedSessions = parsedSessions.filter((s) => {
+        if (s.id.startsWith('seed-sess-')) return false;
+        if (s.id === 'sess-today-morning' || s.id.startsWith('sess-today-')) return false;
+        // Purge any old generated sessions on dates where user didn't study
+        if (s.id.startsWith('sess-real-') && !realSeedDates.has(s.date)) return false;
+        return true;
+      });
+
+      // Ensure real study sessions for Sep 10 and Sep 11 exist
+      const existingKeys = new Set(parsedSessions.map((s) => `${s.date}-${s.activityId}`));
+      for (const realSess of realSeed.sessions) {
+        if (!existingKeys.has(`${realSess.date}-${realSess.activityId}`)) {
+          parsedSessions.push(realSess);
         }
-        parsedSessions = merged;
-        setReviews(realSeed.reviews);
-      } else {
-        // Purge any artificial fake today sessions
-        parsedSessions = parsedSessions.filter(
-          (s) => s.id !== 'sess-today-morning' && !s.id.startsWith('sess-today-')
-        );
       }
 
       try {
@@ -317,18 +311,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (storedHabits) {
         try {
           let parsedHabits: Habit[] = JSON.parse(storedHabits);
-          // If habits don't have logs or have mock keys, merge real seed logs
-          const realSeed = generateSeedData();
+          // Prune any false habit logs for days 1-9
           parsedHabits = parsedHabits.map((h) => {
-            const seedLogs = realSeed.habitLogs[h.id];
-            if (seedLogs && Object.keys(h.logs || {}).length === 0) {
-              return { ...h, logs: { ...seedLogs } };
+            const cleanedLogs: Record<string, boolean> = {};
+            // Keep real seed logs (Sep 10, Sep 11) and today
+            Object.entries(h.logs || {}).forEach(([dateStr, done]) => {
+              if (realSeedDates.has(dateStr) || dateStr === format(new Date(), 'yyyy-MM-dd')) {
+                cleanedLogs[dateStr] = done;
+              }
+            });
+            // Merge in real seed logs
+            if (realSeed.habitLogs[h.id]) {
+              Object.assign(cleanedLogs, realSeed.habitLogs[h.id]);
             }
-            return h;
+            return { ...h, logs: cleanedLogs };
           });
           setHabits(parsedHabits.filter((h) => !isDeleted(h.id, h.name)));
         } catch {
-          const realSeed = generateSeedData();
           const seededHabits = INITIAL_HABITS.map((h) => ({
             ...h,
             logs: realSeed.habitLogs[h.id] || {},
@@ -336,7 +335,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           setHabits(seededHabits.filter((h) => !isDeleted(h.id, h.name)));
         }
       } else {
-        const realSeed = generateSeedData();
         const seededHabits = INITIAL_HABITS.map((h) => ({
           ...h,
           logs: realSeed.habitLogs[h.id] || {},
