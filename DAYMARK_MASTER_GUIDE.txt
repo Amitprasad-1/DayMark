@@ -1,0 +1,175 @@
+================================================================================
+DAYMARK: COMPLETE A-TO-Z PROJECT SPECIFICATION & INTERVIEW PREPARATION GUIDE
+================================================================================
+
+1. EXECUTIVE SUMMARY & 30-SECOND ELEVATOR PITCH
+--------------------------------------------------------------------------------
+"DayMark is an offline-first, high-performance productivity operating system and focus
+tracker engineered with Next.js 16, React 19, TypeScript, Node.js/Express, Prisma, 
+and PostgreSQL. It unifies deep-work tracking, quantitative strategic milestones, habit 
+streak analytics, directive task management, and an epoch-based resilient focus timer. 
+What differentiates DayMark technically is its zero-latency offline-first architecture: 
+every mutation commits synchronously (0ms) to local storage, automatically purges 
+deleted state via cryptographic tombstones, and syncs bidirectionally through a hybrid 
+Web Relay & REST pipeline with automatic conflict resolution where local state always 
+triumphs over stale cloud data."
+
+
+2. SYSTEM ARCHITECTURE & CORE TECH STACK
+--------------------------------------------------------------------------------
+Frontend:
+  - Framework: Next.js 16.3.4 (App Router, Turbopack)
+  - Core Library: React 19
+  - Language: TypeScript (Strict Type Checking)
+  - Styling: Tailwind CSS (Custom Dark Mode Glassmorphism: #090E1C)
+  - Animations: Framer Motion (GPU hardware-accelerated fluid transitions)
+  - Icons: Lucide React
+  - Utilities: date-fns (date normalization), canvas-confetti
+
+Backend & Database:
+  - Runtime: Node.js & Express.js
+  - Database: PostgreSQL (Relational persistence)
+  - ORM: Prisma ORM v5.22.0 (Schema migrations, type generation, connection pooling)
+  - Resilience: Dual-Layer Data Access (PostgreSQL with in-memory fallback cache)
+
+Synchronization Engine:
+  - Client: Synchronous 0ms LocalStorage write + Cryptographic Tombstones + Snapshot Vault
+  - Device-to-Device Relay: Next.js App Router Edge API route (/api/sync) with 6-char Room Code pairing
+  - Server REST API: Express /api/sync/full batch sync with Postgres pruning
+
+
+3. CORE MODULES & BUSINESS LOGIC (A TO Z)
+--------------------------------------------------------------------------------
+A. Global Resilient Focus Timer & Stopwatch Engine:
+   - Problem: Standard setInterval timers drift or freeze when browser tabs are inactive or minimized.
+   - Solution: Epoch timestamp calculation (targetTimestamp = Date.now() + durationMs).
+   - Modes: Pomodoro (Work 25m, Short Break 5m, Long Break 15m) + Flexible Stopwatch with activity tagging.
+   - Persistence: Survives full browser restarts, OS sleeps, or tab discards with zero drift.
+
+B. Strategic Target Milestones & Goals:
+   - Types: Time-based goals (e.g. 100 Hours of Deep Systems Engineering) and Task-based goals (e.g. 150 LeetCode Problems).
+   - Dynamic Progression: Study sessions auto-increment time goals; completed tasks auto-increment task goals.
+   - Real-Time Sorting: Active/upcoming milestones (sorted by days remaining) appear first; past/completed milestones appear at the bottom.
+
+C. 365-Day Activity Matrix & Habit Consistency Engine:
+   - GitHub-style 365-day heatmap calculating intensity levels (0 to 4) based on cumulative daily focus seconds.
+   - Date-mapped habit logs (logs: { 'YYYY-MM-DD': boolean }) supporting weekly targets, streak counters, and velocity.
+
+D. Tasks & Directives Manager:
+   - Task directives with High / Medium / Low priority tags, categories, and due dates.
+   - Interactive confetti celebration UX upon task completion.
+
+E. Motivational Quotes Dynamic Ticker:
+   - High-performance marquee ticker displaying curated mindset quotes.
+   - Full CRUD capabilities: Add custom quotes, toggle active states, drag-and-drop reordering, and reset to defaults.
+
+F. Daily Review & Reflection Journal:
+   - Structured daily reflection: What went well, what to improve, tomorrow's main directive, and a 1-10 productivity score.
+
+G. Device Pairing & Backup Snapshot Vault:
+   - Room code pairing (e.g., DM-MAIN) between laptop and smartphone without third-party vendor lock-in.
+   - Rolling point-in-time snapshots for instantaneous state rollback and data export/import.
+
+
+4. TOP ENGINEERING CHALLENGES & HOW YOU SOLVED THEM
+--------------------------------------------------------------------------------
+Challenge 1: The 0ms Persistence & Stale Cloud Overwrite Problem
+- Problem: Relying on asynchronous React useEffect to save data to localStorage introduces a frame gap. A rapid page refresh loses the change. Additionally, background cloud sync returning older remote data would overwrite fresh local edits.
+- Solution:
+  1. Synchronous Immediate Write: Every add, update, delete, or toggle action writes synchronously to localStorage.setItem inside the event handler before any async React render frame.
+  2. Local Precedence Merge: In syncWithCloud, merged entities always place local data after cloud data ({ ...cloudItem, ...localItem }), ensuring local modifications win.
+  3. Atomic Ref Pointer: latestStateRef.current is updated synchronously inside pushCurrentSnapshot() to prevent stale React closures.
+
+Challenge 2: The Cloud Resurrection (Zombie Data) Problem
+- Problem: In offline-first apps, simply deleting an item from local state causes it to reappear once the cloud sync pulls older data from the server.
+- Solution:
+  1. Cryptographic Tombstones: Deleted entity IDs and normalized titles are permanently recorded in a dedicated tombstone registry (daymark_deleted_item_ids_v1).
+  2. Filter Gate: All hydration and cloud merges pass through !isDeleted(id, title).
+  3. Tombstone Recycling: Whenever an entity is added or updated, unmarkDeleted() cleans the registry so titles can be reused without conflict.
+  4. Server-Side Pruning: In POST /api/sync/full, the PostgreSQL database executes prisma.entity.deleteMany({ where: { id: { notIn: activeIds } } }) to wipe deleted records.
+
+Challenge 3: Inactive Browser Tab Timer Freezing
+- Problem: Browsers aggressively throttle background tab timers to save battery, causing setInterval to run once a minute or stop altogether.
+- Solution: Decoupled time calculation from interval ticks. The timer saves targetTimestamp = Date.now() + durationMs. On every tick and hydration, remaining time is calculated directly from the epoch difference: Math.max(0, Math.round((targetTimestamp - Date.now()) / 1000)).
+
+
+5. DATABASE SCHEMA (PRISMA / POSTGRESQL)
+--------------------------------------------------------------------------------
+- User: Identity, email, passwordHash, createdAt, updatedAt
+- UserSettings: Theme (midnight, obsidian, etc.), pomodoroDuration, soundAlerts
+- Activity: Name, category, color, icon, dailyTargetMinutes, isActive
+- StudySession: Activity relation, startTime, endTime, durationSeconds, notes, date
+- Habit: Name, category, icon, color, frequency, targetDaysPerWeek, isActive
+- HabitLog: Habit relation, date, completed (Compound unique constraint: [habitId, date])
+- Task: Title, description, priority (LOW, MEDIUM, HIGH), category, dueDate, completed, completedAt
+- Goal: Title, description, type (TIME, TASK, STREAK, METRIC), targetValue, currentValue, targetDate
+- CustomCountdown: Title, targetDate, category, color, icon
+- DailyReview: Date, wentWell, improve, tomorrowFocus, notes, productivityScore (Compound unique: [userId, date])
+
+
+6. TOP TECHNICAL INTERVIEW QUESTIONS & MODEL ANSWERS
+--------------------------------------------------------------------------------
+
+Q1: "Walk me through the architecture of DayMark. How did you choose your stack?"
+A1: "DayMark was built as an offline-first productivity operating system. On the frontend,
+    I selected Next.js 16 with React 19 and TypeScript to combine fast Turbopack bundling
+    with strict type safety. Styling uses Tailwind CSS with Framer Motion for GPU-accelerated
+    animations.
+    On the backend, I built an Express.js service using Prisma ORM and PostgreSQL.
+    Crucially, I engineered a dual-layer data pattern: if PostgreSQL is connected, data 
+    persists relationally; if offline, an in-memory fallback handles requests, while the
+    client maintains absolute truth through synchronous LocalStorage and rolling backup snapshots."
+
+Q2: "How do you handle state management and cross-device synchronization without third-party services like Firebase?"
+A2: "I designed a custom hybrid synchronization engine to avoid vendor lock-in:
+    1. State is managed via React Context (AppContext) backed by an atomic latestStateRef 
+       pointer to eliminate stale closures.
+    2. For device-to-device pairing (laptop to phone), I built a lightweight room-based
+       relay via Next.js App Router API routes (/api/sync). Devices connect using a 6-character room token.
+    3. On any mutation, the client immediately updates local storage (0ms), pushes a sanitized
+       snapshot to the room relay, and syncs with the PostgreSQL backend.
+    4. Conflict resolution follows a client-wins strategy ({ ...cloudData, ...localData }),
+       guaranteeing zero latency and zero data loss."
+
+Q3: "What is your strategy for handling deletions in an offline-first distributed application?"
+A3: "In distributed offline systems, simply filtering an item out of local state creates
+    'zombie data' that resurrects on the next sync pull.
+    I solved this by implementing Cryptographic Tombstoning:
+    - Deleted IDs and normalized titles are stored in a dedicated tombstone registry.
+    - Hydration, local filtering, and cloud merging strictly enforce !isDeleted(id, title).
+    - During full backend sync, the client submits active IDs, and PostgreSQL executes
+      deleteMany({ where: { id: { notIn: activeIds } } }) to prune records on the database.
+    - When a user creates a new entity with the same title, unmarkDeleted() cleans the
+      tombstone so names can be cleanly reused."
+
+Q4: "How does the Focus Timer maintain accuracy if the user switches tabs or locks their laptop?"
+A4: "Standard setInterval implementations fail because browsers throttle background tabs to
+    conserve battery. I solved this with an epoch-based timer engine.
+    When a timer begins, DayMark writes targetTimestamp = Date.now() + durationMs to both
+    a React ref and LocalStorage. On every tick and on page wakeup, remaining time is calculated 
+    as (targetTimestamp - Date.now()). If the tab sleeps for 20 minutes, reopening it 
+    immediately reflects the exact true elapsed time with millisecond precision."
+
+Q5: "How did you ensure that quick page refreshes never drop user actions?"
+A5: "Standard React patterns update state and rely on an asynchronous useEffect to write to
+    LocalStorage. In rapid user flows—like adding or editing a task and instantly refreshing—the
+    page reloads before the effect fires.
+    In DayMark, every user action invokes a synchronous localStorage.setItem inside the event
+    handler before triggering state updates. This guarantees 0ms latency and 100% data persistence."
+
+Q6: "How is database integrity maintained when logging sessions linked to activities?"
+A6: "In Prisma, StudySession holds a foreign-key relation to Activity. In offline or seeded
+    conditions, a session could reference an un-synced activity ID.
+    The backend implements defensive upserts: before creating a session, it verifies the
+    activity exists. If missing, it auto-creates the activity or associates it with a default
+    user activity, and full sync always upserts activities before sessions."
+
+Q7: "If you had to scale DayMark to 500,000 active concurrent users, what would you change?"
+A7: "I would implement three major architectural evolutions:
+    1. CRDTs (Conflict-Free Replicated Data Types) like Yjs or Automerge for real-time collaborative editing.
+    2. WebSocket / Server-Sent Events relay backed by Redis Pub/Sub for sub-50ms cross-device messaging.
+    3. PostgreSQL tenant-partitioning by userId using Citus or read replicas, with Cloudflare KV / Redis edge-caching for hot room snapshots."
+
+================================================================================
+END OF MASTER GUIDE
+================================================================================
