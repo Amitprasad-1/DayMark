@@ -39,6 +39,7 @@ export type LuxuryFinish = 'noirChrome' | 'royalGold' | 'midnightSapphire' | 'ra
 
 export type HandColorPreset =
   | 'auto'
+  | 'custom'
   | 'emeraldGold'
   | 'goldCyan'
   | 'crimsonCyan'
@@ -207,9 +208,68 @@ const LUXURY_FINISHES: Record<LuxuryFinish, FinishPalette> = {
   },
 };
 
+// Helper to dynamically generate 4-tone 3D metallic hand palette from any custom hex color
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  let clean = hex.replace('#', '');
+  if (clean.length === 3) {
+    clean = clean.split('').map((c) => c + c).join('');
+  }
+  const num = parseInt(clean, 16) || 0;
+  return {
+    r: (num >> 16) & 255,
+    g: (num >> 8) & 255,
+    b: num & 255,
+  };
+}
+
+function rgbToHex(r: number, g: number, b: number): string {
+  const clamp = (v: number) => Math.max(0, Math.min(255, Math.round(v)));
+  return '#' + [clamp(r), clamp(g), clamp(b)].map((x) => x.toString(16).padStart(2, '0')).join('');
+}
+
+function adjustLightness(hex: string, percent: number): string {
+  const rgb = hexToRgb(hex);
+  if (percent > 0) {
+    return rgbToHex(
+      rgb.r + (255 - rgb.r) * (percent / 100),
+      rgb.g + (255 - rgb.g) * (percent / 100),
+      rgb.b + (255 - rgb.b) * (percent / 100)
+    );
+  } else {
+    const factor = 1 + percent / 100;
+    return rgbToHex(rgb.r * factor, rgb.g * factor, rgb.b * factor);
+  }
+}
+
+export function generateTonalHandPalette(baseHex: string) {
+  return {
+    color: baseHex,
+    light: adjustLightness(baseHex, 35),
+    mid: baseHex,
+    dark: adjustLightness(baseHex, -35),
+    spine: adjustLightness(baseHex, 55),
+  };
+}
+
+// 12 Luxury Horology Color Swatches for Individual Hand Customization
+export const LUXURY_HAND_SWATCHES = [
+  { label: 'Rolex Emerald', hex: '#10B981' },
+  { label: 'Royal Gold', hex: '#F59E0B' },
+  { label: 'Ice Cyan', hex: '#00D8FF' },
+  { label: 'Flame Crimson', hex: '#EF4444' },
+  { label: 'Hot Fuchsia', hex: '#EC4899' },
+  { label: 'Tokyo Violet', hex: '#A855F7' },
+  { label: 'Tangelo', hex: '#F97316' },
+  { label: 'Patek Sapphire', hex: '#3B82F6' },
+  { label: 'Toxic Lime', hex: '#84CC16' },
+  { label: 'Rose Gold', hex: '#FB7185' },
+  { label: 'Platinum Silver', hex: '#E2E8F0' },
+  { label: 'Pure White', hex: '#FFFFFF' },
+];
+
 // 10 Eye-Catching, High-Contrast Dual-Tone Color Presets (Zero washed-out white!)
 const HAND_COLOR_PRESETS: Record<
-  Exclude<HandColorPreset, 'auto'>,
+  Exclude<HandColorPreset, 'auto' | 'custom'>,
   {
     label: string;
     desc: string;
@@ -402,15 +462,24 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
       const saved = localStorage.getItem('daymark_clock_hand_color') as HandColorPreset;
       if (saved) return saved;
     }
-    return 'emeraldGold'; // Default to stunning emerald & gold instead of auto/white
+    return 'emeraldGold';
   });
 
-  const [frameStyle, setFrameStyle] = useState<ClockFrameStyle>(() => {
+  // Independent Customizable Hour & Minute Hand Colors ("Nobe" Nodes)
+  const [hourHandColor, setHourHandColor] = useState<string>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('daymark_clock_frame_style') as ClockFrameStyle;
+      const saved = localStorage.getItem('daymark_clock_hour_color');
       if (saved) return saved;
     }
-    return 'round';
+    return '#10B981'; // Default Rolex Emerald
+  });
+
+  const [minuteHandColor, setMinuteHandColor] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('daymark_clock_minute_color');
+      if (saved) return saved;
+    }
+    return '#F59E0B'; // Default Royal Gold
   });
 
   const [handGlowEnabled, setHandGlowEnabled] = useState<boolean>(() => {
@@ -445,9 +514,15 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('daymark_clock_frame_style', frameStyle);
+      localStorage.setItem('daymark_clock_hour_color', hourHandColor);
     }
-  }, [frameStyle]);
+  }, [hourHandColor]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('daymark_clock_minute_color', minuteHandColor);
+    }
+  }, [minuteHandColor]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -471,20 +546,20 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
 
   const activePal = LUXURY_FINISHES[luxuryFinish];
 
-  // Resolve active hand colors based on preset or theme auto
-  const resolvedHandColors =
-    handColorPreset === 'auto'
-      ? {
-          hourLight: activePal.hourHandLight,
-          hourMid: activePal.hourHandMid,
-          hourDark: activePal.hourHandDark,
-          hourSpine: activePal.hourSpine,
-          minuteLight: activePal.minuteHandLight,
-          minuteMid: activePal.minuteHandMid,
-          minuteDark: activePal.minuteHandDark,
-          minuteSpine: activePal.minuteSpine,
-        }
-      : HAND_COLOR_PRESETS[handColorPreset];
+  // Dynamically resolve metallic 3D gradients and tone highlights for customizable hour & minute hands
+  const hourTones = generateTonalHandPalette(hourHandColor);
+  const minuteTones = generateTonalHandPalette(minuteHandColor);
+
+  const resolvedHandColors = {
+    hourLight: hourTones.light,
+    hourMid: hourTones.mid,
+    hourDark: hourTones.dark,
+    hourSpine: hourTones.spine,
+    minuteLight: minuteTones.light,
+    minuteMid: minuteTones.mid,
+    minuteDark: minuteTones.dark,
+    minuteSpine: minuteTones.spine,
+  };
 
   // Update real-time clock smoothly
   useEffect(() => {
@@ -503,11 +578,11 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
     }
   }, [timerStatus, progressFraction, timerMode]);
 
-  const isWithBells = frameStyle === 'twinBell';
+  const isWithBells = false;
 
-  // Geometry configuration
+  // Geometry configuration: perfectly centered circular dial
   const cx = 200;
-  const cy = isWithBells ? 245 : 200;
+  const cy = 200;
   const dialRadius = 152;
 
   // Helper for formatting time HH:MM:SS or MM:SS
@@ -1093,35 +1168,6 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
           </span>
         </button>
 
-        {/* Frame Style (Round vs Twin Bell) */}
-        <div className="flex items-center gap-1 p-0.5 rounded-2xl bg-[#0B0E17]/90 border border-white/10 shadow-xl backdrop-blur-xl">
-          <button
-            type="button"
-            onClick={() => setFrameStyle('round')}
-            className={`px-2 py-0.5 rounded-xl text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
-              frameStyle === 'round'
-                ? 'bg-white/20 text-white shadow-inner border border-white/30'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
-            }`}
-            title="Clean Circular Dial (Reference Image 2)"
-          >
-            <Circle className="w-3 h-3" />
-            <span className="hidden sm:inline">Round</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setFrameStyle('twinBell')}
-            className={`px-2 py-0.5 rounded-xl text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
-              frameStyle === 'twinBell'
-                ? 'bg-white/20 text-white shadow-inner border border-white/30'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
-            }`}
-            title="Twin Alarm Bells"
-          >
-            <Bell className="w-3 h-3" />
-            <span className="hidden sm:inline">Twin Bell</span>
-          </button>
-        </div>
       </div>
 
       {/* =========================================================================
@@ -1140,10 +1186,10 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
             <div className="flex items-center justify-between border-b border-white/10 pb-2">
               <div className="flex items-center gap-1">
                 {[
-                  { id: 'colors', label: '10 Color Pairs', icon: '🎨' },
-                  { id: 'hands', label: '8 Hand ("Nobe") Styles', icon: '🗡️' },
-                  { id: 'nobe', label: 'Center Hub Cap', icon: '🔘' },
-                  { id: 'dial', label: 'Dial Edition', icon: '✨' },
+                  { id: 'colors', label: '🎨 Hand Colors', icon: '🎨' },
+                  { id: 'hands', label: '🗡️ Hand ("Nobe") Styles', icon: '🗡️' },
+                  { id: 'nobe', label: '🔘 Center Cap', icon: '🔘' },
+                  { id: 'dial', label: '✨ Dial Edition', icon: '✨' },
                 ].map((tab) => (
                   <button
                     key={tab.id}
@@ -1177,60 +1223,188 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
               </button>
             </div>
 
-            {/* TAB 1: 10 HIGH-CONTRAST DUAL-TONE COLOR PRESETS */}
+            {/* TAB 1: FULLY CUSTOMIZABLE HOUR & MINUTE HAND COLORS */}
             {activeCustomizerTab === 'colors' && (
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between px-1">
-                  <span className="text-[11px] font-black uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                    <Palette className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Eye-Catching Dual-Tone Palettes (Hour Hand vs Minute Hand):</span>
-                  </span>
-                  <span className="text-[10px] text-amber-400 font-mono font-bold">Zero Washed-Out White</span>
+              <div className="flex flex-col gap-3">
+                {/* 2-Column Responsive Individual Hand Customizers */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Left Column: Hour Hand Color ("Node/Nobe") */}
+                  <div className="p-3 rounded-2xl bg-white/[0.04] border border-white/10 flex flex-col gap-2.5 shadow-md">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="w-4 h-4 rounded-full border border-white/50 shadow-[0_0_10px_currentColor]"
+                          style={{ backgroundColor: hourHandColor, color: hourHandColor }}
+                        />
+                        <span className="text-xs font-black text-white">Hour Hand Color:</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-mono text-slate-300 font-bold uppercase">{hourHandColor}</span>
+                        {/* Custom Color Input Picker */}
+                        <label className="relative cursor-pointer flex items-center justify-center px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/25 transition-all text-[10px] font-bold text-amber-300 gap-1">
+                          <Palette className="w-3 h-3 text-amber-300" />
+                          <span>Custom</span>
+                          <input
+                            type="color"
+                            value={hourHandColor}
+                            onChange={(e) => {
+                              setHourHandColor(e.target.value);
+                              setHandColorPreset('custom');
+                            }}
+                            className="sr-only"
+                            title="Pick any custom color for Hour hand"
+                          />
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Quick Swatches for Hour Hand */}
+                    <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                      {LUXURY_HAND_SWATCHES.map((sw) => {
+                        const isSel = hourHandColor.toLowerCase() === sw.hex.toLowerCase();
+                        return (
+                          <button
+                            key={`h-${sw.hex}`}
+                            type="button"
+                            onClick={() => {
+                              setHourHandColor(sw.hex);
+                              setHandColorPreset('custom');
+                            }}
+                            className={`w-6 h-6 rounded-lg transition-all cursor-pointer relative flex items-center justify-center border ${
+                              isSel
+                                ? 'scale-110 border-white ring-2 ring-white/70 shadow-[0_0_10px_rgba(255,255,255,0.8)] z-10'
+                                : 'border-black/50 hover:scale-105 opacity-85 hover:opacity-100'
+                            }`}
+                            style={{ backgroundColor: sw.hex }}
+                            title={`Hour: ${sw.label} (${sw.hex})`}
+                          >
+                            {isSel && <span className="w-1.5 h-1.5 rounded-full bg-black/80" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Right Column: Minute Hand Color ("Node/Nobe") */}
+                  <div className="p-3 rounded-2xl bg-white/[0.04] border border-white/10 flex flex-col gap-2.5 shadow-md">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="w-4 h-4 rounded-full border border-white/50 shadow-[0_0_10px_currentColor]"
+                          style={{ backgroundColor: minuteHandColor, color: minuteHandColor }}
+                        />
+                        <span className="text-xs font-black text-white">Minute Hand Color:</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-mono text-slate-300 font-bold uppercase">{minuteHandColor}</span>
+                        {/* Custom Color Input Picker */}
+                        <label className="relative cursor-pointer flex items-center justify-center px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/25 transition-all text-[10px] font-bold text-cyan-300 gap-1">
+                          <Palette className="w-3 h-3 text-cyan-300" />
+                          <span>Custom</span>
+                          <input
+                            type="color"
+                            value={minuteHandColor}
+                            onChange={(e) => {
+                              setMinuteHandColor(e.target.value);
+                              setHandColorPreset('custom');
+                            }}
+                            className="sr-only"
+                            title="Pick any custom color for Minute hand"
+                          />
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Quick Swatches for Minute Hand */}
+                    <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                      {LUXURY_HAND_SWATCHES.map((sw) => {
+                        const isSel = minuteHandColor.toLowerCase() === sw.hex.toLowerCase();
+                        return (
+                          <button
+                            key={`m-${sw.hex}`}
+                            type="button"
+                            onClick={() => {
+                              setMinuteHandColor(sw.hex);
+                              setHandColorPreset('custom');
+                            }}
+                            className={`w-6 h-6 rounded-lg transition-all cursor-pointer relative flex items-center justify-center border ${
+                              isSel
+                                ? 'scale-110 border-white ring-2 ring-white/70 shadow-[0_0_10px_rgba(255,255,255,0.8)] z-10'
+                                : 'border-black/50 hover:scale-105 opacity-85 hover:opacity-100'
+                            }`}
+                            style={{ backgroundColor: sw.hex }}
+                            title={`Minute: ${sw.label} (${sw.hex})`}
+                          >
+                            {isSel && <span className="w-1.5 h-1.5 rounded-full bg-black/80" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                  {/* Theme Auto */}
-                  <button
-                    type="button"
-                    onClick={() => setHandColorPreset('auto')}
-                    className={`p-2 rounded-2xl flex flex-col items-center justify-center text-center transition-all cursor-pointer border ${
-                      handColorPreset === 'auto'
-                        ? 'bg-amber-500/25 border-amber-400/60 text-white shadow-lg ring-1 ring-amber-400/50'
-                        : 'bg-white/[0.04] border-white/10 text-slate-300 hover:text-white hover:bg-white/[0.08]'
-                    }`}
-                  >
-                    <div className="flex items-center -space-x-1 mb-1">
-                      <span className="w-3.5 h-3.5 rounded-full ring-1 ring-black" style={{ backgroundColor: activePal.hourHandMid }} />
-                      <span className="w-3.5 h-3.5 rounded-full ring-1 ring-black" style={{ backgroundColor: activePal.minuteHandMid }} />
-                    </div>
-                    <span className="text-[11px] font-bold leading-tight">Theme Auto</span>
-                    <span className="text-[9px] text-slate-400 font-mono">Sync Dial</span>
-                  </button>
+                {/* Coordinated Designer Duos (1-Click Pairings) */}
+                <div className="space-y-1.5 pt-1 border-t border-white/10">
+                  <div className="flex items-center justify-between px-1">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                      Coordinated Designer Duos (1-Click Pairings):
+                    </span>
+                    <span className="text-[9px] text-amber-400 font-mono">10 Curated Palettes</span>
+                  </div>
 
-                  {/* 10 Curated Palettes */}
-                  {(Object.keys(HAND_COLOR_PRESETS) as Array<Exclude<HandColorPreset, 'auto'>>).map((k) => {
-                    const p = HAND_COLOR_PRESETS[k];
-                    const isSel = handColorPreset === k;
-                    return (
-                      <button
-                        key={k}
-                        type="button"
-                        onClick={() => setHandColorPreset(k)}
-                        className={`p-2 rounded-2xl flex flex-col items-center justify-center text-center transition-all cursor-pointer border ${
-                          isSel
-                            ? 'bg-white/20 border-white/50 text-white shadow-lg ring-1 ring-white/50'
-                            : 'bg-white/[0.04] border-white/10 text-slate-300 hover:text-white hover:bg-white/[0.08]'
-                        }`}
-                      >
-                        <div className="flex items-center -space-x-1 mb-1">
-                          <span className="w-3.5 h-3.5 rounded-full ring-1 ring-black shadow-sm" style={{ backgroundColor: p.hourColor }} />
-                          <span className="w-3.5 h-3.5 rounded-full ring-1 ring-black shadow-sm" style={{ backgroundColor: p.minuteColor }} />
-                        </div>
-                        <span className="text-[11px] font-bold leading-tight">{p.label}</span>
-                        <span className="text-[9px] text-slate-400 font-mono truncate max-w-[120px]">{p.desc}</span>
-                      </button>
-                    );
-                  })}
+                  <div className="grid grid-cols-2 sm:grid-cols-6 gap-1.5">
+                    {/* Theme Auto */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setHourHandColor(activePal.hourHandMid);
+                        setMinuteHandColor(activePal.minuteHandMid);
+                        setHandColorPreset('auto');
+                      }}
+                      className={`p-1.5 rounded-xl flex items-center gap-2 transition-all cursor-pointer border ${
+                        handColorPreset === 'auto'
+                          ? 'bg-amber-500/25 border-amber-400/60 text-white shadow-lg ring-1 ring-amber-400/50'
+                          : 'bg-white/[0.04] border-white/10 text-slate-300 hover:text-white hover:bg-white/[0.08]'
+                      }`}
+                    >
+                      <div className="flex items-center -space-x-1 shrink-0">
+                        <span className="w-3 h-3 rounded-full ring-1 ring-black" style={{ backgroundColor: activePal.hourHandMid }} />
+                        <span className="w-3 h-3 rounded-full ring-1 ring-black" style={{ backgroundColor: activePal.minuteHandMid }} />
+                      </div>
+                      <span className="text-[10px] font-bold truncate">Theme Auto</span>
+                    </button>
+
+                    {/* 10 Curated Pairs */}
+                    {(Object.keys(HAND_COLOR_PRESETS) as Array<Exclude<HandColorPreset, 'auto' | 'custom'>>).map((k) => {
+                      const p = HAND_COLOR_PRESETS[k];
+                      const isSel =
+                        handColorPreset === k ||
+                        (hourHandColor.toLowerCase() === p.hourColor.toLowerCase() &&
+                          minuteHandColor.toLowerCase() === p.minuteColor.toLowerCase());
+                      return (
+                        <button
+                          key={k}
+                          type="button"
+                          onClick={() => {
+                            setHourHandColor(p.hourColor);
+                            setMinuteHandColor(p.minuteColor);
+                            setHandColorPreset(k);
+                          }}
+                          className={`p-1.5 rounded-xl flex items-center gap-2 transition-all cursor-pointer border ${
+                            isSel
+                              ? 'bg-white/20 border-white/50 text-white shadow-lg ring-1 ring-white/50'
+                              : 'bg-white/[0.04] border-white/10 text-slate-300 hover:text-white hover:bg-white/[0.08]'
+                          }`}
+                        >
+                          <div className="flex items-center -space-x-1 shrink-0">
+                            <span className="w-3 h-3 rounded-full ring-1 ring-black" style={{ backgroundColor: p.hourColor }} />
+                            <span className="w-3 h-3 rounded-full ring-1 ring-black" style={{ backgroundColor: p.minuteColor }} />
+                          </div>
+                          <span className="text-[10px] font-bold truncate">{p.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             )}
@@ -1483,87 +1657,7 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
             </filter>
           </defs>
 
-          {/* =========================================================================
-              OPTIONAL TWIN BELLS & HANDLE (When frameStyle === 'twinBell')
-              ========================================================================= */}
-          {isWithBells && (
-            <g>
-              {/* Top Handle */}
-              <g filter="url(#vluxClockVolumetricShadow)">
-                <path
-                  d="M 120 120 C 120 30, 280 30, 280 120"
-                  fill="none"
-                  stroke="url(#vluxBezelRimGrad)"
-                  strokeWidth="9.5"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M 123 118 C 123 34, 277 34, 277 118"
-                  fill="none"
-                  stroke="#FFFFFF"
-                  strokeWidth="1.8"
-                  strokeOpacity="0.75"
-                  strokeLinecap="round"
-                />
-                <circle cx="200" cy="45" r="7.5" fill="url(#vluxBezelRimGrad)" stroke="#1E1408" strokeWidth="1.5" />
-              </g>
 
-              {/* Angled Feet Stand */}
-              <g filter="url(#vluxClockVolumetricShadow)">
-                <line x1="112" y1="349" x2="70" y2="421" stroke="url(#vluxBezelRimGrad)" strokeWidth="11" strokeLinecap="round" />
-                <circle cx="70" cy="421" r="8" fill="url(#vluxCollarGrad)" stroke="#1F2937" strokeWidth="1.5" />
-                <line x1="288" y1="349" x2="330" y2="421" stroke="url(#vluxBezelRimGrad)" strokeWidth="11" strokeLinecap="round" />
-                <circle cx="330" cy="421" r="8" fill="url(#vluxCollarGrad)" stroke="#1F2937" strokeWidth="1.5" />
-              </g>
-
-              {/* Articulated Striker Hammer */}
-              <motion.g
-                animate={showRinging ? { rotate: [-16, 16, -16] } : { rotate: 0 }}
-                transition={showRinging ? { duration: 0.08, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.2 }}
-                style={{ originX: '200px', originY: '133px' }}
-              >
-                <line x1="200" y1="133" x2="200" y2="91" stroke="url(#vluxBezelRimGrad)" strokeWidth="5.5" strokeLinecap="round" />
-                <rect x="195" y="83" width="10" height="18" rx="3" fill="url(#vluxBezelRimGrad)" stroke="#0F172A" strokeWidth="1" />
-                <circle cx="200" cy="83" r="7.5" fill="url(#vluxCollarGrad)" stroke="#0F172A" strokeWidth="1.5" />
-              </motion.g>
-
-              {/* Left Bell Cup */}
-              <motion.g
-                animate={showRinging ? { rotate: [-2, 2, -2] } : { rotate: 0 }}
-                transition={showRinging ? { duration: 0.1, repeat: Infinity } : { duration: 0.2 }}
-                style={{ originX: '95px', originY: '89px' }}
-                filter="url(#vluxClockVolumetricShadow)"
-              >
-                <line x1="128" y1="143" x2="96" y2="89" stroke="url(#vluxBezelRimGrad)" strokeWidth="8" strokeLinecap="round" />
-                <circle cx="96" cy="89" r="6" fill="url(#vluxBezelRimGrad)" />
-                <path
-                  d="M 50 115 C 42 63, 126 37, 144 89 C 148 99, 139 113, 125 115 Z"
-                  fill="#111827"
-                  stroke="#090D14"
-                  strokeWidth="3"
-                />
-                <path d="M 52 113 C 65 118, 116 118, 127 114" fill="none" stroke="url(#vluxBezelRimGrad)" strokeWidth="2.5" strokeLinecap="round" />
-              </motion.g>
-
-              {/* Right Bell Cup */}
-              <motion.g
-                animate={showRinging ? { rotate: [2, -2, 2] } : { rotate: 0 }}
-                transition={showRinging ? { duration: 0.1, repeat: Infinity } : { duration: 0.2 }}
-                style={{ originX: '305px', originY: '89px' }}
-                filter="url(#vluxClockVolumetricShadow)"
-              >
-                <line x1="272" y1="143" x2="304" y2="89" stroke="url(#vluxBezelRimGrad)" strokeWidth="8" strokeLinecap="round" />
-                <circle cx="304" cy="89" r="6" fill="url(#vluxBezelRimGrad)" />
-                <path
-                  d="M 350 115 C 358 63, 274 37, 256 89 C 252 99, 261 113, 275 115 Z"
-                  fill="#111827"
-                  stroke="#090D14"
-                  strokeWidth="3"
-                />
-                <path d="M 348 113 C 335 118, 284 118, 273 114" fill="none" stroke="url(#vluxBezelRimGrad)" strokeWidth="2.5" strokeLinecap="round" />
-              </motion.g>
-            </g>
-          )}
 
           {/* =========================================================================
               CLEAN SINGLE SLIM LUXURY BEZEL & DIAL (The 2 heavy outer borders removed!)
@@ -1802,14 +1896,21 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
             <Palette className="w-3 h-3 text-amber-400" />
             <span className="hidden sm:inline">Palette:</span>
           </span>
-          {(Object.keys(HAND_COLOR_PRESETS) as Array<Exclude<HandColorPreset, 'auto'>>).map((key) => {
+          {(Object.keys(HAND_COLOR_PRESETS) as Array<Exclude<HandColorPreset, 'auto' | 'custom'>>).map((key) => {
             const pal = HAND_COLOR_PRESETS[key];
-            const isSelected = handColorPreset === key;
+            const isSelected =
+              handColorPreset === key ||
+              (hourHandColor.toLowerCase() === pal.hourColor.toLowerCase() &&
+                minuteHandColor.toLowerCase() === pal.minuteColor.toLowerCase());
             return (
               <button
                 key={key}
                 type="button"
-                onClick={() => setHandColorPreset(key)}
+                onClick={() => {
+                  setHourHandColor(pal.hourColor);
+                  setMinuteHandColor(pal.minuteColor);
+                  setHandColorPreset(key);
+                }}
                 className={`group relative p-1 rounded-xl transition-all cursor-pointer border flex items-center gap-1 ${
                   isSelected
                     ? 'bg-white/20 border-white/60 shadow-[0_0_10px_rgba(255,255,255,0.3)] scale-105'
