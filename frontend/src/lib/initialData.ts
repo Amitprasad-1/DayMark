@@ -2,7 +2,7 @@ import { Activity, Habit, Task, Goal, CustomCountdown, UserSettings, DailyReview
 import { format, subDays } from 'date-fns';
 
 export const INITIAL_SETTINGS: UserSettings = {
-  userName: 'Productive Architect',
+  userName: 'Amit Prasad',
   theme: 'dark',
   dailyTargetMinutes: 360, // 6 hours
   workIntervalMinutes: 25,
@@ -196,7 +196,7 @@ export const INITIAL_GOALS: Goal[] = [
     description: 'Complete Python, Excel, Stats, Power BI & Tableau modules (60h)',
     type: 'TIME',
     targetValue: 60,
-    currentValue: 2,
+    currentValue: 24,
     targetDate: format(new Date(new Date().getFullYear(), 9, 31), 'yyyy-MM-dd'),
     category: 'Data Analytics',
     color: '#06B6D4',
@@ -311,7 +311,7 @@ export const INITIAL_QUOTES: MotivationalQuote[] = [
 ];
 
 
-// Helper to generate seed historical data so the full year visual calendar has realistic heatmaps!
+// Authentic Real Study Sessions for Real Subjects (No Math.random mock data)
 export function generateSeedData(): {
   sessions: StudySession[];
   habitLogs: Record<string, Record<string, boolean>>;
@@ -319,60 +319,460 @@ export function generateSeedData(): {
 } {
   const sessions: StudySession[] = [];
   const habitLogs: Record<string, Record<string, boolean>> = {
-    'hab-1': {},
-    'hab-2': {},
-    'hab-3': {},
-    'hab-4': {},
+    'hab-data-analytics': {},
+    'hab-coding-dsa': {},
+    'hab-apti-practice': {},
+    'hab-english-reading': {},
+    'hab-daily-exercise': {},
   };
   const reviews: DailyReview[] = [];
 
   const today = new Date();
 
-  // Generate realistic history across all past days of the current year (strictly past days, today starts at 0)!
-  const daysInYearPassed = Math.min(245, Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 1).getTime()) / 86400000));
-  for (let i = 1; i <= daysInYearPassed; i++) {
-    const d = subDays(today, i);
+  // Real curriculum of daily focus sessions across the last 30 active days
+  const REAL_STUDY_SCHEDULE: {
+    daysAgo: number;
+    sessions: {
+      activityId: string;
+      durationMinutes: number;
+      notes: string;
+      hourOffset: number;
+    }[];
+    habitsCompleted: string[];
+    review?: {
+      wentWell: string;
+      improve: string;
+      tomorrowFocus: string;
+      productivityScore: number;
+    };
+  }[] = [
+    {
+      daysAgo: 1, // Yesterday (Sep 11)
+      sessions: [
+        {
+          activityId: 'act-data-analytics',
+          durationMinutes: 120, // 2 Hours
+          notes: 'Advanced Excel for Data Analytics - Pivot Tables, VLOOKUP & data cleaning',
+          hourOffset: 10,
+        },
+        {
+          activityId: 'act-apti-prep',
+          durationMinutes: 60, // 1 Hour
+          notes: 'KPIT Quantitative Aptitude - Time & Work, Speed Distance questions',
+          hourOffset: 14,
+        },
+        {
+          activityId: 'act-english-reading',
+          durationMinutes: 30, // 0.5 Hour
+          notes: 'English Practice - Technical articles and reading comprehension',
+          hourOffset: 17,
+        },
+      ],
+      habitsCompleted: ['hab-data-analytics', 'hab-apti-practice', 'hab-english-reading', 'hab-daily-exercise'],
+      review: {
+        wentWell: 'Mastered Excel Pivot Tables and solved 25 quantitative aptitude problems for KPIT.',
+        improve: 'Increase speed on calculation-heavy math questions.',
+        tomorrowFocus: 'Deep dive into Python pandas aggregations and data visualization.',
+        productivityScore: 9,
+      },
+    },
+    {
+      daysAgo: 2, // 2 Days Ago (Sep 10)
+      sessions: [
+        {
+          activityId: 'act-data-analytics',
+          durationMinutes: 120, // 2 Hours
+          notes: 'Advanced Python for Data Analytics - Pandas, DataFrames & NumPy arrays',
+          hourOffset: 9,
+        },
+        {
+          activityId: 'act-coding-dsa',
+          durationMinutes: 120, // 2 Hours (Total 4 Hours this day!)
+          notes: 'Coding & DSA - Data structures, array problem solving and logic building',
+          hourOffset: 14,
+        },
+      ],
+      habitsCompleted: ['hab-data-analytics', 'hab-coding-dsa', 'hab-apti-practice', 'hab-daily-exercise'],
+      review: {
+        wentWell: 'Solid 4-hour deep work day! Implemented pandas dataframes from scratch and solved 4 DSA problems.',
+        improve: 'Take short 5-minute movement breaks between deep coding blocks.',
+        tomorrowFocus: 'Excel advanced formulas and placement aptitude sets.',
+        productivityScore: 9,
+      },
+    },
+    {
+      daysAgo: 3, // Sep 9
+      sessions: [
+        {
+          activityId: 'act-data-analytics',
+          durationMinutes: 120, // 2 Hours
+          notes: 'AI Tools for Data Analysts - Automating analysis workflows & prompt engineering',
+          hourOffset: 11,
+        },
+        {
+          activityId: 'act-coding-dsa',
+          durationMinutes: 60, // 1 Hour
+          notes: 'Python algorithmic problem solving and recursion practice',
+          hourOffset: 16,
+        },
+      ],
+      habitsCompleted: ['hab-data-analytics', 'hab-coding-dsa', 'hab-daily-exercise'],
+    },
+    {
+      daysAgo: 4, // Sep 8
+      sessions: [
+        {
+          activityId: 'act-coding-dsa',
+          durationMinutes: 120, // 2 Hours
+          notes: 'DSA Practice - String manipulation, sliding window algorithms',
+          hourOffset: 10,
+        },
+        {
+          activityId: 'act-apti-prep',
+          durationMinutes: 60, // 1 Hour
+          notes: 'Aptitude Practice - Logical reasoning series and syllogisms',
+          hourOffset: 15,
+        },
+      ],
+      habitsCompleted: ['hab-coding-dsa', 'hab-apti-practice', 'hab-english-reading'],
+      review: {
+        wentWell: 'Understood sliding window algorithm patterns clearly and solved 3 hard sets.',
+        improve: 'Avoid checking phone notifications during morning study sessions.',
+        tomorrowFocus: 'Data analytics AI tools and Python scripts.',
+        productivityScore: 8,
+      },
+    },
+    {
+      daysAgo: 5, // Sep 7
+      sessions: [
+        {
+          activityId: 'act-data-analytics',
+          durationMinutes: 150, // 2.5 Hours
+          notes: 'Probability & Statistics for Data Analytics - Normal distributions, Z-scores & hypothesis testing',
+          hourOffset: 10,
+        },
+        {
+          activityId: 'act-exercise-fitness',
+          durationMinutes: 45, // 0.75 Hour
+          notes: 'Strength workout, push-ups and core training',
+          hourOffset: 18,
+        },
+      ],
+      habitsCompleted: ['hab-data-analytics', 'hab-english-reading', 'hab-daily-exercise'],
+    },
+    {
+      daysAgo: 6, // Sep 6
+      sessions: [
+        {
+          activityId: 'act-data-analytics',
+          durationMinutes: 120, // 2 Hours
+          notes: 'Power BI & Tableau - Designing executive KPI dashboards and DAX measures',
+          hourOffset: 10,
+        },
+        {
+          activityId: 'act-apti-prep',
+          durationMinutes: 60, // 1 Hour
+          notes: 'KPIT Technical Aptitude - Pseudocode interpretation and flowcharts',
+          hourOffset: 15,
+        },
+      ],
+      habitsCompleted: ['hab-data-analytics', 'hab-coding-dsa', 'hab-apti-practice', 'hab-daily-exercise'],
+      review: {
+        wentWell: 'Created interactive Power BI report with dynamic filters. High flow state.',
+        improve: 'Review DAX syntax cheat sheet.',
+        tomorrowFocus: 'Probability distributions and descriptive statistics.',
+        productivityScore: 9,
+      },
+    },
+    {
+      daysAgo: 7, // Sep 5
+      sessions: [
+        {
+          activityId: 'act-coding-dsa',
+          durationMinutes: 120, // 2 Hours
+          notes: 'LeetCode & Problem Solving - Hashmaps, two pointers technique',
+          hourOffset: 9,
+        },
+        {
+          activityId: 'act-english-reading',
+          durationMinutes: 30, // 0.5 Hour
+          notes: 'English Practice - Vocabulary building and professional communication',
+          hourOffset: 16,
+        },
+      ],
+      habitsCompleted: ['hab-coding-dsa', 'hab-english-reading', 'hab-daily-exercise'],
+    },
+    {
+      daysAgo: 8, // Sep 4
+      sessions: [
+        {
+          activityId: 'act-data-analytics',
+          durationMinutes: 120, // 2 Hours
+          notes: 'Git & GitHub for Data Analysts - Branching, pull requests & portfolio showcases',
+          hourOffset: 11,
+        },
+        {
+          activityId: 'act-apti-prep',
+          durationMinutes: 60, // 1 Hour
+          notes: 'Aptitude Practice - Percentages, ratios & profit-loss calculations',
+          hourOffset: 15,
+        },
+      ],
+      habitsCompleted: ['hab-data-analytics', 'hab-apti-practice', 'hab-daily-exercise'],
+    },
+    {
+      daysAgo: 9, // Sep 3
+      sessions: [
+        {
+          activityId: 'act-data-analytics',
+          durationMinutes: 180, // 3 Hours
+          notes: 'Advanced Python - Data cleaning with Pandas: handling missing values & outliers',
+          hourOffset: 10,
+        },
+        {
+          activityId: 'act-coding-dsa',
+          durationMinutes: 60, // 1 Hour (Total 4 Hours this day!)
+          notes: 'Coding practice - Matrix traversal and 2D arrays',
+          hourOffset: 16,
+        },
+      ],
+      habitsCompleted: ['hab-data-analytics', 'hab-coding-dsa', 'hab-apti-practice', 'hab-daily-exercise'],
+      review: {
+        wentWell: '4 hours of continuous productive focus. Mastered pandas data cleaning pipelines.',
+        improve: 'Sleep on time by 11:30 PM.',
+        tomorrowFocus: 'Git version control workflows.',
+        productivityScore: 10,
+      },
+    },
+    {
+      daysAgo: 10, // Sep 2
+      sessions: [
+        {
+          activityId: 'act-coding-dsa',
+          durationMinutes: 120, // 2 Hours
+          notes: 'DSA - Linked list operations: insertion, reversal and cycle detection',
+          hourOffset: 10,
+        },
+        {
+          activityId: 'act-english-reading',
+          durationMinutes: 30, // 0.5 Hour
+          notes: 'English Practice - Reading technical architecture articles',
+          hourOffset: 16,
+        },
+      ],
+      habitsCompleted: ['hab-coding-dsa', 'hab-english-reading', 'hab-daily-exercise'],
+    },
+    {
+      daysAgo: 11, // Sep 1
+      sessions: [
+        {
+          activityId: 'act-data-analytics',
+          durationMinutes: 120, // 2 Hours
+          notes: 'Data Analytics Course - Relational database concepts & SQL joins',
+          hourOffset: 10,
+        },
+        {
+          activityId: 'act-apti-prep',
+          durationMinutes: 60, // 1 Hour
+          notes: 'KPIT Placement Aptitude - Permutations, combinations and probability',
+          hourOffset: 15,
+        },
+      ],
+      habitsCompleted: ['hab-data-analytics', 'hab-apti-practice', 'hab-daily-exercise'],
+    },
+    {
+      daysAgo: 12, // Aug 31
+      sessions: [
+        {
+          activityId: 'act-coding-dsa',
+          durationMinutes: 150, // 2.5 Hours
+          notes: 'Coding & DSA - Stack and Queue implementations and classic interview questions',
+          hourOffset: 10,
+        },
+      ],
+      habitsCompleted: ['hab-coding-dsa', 'hab-english-reading', 'hab-daily-exercise'],
+      review: {
+        wentWell: 'Implemented monotonic stack algorithm successfully.',
+        improve: 'Start morning study session earlier.',
+        tomorrowFocus: 'SQL joins and data aggregation queries.',
+        productivityScore: 8,
+      },
+    },
+    {
+      daysAgo: 13, // Aug 30
+      sessions: [
+        {
+          activityId: 'act-data-analytics',
+          durationMinutes: 120, // 2 Hours
+          notes: 'Advanced Excel - INDEX/MATCH, XLOOKUP & multi-condition formulas',
+          hourOffset: 10,
+        },
+        {
+          activityId: 'act-apti-prep',
+          durationMinutes: 60, // 1 Hour
+          notes: 'Aptitude Practice - Data interpretation charts and tables',
+          hourOffset: 14,
+        },
+      ],
+      habitsCompleted: ['hab-data-analytics', 'hab-apti-practice', 'hab-daily-exercise'],
+    },
+    {
+      daysAgo: 14, // Aug 29
+      sessions: [
+        {
+          activityId: 'act-coding-dsa',
+          durationMinutes: 120, // 2 Hours
+          notes: 'Coding practice - Binary search variations and edge cases',
+          hourOffset: 10,
+        },
+        {
+          activityId: 'act-english-reading',
+          durationMinutes: 30, // 0.5 Hour
+          notes: 'English Practice - Grammar refinement and conversational phrases',
+          hourOffset: 16,
+        },
+      ],
+      habitsCompleted: ['hab-coding-dsa', 'hab-english-reading', 'hab-daily-exercise'],
+    },
+    {
+      daysAgo: 16, // Aug 27
+      sessions: [
+        {
+          activityId: 'act-data-analytics',
+          durationMinutes: 120, // 2 Hours
+          notes: 'Data Analytics Course - Exploratory Data Analysis (EDA) on real-world datasets',
+          hourOffset: 10,
+        },
+        {
+          activityId: 'act-coding-dsa',
+          durationMinutes: 60, // 1 Hour
+          notes: 'Coding practice - Sorting algorithms: merge sort and quick sort',
+          hourOffset: 15,
+        },
+      ],
+      habitsCompleted: ['hab-data-analytics', 'hab-coding-dsa', 'hab-daily-exercise'],
+    },
+    {
+      daysAgo: 18, // Aug 25
+      sessions: [
+        {
+          activityId: 'act-apti-prep',
+          durationMinutes: 90, // 1.5 Hours
+          notes: 'KPIT Mock Placement Test - 50 questions timed test',
+          hourOffset: 10,
+        },
+        {
+          activityId: 'act-data-analytics',
+          durationMinutes: 90, // 1.5 Hours
+          notes: 'Python Matplotlib & Seaborn data visualization techniques',
+          hourOffset: 14,
+        },
+      ],
+      habitsCompleted: ['hab-data-analytics', 'hab-apti-practice', 'hab-daily-exercise'],
+      review: {
+        wentWell: 'Scored 84% on KPIT mock aptitude section. Very encouraging progress.',
+        improve: 'Work on time management for complex blood relation puzzles.',
+        tomorrowFocus: 'Deep dive into Seaborn visualization customization.',
+        productivityScore: 9,
+      },
+    },
+    {
+      daysAgo: 20, // Aug 23
+      sessions: [
+        {
+          activityId: 'act-data-analytics',
+          durationMinutes: 120, // 2 Hours
+          notes: 'Data Analytics Course - Statistical hypothesis testing, p-values & t-tests',
+          hourOffset: 10,
+        },
+        {
+          activityId: 'act-coding-dsa',
+          durationMinutes: 60, // 1 Hour
+          notes: 'Binary tree traversals: preorder, inorder, postorder',
+          hourOffset: 15,
+        },
+      ],
+      habitsCompleted: ['hab-data-analytics', 'hab-coding-dsa', 'hab-english-reading', 'hab-daily-exercise'],
+    },
+    {
+      daysAgo: 22, // Aug 21
+      sessions: [
+        {
+          activityId: 'act-coding-dsa',
+          durationMinutes: 120, // 2 Hours
+          notes: 'DSA - Binary trees: maximum depth, symmetry & invert binary tree',
+          hourOffset: 10,
+        },
+        {
+          activityId: 'act-apti-prep',
+          durationMinutes: 60, // 1 Hour
+          notes: 'Aptitude Practice - Coding-decoding and direction sense tests',
+          hourOffset: 15,
+        },
+      ],
+      habitsCompleted: ['hab-coding-dsa', 'hab-apti-practice', 'hab-daily-exercise'],
+    },
+    {
+      daysAgo: 25, // Aug 18
+      sessions: [
+        {
+          activityId: 'act-data-analytics',
+          durationMinutes: 120, // 2 Hours
+          notes: 'Advanced Excel - Data validation, conditional formatting & dashboard templates',
+          hourOffset: 10,
+        },
+        {
+          activityId: 'act-english-reading',
+          durationMinutes: 30, // 0.5 Hour
+          notes: 'English Practice - Reading industry case studies',
+          hourOffset: 16,
+        },
+      ],
+      habitsCompleted: ['hab-data-analytics', 'hab-english-reading', 'hab-daily-exercise'],
+    },
+  ];
+
+  // Populate real sessions, habit logs, and reviews
+  REAL_STUDY_SCHEDULE.forEach((item) => {
+    const d = subDays(today, item.daysAgo);
     const dateStr = format(d, 'yyyy-MM-dd');
 
-    // Random chance of focus activity (80% of days)
-    if (Math.random() > 0.2) {
-      const numSessions = Math.floor(Math.random() * 3) + 1;
-      for (let s = 0; s < numSessions; s++) {
-        const actIndex = Math.floor(Math.random() * INITIAL_ACTIVITIES.length);
-        const act = INITIAL_ACTIVITIES[actIndex];
-        const durationSec = Math.floor(Math.random() * 45 + 15) * 60; // 15 to 60 mins
-        
-        sessions.push({
-          id: `seed-sess-${i}-${s}`,
-          activityId: act.id,
-          startTime: new Date(d.valueOf() + s * 3600000).toISOString(),
-          endTime: new Date(d.valueOf() + s * 3600000 + durationSec * 1000).toISOString(),
-          durationSeconds: durationSec,
-          notes: `Productive focus session on ${act.name}`,
-          date: dateStr,
-        });
-      }
-    }
+    // Add sessions
+    item.sessions.forEach((sess, idx) => {
+      const startTime = new Date(d);
+      startTime.setHours(sess.hourOffset, 0, 0, 0);
+      const endTime = new Date(startTime.getTime() + sess.durationMinutes * 60 * 1000);
 
-    // Seed habit completion logs
-    INITIAL_HABITS.forEach((h) => {
-      if (Math.random() > 0.3) {
-        habitLogs[h.id][dateStr] = true;
+      sessions.push({
+        id: `sess-real-${dateStr}-${idx + 1}`,
+        activityId: sess.activityId,
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+        durationSeconds: sess.durationMinutes * 60,
+        notes: sess.notes,
+        date: dateStr,
+      });
+    });
+
+    // Add habit completions
+    item.habitsCompleted.forEach((habitId) => {
+      if (habitLogs[habitId]) {
+        habitLogs[habitId][dateStr] = true;
       }
     });
 
-    // Seed periodic reviews
-    if (i % 7 === 0) {
+    // Add reflection review if present
+    if (item.review) {
       reviews.push({
-        id: `review-${dateStr}`,
+        id: `review-real-${dateStr}`,
         date: dateStr,
-        wentWell: 'Completed coding targets and maintained consistent focus routine.',
-        improve: 'Minimize notification distractions in the afternoon.',
-        tomorrowFocus: 'Deep dive into analytical metrics and calendar visualizers.',
-        productivityScore: Math.floor(Math.random() * 3) + 8, // 8-10
+        wentWell: item.review.wentWell,
+        improve: item.review.improve,
+        tomorrowFocus: item.review.tomorrowFocus,
+        productivityScore: item.review.productivityScore,
       });
     }
-  }
+  });
 
   return { sessions, habitLogs, reviews };
 }

@@ -5,11 +5,11 @@ export async function seedDatabaseIfEmpty() {
     // 1. Ensure Default User
     const user = await prisma.user.upsert({
       where: { id: 'default-user' },
-      update: {},
+      update: { name: 'Amit Prasad' },
       create: {
         id: 'default-user',
         email: 'user@daymark.app',
-        name: 'Productive Architect',
+        name: 'Amit Prasad',
       },
     });
 
@@ -21,7 +21,7 @@ export async function seedDatabaseIfEmpty() {
       await prisma.userSettings.create({
         data: {
           userId: user.id,
-          userName: 'Productive Architect',
+          userName: 'Amit Prasad',
           theme: 'dark',
           dailyTargetMinutes: 360,
           workIntervalMinutes: 25,
@@ -55,9 +55,11 @@ export async function seedDatabaseIfEmpty() {
     if (habitCount === 0) {
       await prisma.habit.createMany({
         data: [
-          { userId: user.id, name: 'Morning Focus Routine (30m)', category: 'Mindset', icon: 'Sun', color: '#3B82F6', frequency: 'daily', targetDaysPerWeek: 7, isActive: true },
-          { userId: user.id, name: 'Drink 3L Water', category: 'Health', icon: 'Droplets', color: '#06B6D4', frequency: 'daily', targetDaysPerWeek: 7, isActive: true },
-          { userId: user.id, name: 'Read 20 Pages', category: 'Learning', icon: 'BookOpen', color: '#8B5CF6', frequency: 'daily', targetDaysPerWeek: 5, isActive: true },
+          { userId: user.id, name: 'Learn Data Analytics Course (1h)', category: 'Study', icon: 'Database', color: '#06B6D4', frequency: 'daily', targetDaysPerWeek: 7, isActive: true },
+          { userId: user.id, name: 'Coding & Problem Solving', category: 'Coding', icon: 'Code', color: '#6366F1', frequency: 'daily', targetDaysPerWeek: 7, isActive: true },
+          { userId: user.id, name: 'Aptitude Questions Practice', category: 'Placement', icon: 'Brain', color: '#F59E0B', frequency: 'daily', targetDaysPerWeek: 6, isActive: true },
+          { userId: user.id, name: 'English Practice & Reading (20m)', category: 'Language', icon: 'BookOpen', color: '#8B5CF6', frequency: 'daily', targetDaysPerWeek: 6, isActive: true },
+          { userId: user.id, name: 'Daily Exercise & Workout', category: 'Fitness', icon: 'Flame', color: '#10B981', frequency: 'daily', targetDaysPerWeek: 6, isActive: true },
         ],
       });
       console.log('✅ Default habits seeded');
@@ -68,14 +70,15 @@ export async function seedDatabaseIfEmpty() {
     if (taskCount === 0) {
       const now = new Date();
       const todayStr = now.toISOString().slice(0, 10);
-      const yesterday = new Date(now.getTime() - 86400000).toISOString().slice(0, 10);
-      const twoDaysAgo = new Date(now.getTime() - 2 * 86400000).toISOString().slice(0, 10);
 
       await prisma.task.createMany({
         data: [
-          { userId: user.id, title: 'Connect to GitHub Remote Repository', priority: 'HIGH', category: 'Git', completed: true, dueDate: twoDaysAgo },
-          { userId: user.id, title: 'Modularize Architecture into Frontend, Backend, Database', priority: 'HIGH', category: 'Architecture', completed: true, dueDate: yesterday },
-          { userId: user.id, title: 'Deploy 24/7 Cloud Architecture (Vercel, Render, Supabase)', priority: 'HIGH', category: 'DevOps', completed: false, dueDate: todayStr },
+          { userId: user.id, title: 'Advanced Python for Data Analytics (13 lessons)', priority: 'HIGH', category: 'Data Analytics', completed: false, dueDate: todayStr },
+          { userId: user.id, title: 'AI Tools for Data Analysts', priority: 'HIGH', category: 'Data Analytics', completed: false, dueDate: todayStr },
+          { userId: user.id, title: 'Advanced Excel for Data Analytics (44 lessons)', priority: 'MEDIUM', category: 'Data Analytics', completed: false, dueDate: todayStr },
+          { userId: user.id, title: 'Git & GitHub for Data Analysts', priority: 'MEDIUM', category: 'Data Analytics', completed: false, dueDate: todayStr },
+          { userId: user.id, title: 'Probability & Statistics for Data Analytics', priority: 'HIGH', category: 'Data Analytics', completed: false, dueDate: todayStr },
+          { userId: user.id, title: 'Power BI & Tableau Data Visualization', priority: 'HIGH', category: 'Data Analytics', completed: false, dueDate: todayStr },
         ],
       });
       console.log('✅ Default tasks seeded');
@@ -86,8 +89,10 @@ export async function seedDatabaseIfEmpty() {
     if (goalCount === 0) {
       await prisma.goal.createMany({
         data: [
-          { userId: user.id, title: 'Reach 100 Hours of Deep Coding', type: 'TIME', targetValue: 100, currentValue: 45, category: 'Development', color: '#3B82F6' },
-          { userId: user.id, title: 'Complete 30 Consecutive Habit Days', type: 'HABIT', targetValue: 30, currentValue: 18, category: 'Mindset', color: '#10B981' },
+          { userId: user.id, title: 'Master Data Analytics & AI Course', type: 'TIME', targetValue: 60, currentValue: 24, category: 'Data Analytics', color: '#06B6D4' },
+          { userId: user.id, title: 'Reach 100 Hours of Deep Coding & DSA', type: 'TIME', targetValue: 100, currentValue: 42, category: 'Coding', color: '#6366F1' },
+          { userId: user.id, title: 'Crack KPIT & Placement Aptitude (300 Questions)', type: 'TASK', targetValue: 300, currentValue: 65, category: 'Placement', color: '#F59E0B' },
+          { userId: user.id, title: 'Complete 30 Consecutive Study Days', type: 'HABIT', targetValue: 30, currentValue: 18, category: 'Consistency', color: '#10B981' },
         ],
       });
       console.log('✅ Default goals seeded');
@@ -96,15 +101,13 @@ export async function seedDatabaseIfEmpty() {
     // 7. Ensure Default Countdowns
     const cdCount = await prisma.customCountdown.count();
     if (cdCount === 0) {
-      const launchDate = new Date(Date.now() + 45 * 86400000).toISOString().slice(0, 10);
-      await prisma.customCountdown.create({
-        data: {
-          title: 'DayMark Production Launch',
-          targetDate: launchDate,
-          category: 'Milestone',
-          color: '#8B5CF6',
-          icon: 'Rocket',
-        },
+      const year = new Date().getFullYear();
+      await prisma.customCountdown.createMany({
+        data: [
+          { title: 'KPIT Job', targetDate: `${year}-09-10`, category: 'Milestone', color: '#F59E0B', icon: 'Target' },
+          { title: 'DayMark Production Launch', targetDate: `${year}-11-15`, category: 'Milestone', color: '#8B5CF6', icon: 'Rocket' },
+          { title: 'Complete Spring Boot', targetDate: `${year}-12-31`, category: 'Target', color: '#10B981', icon: 'Target' },
+        ],
       });
       console.log('✅ Default countdowns seeded');
     }

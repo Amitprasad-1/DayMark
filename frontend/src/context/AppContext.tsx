@@ -278,15 +278,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           }
         } catch {}
       }
-      if (parsedSessions.length === 0) {
-        const seed = generateSeedData();
-        parsedSessions = seed.sessions;
-        setReviews(seed.reviews);
+
+      // Automatically purge any old mock sessions (seed-sess-*) from previous versions
+      const hasMockSessions = parsedSessions.some((s) => s.id.startsWith('seed-sess-'));
+      if (hasMockSessions || parsedSessions.length === 0) {
+        const realSeed = generateSeedData();
+        // Keep any manually logged real sessions by the user
+        const nonMockSessions = parsedSessions.filter(
+          (s) =>
+            !s.id.startsWith('seed-sess-') &&
+            s.id !== 'sess-today-morning' &&
+            !s.id.startsWith('sess-today-')
+        );
+        const existingKeys = new Set(nonMockSessions.map((s) => `${s.date}-${s.activityId}-${s.durationSeconds}`));
+        const merged = [...nonMockSessions];
+        for (const realSess of realSeed.sessions) {
+          if (!existingKeys.has(`${realSess.date}-${realSess.activityId}-${realSess.durationSeconds}`)) {
+            merged.push(realSess);
+          }
+        }
+        parsedSessions = merged;
+        setReviews(realSeed.reviews);
+      } else {
+        // Purge any artificial fake today sessions
+        parsedSessions = parsedSessions.filter(
+          (s) => s.id !== 'sess-today-morning' && !s.id.startsWith('sess-today-')
+        );
       }
-      // Purge any artificial fake today sessions from previous seeds or injections
-      parsedSessions = parsedSessions.filter(
-        (s) => s.id !== 'sess-today-morning' && !s.id.startsWith('sess-today-')
-      );
+
       try {
         localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(parsedSessions));
       } catch {}
@@ -297,21 +316,51 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const storedHabits = localStorage.getItem(STORAGE_KEYS.HABITS);
       if (storedHabits) {
         try {
-          const parsedHabits: Habit[] = JSON.parse(storedHabits);
+          let parsedHabits: Habit[] = JSON.parse(storedHabits);
+          // If habits don't have logs or have mock keys, merge real seed logs
+          const realSeed = generateSeedData();
+          parsedHabits = parsedHabits.map((h) => {
+            const seedLogs = realSeed.habitLogs[h.id];
+            if (seedLogs && Object.keys(h.logs || {}).length === 0) {
+              return { ...h, logs: { ...seedLogs } };
+            }
+            return h;
+          });
           setHabits(parsedHabits.filter((h) => !isDeleted(h.id, h.name)));
         } catch {
-          setHabits(INITIAL_HABITS.filter((h) => !isDeleted(h.id, h.name)));
+          const realSeed = generateSeedData();
+          const seededHabits = INITIAL_HABITS.map((h) => ({
+            ...h,
+            logs: realSeed.habitLogs[h.id] || {},
+          }));
+          setHabits(seededHabits.filter((h) => !isDeleted(h.id, h.name)));
         }
       } else {
-        setHabits(INITIAL_HABITS.filter((h) => !isDeleted(h.id, h.name)));
+        const realSeed = generateSeedData();
+        const seededHabits = INITIAL_HABITS.map((h) => ({
+          ...h,
+          logs: realSeed.habitLogs[h.id] || {},
+        }));
+        setHabits(seededHabits.filter((h) => !isDeleted(h.id, h.name)));
       }
 
       const storedReviews = localStorage.getItem(STORAGE_KEYS.REVIEWS);
       if (storedReviews) {
         try {
           const parsed = JSON.parse(storedReviews);
-          if (Array.isArray(parsed)) setReviews(parsed);
-        } catch {}
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setReviews(parsed);
+          } else {
+            const realSeed = generateSeedData();
+            setReviews(realSeed.reviews);
+          }
+        } catch {
+          const realSeed = generateSeedData();
+          setReviews(realSeed.reviews);
+        }
+      } else {
+        const realSeed = generateSeedData();
+        setReviews(realSeed.reviews);
       }
 
       const storedTasks = localStorage.getItem(STORAGE_KEYS.TASKS);
@@ -1156,7 +1205,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const seed = generateSeedData();
     setSessions(seed.sessions);
     setReviews(seed.reviews);
-    setHabits(INITIAL_HABITS);
+    setHabits(INITIAL_HABITS.map((h) => ({ ...h, logs: seed.habitLogs[h.id] || {} })));
     setTasks(INITIAL_TASKS);
     setGoals(INITIAL_GOALS);
     setCountdowns(INITIAL_COUNTDOWNS);
@@ -1165,11 +1214,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const loadStudyFocusPreset = () => {
+    const seed = generateSeedData();
     setActivities(INITIAL_ACTIVITIES);
-    setHabits(INITIAL_HABITS);
+    setHabits(INITIAL_HABITS.map((h) => ({ ...h, logs: seed.habitLogs[h.id] || {} })));
+    setSessions(seed.sessions);
+    setReviews(seed.reviews);
     setGoals(INITIAL_GOALS);
     setTasks(INITIAL_TASKS);
     setCountdowns(INITIAL_COUNTDOWNS);
+    setQuotes(INITIAL_QUOTES);
     setActiveActivityId(INITIAL_ACTIVITIES[0].id);
     confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 } });
   };
