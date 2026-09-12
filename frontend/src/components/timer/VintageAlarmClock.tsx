@@ -1033,66 +1033,74 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
                - Distinct Minute Hand: Contrasting Saturated Hue (Zero Plain White!)
                ===================================================================== */
             <g filter="url(#vluxHandDropShadow)">
-              {/* --- HOUR HAND (DISTINCT COLOR 1) --- */}
+              {/* --- HOUR HAND (EXACT SHAPE FROM USER PHOTO) --- */}
               <g transform={`translate(${cx}, ${cy}) rotate(${hourHandAngle})`}>
                 {/* Counterweight Tail */}
                 <path
-                  d="M -1.8,0 L -1.5,16 C -1.5,19.5 0,21 0,21 C 0,21 1.5,19.5 1.5,16 L 1.8,0 Z"
+                  d="M -1.1,0 L -1.1,16 A 1.1 1.1 0 0 0 1.1,16 L 1.1,0 Z"
                   fill="url(#vluxHourHandMetalGrad)"
                   stroke="rgba(0,0,0,0.6)"
                   strokeWidth="0.8"
                 />
 
-                {/* Main Vintage Spade Body: Slender stem -> teardrop pear bulb -> spear tip */}
+                {/* Main Vintage Spade Body: Slender stem -> bulbous teardrop -> rounded rod tip */}
                 <path
-                  d="M -1.2,-6
-                     L -1.2,-36
-                     C -1.2,-41 -5.6,-44 -5.6,-49
-                     C -5.6,-54 -3.0,-57 -1.2,-60
-                     L -0.4,-68
-                     C 0,-70 0,-70 0.4,-68
-                     L 1.2,-60
-                     C 3.0,-57 5.6,-54 5.6,-49
-                     C 5.6,-44 1.2,-41 1.2,-36
-                     L 1.2,-6 Z"
+                  d="M -1.1,-7
+                     L -1.1,-38
+                     C -1.1,-38.2 -2.5,-39.2 -4.0,-40.5
+                     C -6.5,-42.5 -7.2,-45 -7.2,-47.5
+                     C -7.2,-50.5 -4.8,-54.5 -2.6,-58
+                     C -1.6,-59.5 -1.1,-61 -1.1,-63
+                     L -1.1,-69
+                     A 1.1 1.1 0 0 1 1.1,-69
+                     L 1.1,-63
+                     C 1.1,-61 1.6,-59.5 2.6,-58
+                     C 4.8,-54.5 7.2,-50.5 7.2,-47.5
+                     C 7.2,-45 6.5,-42.5 4.0,-40.5
+                     C 2.5,-39.2 1.1,-38.2 1.1,-38
+                     L 1.1,-7 Z"
                   fill="url(#vluxHourHandMetalGrad)"
-                  stroke="rgba(0, 0, 0, 0.65)"
+                  stroke="rgba(0, 0, 0, 0.7)"
                   strokeWidth="0.8"
                 />
 
                 {/* Coordinated specular spine */}
-                <line x1="0" y1="-8" x2="0" y2="-66" stroke={resolvedHandColors.hourSpine} strokeWidth="0.8" strokeOpacity="0.85" />
+                <line x1="0" y1="-8" x2="0" y2="-66" stroke={resolvedHandColors.hourSpine} strokeWidth="0.75" strokeOpacity="0.85" />
               </g>
 
-              {/* --- MINUTE HAND (DISTINCT COLOR 2 - CONTRASTING & NON-WHITE!) --- */}
+              {/* --- MINUTE HAND (EXACT SHAPE FROM USER PHOTO) --- */}
               <g transform={`translate(${cx}, ${cy}) rotate(${minuteHandAngle})`}>
                 {/* Counterweight Tail */}
                 <path
-                  d="M -1.8,0 L -1.5,20 C -1.5,24 0,25.5 0,25.5 C 0,25.5 1.5,24 1.5,20 L 1.8,0 Z"
+                  d="M -1.1,0 L -1.1,20 A 1.1 1.1 0 0 0 1.1,20 L 1.1,0 Z"
                   fill="url(#vluxMinuteHandMetalGrad)"
                   stroke="rgba(0,0,0,0.6)"
                   strokeWidth="0.8"
                 />
 
-                {/* Main Vintage Spade Body: Long slender stem -> teardrop pear bulb -> spear tip */}
+                {/* Main Vintage Spade Body: Long slender stem -> bulbous teardrop -> rounded rod tip */}
                 <path
-                  d="M -1.2,-6
-                     L -1.2,-70
-                     C -1.2,-75 -5.8,-78 -5.8,-83
-                     C -5.8,-88 -3.2,-91 -1.2,-95
-                     L -0.4,-108
-                     C 0,-110 0,-110 0.4,-108
-                     L 1.2,-95
-                     C 3.2,-91 5.8,-88 5.8,-83
-                     C 5.8,-78 1.2,-75 1.2,-70
-                     L 1.2,-6 Z"
+                  d="M -1.1,-7
+                     L -1.1,-68
+                     C -1.1,-68.2 -2.5,-69.2 -4.2,-70.5
+                     C -6.8,-72.5 -7.6,-75.5 -7.6,-78.5
+                     C -7.6,-82.5 -5.2,-87 -3.0,-91
+                     C -1.8,-93 -1.2,-95 -1.2,-97
+                     L -1.2,-111
+                     A 1.2 1.2 0 0 1 1.2,-111
+                     L 1.2,-97
+                     C 1.2,-95 1.8,-93 3.0,-91
+                     C 5.2,-87 7.6,-82.5 7.6,-78.5
+                     C 7.6,-75.5 6.8,-72.5 4.2,-70.5
+                     C 2.5,-69.2 1.1,-68.2 1.1,-68
+                     L 1.1,-7 Z"
                   fill="url(#vluxMinuteHandMetalGrad)"
-                  stroke="rgba(0, 0, 0, 0.65)"
+                  stroke="rgba(0, 0, 0, 0.7)"
                   strokeWidth="0.8"
                 />
 
                 {/* Coordinated specular spine */}
-                <line x1="0" y1="-8" x2="0" y2="-106" stroke={resolvedHandColors.minuteSpine} strokeWidth="0.8" strokeOpacity="0.85" />
+                <line x1="0" y1="-8" x2="0" y2="-107" stroke={resolvedHandColors.minuteSpine} strokeWidth="0.75" strokeOpacity="0.85" />
               </g>
 
               {/* --- SECOND HAND (SLENDER NEEDLE) --- */}
