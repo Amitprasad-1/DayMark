@@ -200,9 +200,18 @@ export const YearDashboard: React.FC = () => {
     const hours = data.totalSeconds / 3600;
     const isDateToday = dateStr === todayStr;
 
-    // Today with or without milestone: vibrant neon flame
+    // Today with or without milestone: vibrant neon flame + hour achievement
     if (isDateToday) {
-      return 'bg-gradient-to-tr from-amber-400 via-orange-500 to-amber-500 border-2 border-amber-200 text-slate-950 font-black ring-2 ring-amber-300 shadow-[0_0_20px_rgba(245,158,11,0.7)] scale-105 z-10';
+      if (hours >= 4) {
+        return 'bg-gradient-to-tr from-emerald-400 via-teal-300 to-cyan-400 border-2 border-white text-slate-950 font-black ring-4 ring-amber-400 shadow-[0_0_24px_rgba(52,211,153,0.85)] scale-105 z-10';
+      }
+      if (hours >= 2) {
+        return 'bg-gradient-to-tr from-cyan-500 via-blue-500 to-indigo-600 border-2 border-white text-white font-black ring-4 ring-amber-400 shadow-[0_0_24px_rgba(6,182,212,0.85)] scale-105 z-10';
+      }
+      if (hours > 0) {
+        return 'bg-gradient-to-tr from-amber-400 via-orange-500 to-amber-500 border-2 border-amber-100 text-slate-950 font-black ring-3 ring-amber-300 shadow-[0_0_20px_rgba(245,158,11,0.8)] scale-105 z-10';
+      }
+      return 'bg-gradient-to-tr from-amber-500/40 via-orange-600/30 to-amber-950/60 border-2 border-amber-400 text-amber-200 font-black ring-2 ring-amber-400/80 shadow-[0_0_18px_rgba(245,158,11,0.6)] scale-105 z-10';
     }
 
     // Target Milestone day: punchy glowing amber/gold jewel cell
@@ -214,21 +223,25 @@ export const YearDashboard: React.FC = () => {
       return 'bg-slate-950/50 border border-white/[0.06] text-slate-500 font-medium hover:border-indigo-400/50 hover:text-slate-200 hover:bg-slate-900';
     }
 
+    // Level 4 (>= 4 Hours or 3+ habits): Electric Rolex Emerald & Cyan
     if (hours >= 4 || data.completedHabitsCount >= 3) {
-      return 'bg-gradient-to-tr from-emerald-400 via-teal-400 to-cyan-400 border-2 border-emerald-200 text-slate-950 font-black shadow-[0_0_16px_rgba(52,211,153,0.55)]';
+      return 'bg-gradient-to-tr from-emerald-400 via-teal-300 to-cyan-400 border-2 border-emerald-200 text-slate-950 font-black shadow-[0_0_18px_rgba(52,211,153,0.65)]';
     }
+    // Level 3 (>= 2 Hours or 2+ habits): Electric Azure Cyan
     if (hours >= 2 || data.completedHabitsCount >= 2) {
-      return 'bg-gradient-to-tr from-indigo-500 via-purple-500 to-indigo-600 border-2 border-indigo-300 text-white font-black shadow-[0_0_14px_rgba(99,102,241,0.45)]';
+      return 'bg-gradient-to-tr from-cyan-600 via-blue-600 to-indigo-600 border-2 border-cyan-300 text-white font-black shadow-[0_0_14px_rgba(6,182,212,0.55)]';
     }
+    // Level 2 (>= 0.5 Hours or 1+ habit): Electric Violet Indigo
     if (hours >= 0.5 || data.completedHabitsCount >= 1) {
-      return 'bg-indigo-900/90 border-2 border-indigo-500/80 text-indigo-100 font-bold shadow-[0_0_10px_rgba(99,102,241,0.3)]';
+      return 'bg-gradient-to-tr from-indigo-800 via-purple-800 to-indigo-900 border-2 border-indigo-400/80 text-indigo-100 font-bold shadow-[0_0_10px_rgba(99,102,241,0.4)]';
     }
+    // Level 1 (> 0 Hours): Deep Sapphire
     if (hours > 0) {
-      return 'bg-indigo-950/90 border border-indigo-600/70 text-indigo-200 font-semibold';
+      return 'bg-indigo-950/95 border border-indigo-500/70 text-indigo-200 font-semibold shadow-sm';
     }
 
-    // Past day with 0 activity: boosted text contrast & crisp border definition
-    return 'bg-slate-900/80 border border-white/[0.09] text-slate-300 font-semibold hover:border-indigo-400 hover:bg-slate-800 hover:text-white';
+    // Past day with 0 activity: clean contrast & crisp border definition
+    return 'bg-slate-900/80 border border-white/[0.09] text-slate-300 font-semibold hover:border-indigo-400/80 hover:bg-slate-800 hover:text-white';
   };
 
   const handleCellHover = (dateObj: Date) => {
@@ -898,15 +911,15 @@ export const YearDashboard: React.FC = () => {
                   </p>
                 </div>
 
-                {/* Day of Week Headers */}
-                <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-black text-slate-500/80 font-mono border-t border-white/[0.06] pt-2">
-                  <span>S</span>
-                  <span>M</span>
-                  <span>T</span>
-                  <span>W</span>
-                  <span>T</span>
-                  <span>F</span>
-                  <span>S</span>
+                {/* Day of Week Headers with Weekend Accent */}
+                <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-black font-mono border-t border-white/[0.06] pt-2">
+                  <span className="text-amber-400/90 font-bold" title="Sunday">S</span>
+                  <span className="text-slate-400">M</span>
+                  <span className="text-slate-400">T</span>
+                  <span className="text-slate-400">W</span>
+                  <span className="text-slate-400">T</span>
+                  <span className="text-slate-400">F</span>
+                  <span className="text-amber-400/90 font-bold" title="Saturday">S</span>
                 </div>
 
                 {/* Days Heatmap Matrix */}
