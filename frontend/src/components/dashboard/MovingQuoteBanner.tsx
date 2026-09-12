@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Flame,
   Sparkles,
@@ -17,6 +17,8 @@ import {
   Edit3,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  Check,
   Quote as QuoteIcon,
   FastForward,
   Activity,
@@ -26,6 +28,45 @@ import {
 import { useApp } from '@/context/AppContext';
 import { ManageQuotesModal } from '@/components/modals/ManageQuotesModal';
 import { motion, AnimatePresence } from 'framer-motion';
+
+export type QuoteBannerMode = 'zoom' | 'typewriter' | 'cinematic' | 'moving';
+
+const MODE_OPTIONS: {
+  id: QuoteBannerMode;
+  label: string;
+  badge: string;
+  desc: string;
+  icon: React.FC<{ className?: string }>;
+}[] = [
+  {
+    id: 'zoom',
+    label: 'Focus',
+    badge: 'Spotlight',
+    desc: 'Word-by-word kinetic zoom',
+    icon: ZoomIn,
+  },
+  {
+    id: 'typewriter',
+    label: 'Type',
+    badge: 'Live',
+    desc: 'Live typewriter & neon cursor',
+    icon: Type,
+  },
+  {
+    id: 'cinematic',
+    label: 'Wave',
+    badge: 'Cinema',
+    desc: 'Floating golden cascade',
+    icon: Sparkles,
+  },
+  {
+    id: 'moving',
+    label: 'Moving',
+    badge: 'Ticker',
+    desc: 'Continuous marquee drift',
+    icon: Activity,
+  },
+];
 
 const ICON_COMPONENTS: Record<string, React.FC<{ className?: string; style?: React.CSSProperties }>> = {
   Heart,
@@ -79,6 +120,23 @@ export const MovingQuoteBanner: React.FC<MovingQuoteBannerProps> = ({ className 
 
   // Typewriter Mode State
   const [typedCharIndex, setTypedCharIndex] = useState(0);
+
+  // Dropdown Menu State
+  const [isModeDropdownOpen, setIsModeDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsModeDropdownOpen(false);
+      }
+    };
+    if (isModeDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isModeDropdownOpen]);
 
   // Hydrate display mode & speed preferences from localStorage
   useEffect(() => {
@@ -232,6 +290,8 @@ export const MovingQuoteBanner: React.FC<MovingQuoteBannerProps> = ({ className 
 
   const tickerItems = activeQuotes.length > 0 ? activeQuotes : [];
   const marqueeClass = SPEED_CONFIG[speed]?.marqueeClass || 'animate-ticker-050';
+  const activeModeObj = MODE_OPTIONS.find((m) => m.id === displayMode) || MODE_OPTIONS[0];
+  const ActiveModeIcon = activeModeObj.icon;
 
   return (
     <>
@@ -461,63 +521,90 @@ export const MovingQuoteBanner: React.FC<MovingQuoteBannerProps> = ({ className 
 
           {/* Controls Bar: Neatly organized & responsive */}
           <div className="flex items-center justify-between sm:justify-end gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-[#070B16]/95 sm:bg-[#090E1C]/95 border-t sm:border-t-0 sm:border-l border-white/[0.08] sm:border-white/[0.10] shrink-0 z-20 w-full sm:w-auto flex-wrap sm:flex-nowrap">
-            {/* Mode Switcher: Focus, Type, Wave, Moving */}
-            <div className="flex items-center bg-white/[0.04] p-0.5 rounded-xl border border-white/[0.08]">
+            {/* Mode Switcher: Sleek Compact Dropdown Menu */}
+            <div className="relative" ref={dropdownRef}>
               <button
                 type="button"
-                onClick={() => handleToggleMode('zoom')}
-                className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition cursor-pointer ${
-                  displayMode === 'zoom'
-                    ? 'bg-amber-500 text-slate-950 shadow-md font-black'
-                    : 'text-slate-400 hover:text-slate-200'
+                onClick={() => setIsModeDropdownOpen((prev) => !prev)}
+                className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl border text-xs font-bold transition shadow-sm cursor-pointer select-none ${
+                  isModeDropdownOpen
+                    ? 'bg-amber-500/25 border-amber-500/50 text-amber-200'
+                    : 'bg-white/[0.05] hover:bg-white/[0.10] border-white/[0.10] text-amber-300 hover:text-white'
                 }`}
-                title="Focus: Sequential kinetic word spotlight zoom"
+                title="Change motivation transition mode"
               >
-                <ZoomIn className="w-3.5 h-3.5" />
-                <span>Focus</span>
+                <ActiveModeIcon className="w-3.5 h-3.5 text-amber-400" />
+                <span className="font-extrabold">{activeModeObj.label}</span>
+                <ChevronDown
+                  className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
+                    isModeDropdownOpen ? 'rotate-180 text-amber-300' : ''
+                  }`}
+                />
               </button>
 
-              <button
-                type="button"
-                onClick={() => handleToggleMode('typewriter')}
-                className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition cursor-pointer ${
-                  displayMode === 'typewriter'
-                    ? 'bg-amber-500 text-slate-950 shadow-md font-black'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-                title="Typewriter: Live character-by-character author typing with neon cursor"
-              >
-                <Type className="w-3.5 h-3.5" />
-                <span>Type</span>
-              </button>
+              <AnimatePresence>
+                {isModeDropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -6, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -6, scale: 0.95 }}
+                    transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+                    className="absolute top-full right-0 mt-1.5 w-52 sm:w-56 rounded-2xl bg-[#090E1C]/98 border border-white/[0.14] p-1.5 shadow-[0_15px_35px_rgba(0,0,0,0.7)] backdrop-blur-3xl z-50 space-y-1"
+                  >
+                    <div className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-white/[0.06] flex items-center justify-between">
+                      <span>Transition Mode</span>
+                      <span className="text-[9px] font-mono text-amber-400/80">4 styles</span>
+                    </div>
 
-              <button
-                type="button"
-                onClick={() => handleToggleMode('cinematic')}
-                className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition cursor-pointer ${
-                  displayMode === 'cinematic'
-                    ? 'bg-amber-500 text-slate-950 shadow-md font-black'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-                title="Wave: Staggered cinematic ripple & floating golden gradient"
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Wave</span>
-              </button>
+                    <div className="space-y-0.5 pt-0.5">
+                      {MODE_OPTIONS.map((opt) => {
+                        const Icon = opt.icon;
+                        const isSelected = displayMode === opt.id;
 
-              <button
-                type="button"
-                onClick={() => handleToggleMode('moving')}
-                className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition cursor-pointer ${
-                  displayMode === 'moving'
-                    ? 'bg-amber-500 text-slate-950 shadow-md font-black'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-                title="Moving: Continuous smooth marquee ticker"
-              >
-                <Activity className="w-3.5 h-3.5" />
-                <span>Moving</span>
-              </button>
+                        return (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => {
+                              handleToggleMode(opt.id);
+                              setIsModeDropdownOpen(false);
+                            }}
+                            className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-left transition cursor-pointer ${
+                              isSelected
+                                ? 'bg-amber-500/20 text-amber-200 border border-amber-500/30'
+                                : 'text-slate-300 hover:text-white hover:bg-white/[0.06] border border-transparent'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div
+                                className={`p-1.5 rounded-lg shrink-0 ${
+                                  isSelected
+                                    ? 'bg-amber-500 text-slate-950 font-bold'
+                                    : 'bg-white/[0.06] text-slate-400'
+                                }`}
+                              >
+                                <Icon className="w-3.5 h-3.5" />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="text-xs font-bold leading-tight flex items-center gap-1.5">
+                                  <span>{opt.label}</span>
+                                  <span className="text-[9px] font-medium text-slate-400 px-1 py-0.2 rounded bg-white/[0.04]">
+                                    {opt.badge}
+                                  </span>
+                                </div>
+                                <p className="text-[10px] text-slate-400 truncate leading-tight mt-0.5">
+                                  {opt.desc}
+                                </p>
+                              </div>
+                            </div>
+                            {isSelected && <Check className="w-3.5 h-3.5 text-amber-400 shrink-0 ml-1" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Speed Selector (0.25x, 0.50x, 0.75x, 1.00x) */}
