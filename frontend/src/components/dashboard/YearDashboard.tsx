@@ -209,14 +209,14 @@ export const YearDashboard: React.FC = () => {
         return 'bg-gradient-to-tr from-cyan-500 via-blue-500 to-indigo-600 text-white font-black scale-105 z-20 shadow-[0_0_20px_rgba(6,182,212,0.7)]';
       }
       if (hours > 0) {
-        return 'bg-gradient-to-tr from-amber-400 via-orange-500 to-amber-500 text-slate-950 font-black scale-105 z-20 shadow-[0_0_18px_rgba(245,158,11,0.7)]';
+        return 'bg-gradient-to-tr from-indigo-800 via-purple-800 to-indigo-900 text-indigo-100 font-black scale-105 z-20 shadow-[0_0_18px_rgba(99,102,241,0.7)]';
       }
-      return 'bg-gradient-to-b from-slate-900 via-slate-950 to-[#0b1020] text-amber-300 font-black scale-105 z-20 shadow-[0_0_16px_rgba(245,158,11,0.35)]';
+      return 'bg-gradient-to-b from-slate-900 via-[#0a1128] to-[#030712] text-cyan-200 font-black scale-105 z-20 shadow-[0_0_16px_rgba(6,182,212,0.3)]';
     }
 
-    // Target Milestone day: Royal Purple / Fuchsia Jewel (completely distinct from Today!)
+    // Target Milestone day: Golden Trophy / Amber Crown (same as previous)
     if (hasMilestone) {
-      return 'bg-gradient-to-br from-purple-500/30 via-fuchsia-600/20 to-purple-950/80 border-2 border-purple-400 text-purple-200 font-black ring-2 ring-purple-500/50 shadow-[0_0_18px_rgba(168,85,247,0.7)] hover:bg-purple-900/60 hover:border-purple-300 hover:text-white hover:scale-110 z-10';
+      return 'bg-gradient-to-br from-amber-500/30 via-orange-600/20 to-amber-950/80 border-2 border-amber-400 text-amber-300 font-black ring-2 ring-amber-400/50 shadow-[0_0_18px_rgba(245,158,11,0.7)] hover:bg-amber-900/60 hover:border-amber-300 hover:text-white hover:scale-110 z-10';
     }
 
     if (isFutureDate) {
@@ -851,16 +851,16 @@ export const YearDashboard: React.FC = () => {
             <span className="text-[10px] font-black text-emerald-300">&gt;4h Deep Work</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3.5 h-3.5 rounded-md bg-gradient-to-br from-purple-500/40 to-fuchsia-600/30 border-2 border-purple-400 shadow-[0_0_14px_rgba(168,85,247,0.7)] relative">
-              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-purple-400 border border-slate-950 shadow-[0_0_6px_#C084FC]" />
+            <div className="w-3.5 h-3.5 rounded-md bg-gradient-to-br from-amber-500/40 to-orange-600/30 border-2 border-amber-400 shadow-[0_0_14px_rgba(245,158,11,0.7)] relative">
+              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-400 border border-slate-950 shadow-[0_0_6px_#F59E0B]" />
             </div>
-            <span className="text-[10px] font-black text-purple-300">Target Milestone</span>
+            <span className="text-[10px] font-black text-amber-300">Target Milestone</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3.5 h-3.5 rounded-md bg-slate-900 border-2 border-amber-400 relative shadow-[0_0_12px_rgba(245,158,11,0.6)] flex items-center justify-center">
+            <div className="w-3.5 h-3.5 rounded-md bg-slate-900 border-2 border-cyan-400 relative shadow-[0_0_12px_rgba(56,189,248,0.7)] flex items-center justify-center">
               <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#38BDF8] animate-pulse" />
             </div>
-            <span className="text-[10px] font-black text-amber-300">Today (Moving Line)</span>
+            <span className="text-[10px] font-black text-cyan-300">Today (Moving Line)</span>
           </div>
         </div>
 
@@ -868,11 +868,11 @@ export const YearDashboard: React.FC = () => {
         <svg className="w-0 h-0 absolute pointer-events-none" aria-hidden="true">
           <defs>
             <linearGradient id="todayInfiniteLaserBeam" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#F59E0B" />
-              <stop offset="25%" stopColor="#FEF08A" />
-              <stop offset="60%" stopColor="#38BDF8" />
-              <stop offset="85%" stopColor="#818CF8" />
-              <stop offset="100%" stopColor="#F59E0B" />
+              <stop offset="0%" stopColor="#38BDF8" />
+              <stop offset="25%" stopColor="#818CF8" />
+              <stop offset="50%" stopColor="#34D399" />
+              <stop offset="75%" stopColor="#06B6D4" />
+              <stop offset="100%" stopColor="#38BDF8" />
             </linearGradient>
           </defs>
         </svg>
@@ -1003,14 +1003,14 @@ export const YearDashboard: React.FC = () => {
 
                         <span className="relative z-10">{dayNum}</span>
 
-                        {/* Strategic Milestone Jewel Badge (Purple Diamond) */}
+                        {/* Strategic Milestone Jewel Badge (Golden Diamond) */}
                         {hasMilestone && (
                           <span
                             className="absolute -top-1 -right-1 flex h-2.5 w-2.5 z-20 pointer-events-none"
                             title={`🎯 Target Milestone: ${dayMilestones.map((m) => m.title).join(', ')}`}
                           >
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75" />
-                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-purple-400 border border-slate-950 shadow-[0_0_8px_#C084FC]" />
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400 border border-slate-950 shadow-[0_0_8px_#F59E0B]" />
                           </span>
                         )}
 
