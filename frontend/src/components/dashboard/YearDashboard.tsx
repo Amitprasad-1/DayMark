@@ -199,17 +199,8 @@ export const YearDashboard: React.FC = () => {
     const data = getDayActivityData(dateStr);
     const hours = data.totalSeconds / 3600;
 
-    // Current Date (Today) - dynamically applied to today's date with zero blur/haze:
+    // Current Date (Today) - ALWAYS solid, clean, dark slate background with bold white text & moving rainbow border:
     if (isDateToday) {
-      if (hours >= 4) {
-        return 'bg-gradient-to-tr from-emerald-500 to-teal-400 text-slate-950 font-black scale-105 z-20 border border-emerald-300';
-      }
-      if (hours >= 2) {
-        return 'bg-gradient-to-tr from-cyan-600 to-blue-500 text-white font-black scale-105 z-20 border border-cyan-300';
-      }
-      if (hours > 0) {
-        return 'bg-gradient-to-tr from-indigo-700 to-purple-600 text-white font-black scale-105 z-20 border border-indigo-300';
-      }
       // Crisp, crystal clear dark slate interior with sharp contrast and 100% zero haze
       return 'bg-slate-900 border border-white/20 text-white font-bold scale-105 z-20';
     }
