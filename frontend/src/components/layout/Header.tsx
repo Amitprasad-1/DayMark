@@ -33,6 +33,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenShortcuts }) => {
     setSelectedDate,
     sessions,
     cloudSyncStatus,
+    cloudRoomId,
     syncWithCloud,
   } = useApp();
   const [time, setTime] = useState<string>('');
@@ -178,20 +179,14 @@ export const Header: React.FC<HeaderProps> = ({ onOpenShortcuts }) => {
             whileTap={{ scale: 0.97 }}
             type="button"
             onClick={() => syncWithCloud()}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs transition-all cursor-pointer shadow-md ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs transition-all cursor-pointer shadow-md ${
               cloudSyncStatus === 'synced'
                 ? 'bg-emerald-950/60 border-emerald-500/50 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.25)]'
                 : cloudSyncStatus === 'syncing'
                 ? 'bg-indigo-950/60 border-indigo-500/50 text-indigo-300 shadow-[0_0_12px_rgba(99,102,241,0.25)]'
                 : 'bg-slate-900/85 border-white/10 text-slate-300 hover:border-white/20'
             }`}
-            title={
-              cloudSyncStatus === 'synced'
-                ? 'Cloud Synced with PostgreSQL — Click to Re-sync'
-                : cloudSyncStatus === 'syncing'
-                ? 'Syncing with Supabase Cloud...'
-                : 'Local Cache Ready — Click to Sync Cloud'
-            }
+            title={`Real-Time Cloud Sync Room: [ ${cloudRoomId} ] — Click to Sync Now (Go to Settings to pair your phone)`}
           >
             {cloudSyncStatus === 'syncing' ? (
               <RefreshCw className="w-3.5 h-3.5 text-indigo-400 animate-spin" />
@@ -200,12 +195,17 @@ export const Header: React.FC<HeaderProps> = ({ onOpenShortcuts }) => {
             ) : (
               <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_10px_#F59E0B]" />
             )}
-            <span className="hidden sm:inline font-bold">
-              {cloudSyncStatus === 'synced'
-                ? 'Synced'
-                : cloudSyncStatus === 'syncing'
-                ? 'Syncing'
-                : 'Local'}
+            <span className="font-bold flex items-center gap-1">
+              <span className="hidden sm:inline">
+                {cloudSyncStatus === 'synced'
+                  ? 'Sync'
+                  : cloudSyncStatus === 'syncing'
+                  ? 'Syncing'
+                  : 'Sync'}
+              </span>
+              <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-black/40 border border-white/10 text-amber-300">
+                {cloudRoomId}
+              </span>
             </span>
           </motion.button>
 

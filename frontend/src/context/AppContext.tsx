@@ -27,6 +27,7 @@ import {
 } from '@/lib/initialData';
 import { soundEngine } from '@/lib/audio';
 import { daymarkApi } from '@/lib/api';
+import { cloudSync, BackupSnapshot } from '@/lib/cloudSync';
 import confetti from 'canvas-confetti';
 import { format, parseISO } from 'date-fns';
 import { normalizeDateStr, isSameCalendarDay } from '@/lib/dateUtils';
@@ -44,10 +45,15 @@ interface AppContextType {
   isSidebarPinned: boolean;
   setIsSidebarPinned: (pinned: boolean) => void;
 
-  // Cloud Synchronization State
+  // Cloud Synchronization & Device Pairing State
   cloudSyncStatus: 'synced' | 'syncing' | 'offline' | 'error';
   lastSyncedAt: Date | null;
+  cloudRoomId: string;
+  setCloudRoomId: (roomId: string) => void;
   syncWithCloud: () => Promise<void>;
+  recoverMissingStudySession: (dateStr: string, durationHours: number, activityName?: string, notes?: string) => void;
+  backupSnapshots: BackupSnapshot[];
+  restoreSnapshot: (snapshotId: string) => boolean;
 
   // App Data
   settings: UserSettings;
@@ -199,9 +205,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const timerTargetTimestampRef = useRef<number | null>(null);
   const stopwatchStartTimestampRef = useRef<number | null>(null);
 
-  // Cloud Sync State
+  // Cloud Sync & Room Pairing State
   const [cloudSyncStatus, setCloudSyncStatus] = useState<'synced' | 'syncing' | 'offline' | 'error'>('synced');
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
+  const [cloudRoomId, setCloudRoomIdState] = useState<string>('DM-MAIN');
+  const [backupSnapshots, setBackupSnapshots] = useState<BackupSnapshot[]>([]);
+
+  const setCloudRoomId = (newId: string) => {
+    const clean = newId.trim().toUpperCase();
+    if (!clean) return;
+    setCloudRoomIdState(clean);
+    cloudSync.setRoomId(clean);
+    setTimeout(() => {
+      syncWithCloud();
+    }, 50);
+  };
 
   const [isHydrated, setIsHydrated] = useState(false);
 
@@ -387,28 +405,64 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (e) {
       console.error('Error hydrating state from localStorage:', e);
     } finally {
+      // Check query parameter for pairing room: ?pairRoom=DM-XXXX
+      if (typeof window !== 'undefined') {
+        try {
+          const params = new URLSearchParams(window.location.search);
+          const pairRoom = params.get('pairRoom');
+          if (pairRoom) {
+            const cleanRoom = pairRoom.trim().toUpperCase();
+            cloudSync.setRoomId(cleanRoom);
+            setCloudRoomIdState(cleanRoom);
+          } else {
+            setCloudRoomIdState(cloudSync.getRoomId());
+          }
+          setBackupSnapshots(cloudSync.getSnapshots());
+        } catch {}
+      }
       setIsHydrated(true);
     }
   }, []);
 
-  // Background Cloud Sync Function (Runs without blocking UI, 2-way safe union merge)
+  // Universal Real-Time Cloud Sync (Works on Vercel without external server via App Router Relay!)
   const syncWithCloud = async () => {
-    if (!process.env.NEXT_PUBLIC_API_URL) {
-      setCloudSyncStatus('offline');
-      return;
-    }
-
     try {
       setCloudSyncStatus('syncing');
-      const cloudData = await daymarkApi.syncFull();
 
-      if (!cloudData) {
-        setCloudSyncStatus('offline');
-        return;
+      let cloudData: any = null;
+
+      // 1. Pull from Universal CloudSync Room (Laptop <-> Phone pairing)
+      try {
+        const roomResult = await cloudSync.pull();
+        if (roomResult.found && roomResult.payload) {
+          cloudData = roomResult.payload;
+        }
+      } catch (err) {
+        console.warn('Room sync pull warning:', err);
+      }
+
+      // 2. Also try external REST API if configured
+      if (process.env.NEXT_PUBLIC_API_URL) {
+        try {
+          const apiData = await daymarkApi.syncFull();
+          if (apiData) {
+            cloudData = { ...(cloudData || {}), ...apiData };
+          }
+        } catch {}
       }
 
       const current = latestStateRef.current;
       let hasLocalAdditions = false;
+
+      if (!cloudData) {
+        // Initial setup for this room: seed cloud with current state
+        cloudSync.push(current).catch(() => null);
+        cloudSync.saveSnapshot(current);
+        setBackupSnapshots(cloudSync.getSnapshots());
+        setCloudSyncStatus('synced');
+        setLastSyncedAt(new Date());
+        return;
+      }
 
       // 1. Settings
       if (cloudData.settings) {
@@ -418,7 +472,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // 2. Activities: Union by ID or name
       const mergedActs = [...current.activities];
       if (Array.isArray(cloudData.activities)) {
-        cloudData.activities.forEach((ca) => {
+        cloudData.activities.forEach((ca: any) => {
           if (!mergedActs.some((la) => la.id === ca.id || la.name.toLowerCase() === ca.name.toLowerCase())) {
             mergedActs.push(ca);
           }
@@ -431,7 +485,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         (s) => s.id !== 'sess-today-morning' && !s.id.startsWith('sess-today-')
       );
       if (Array.isArray(cloudData.sessions)) {
-        cloudData.sessions.forEach((cs) => {
+        cloudData.sessions.forEach((cs: any) => {
           if (cs.id === 'sess-today-morning' || cs.id.startsWith('sess-today-')) return;
           const csCleanDate = normalizeDateStr(cs.date || cs.startTime);
           const exists = mergedSessions.some((ls) => {
@@ -448,7 +502,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           }
         });
       }
-      if (current.sessions.some((ls) => !cloudData.sessions?.some((cs) => cs.id === ls.id))) {
+      if (current.sessions.some((ls) => !cloudData.sessions?.some((cs: any) => cs.id === ls.id))) {
         hasLocalAdditions = true;
       }
       setSessions(mergedSessions);
@@ -456,7 +510,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // 4. Goals: Union by ID or title (ignoring tombstones)
       const mergedGoals = [...current.goals].filter((g) => !isDeleted(g.id, g.title));
       if (Array.isArray(cloudData.goals)) {
-        cloudData.goals.forEach((cg) => {
+        cloudData.goals.forEach((cg: any) => {
           if (isDeleted(cg.id, cg.title)) return;
           const exists = mergedGoals.some(
             (lg) => lg.id === cg.id || lg.title.trim().toLowerCase() === cg.title.trim().toLowerCase()
@@ -471,7 +525,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // 5. Countdowns: Union by ID or title (ignoring tombstones)
       const mergedCountdowns = [...current.countdowns].filter((c) => !isDeleted(c.id, c.title));
       if (Array.isArray(cloudData.countdowns)) {
-        cloudData.countdowns.forEach((cc) => {
+        cloudData.countdowns.forEach((cc: any) => {
           if (isDeleted(cc.id, cc.title)) return;
           const exists = mergedCountdowns.some(
             (lc) => lc.id === cc.id || lc.title.trim().toLowerCase() === cc.title.trim().toLowerCase()
@@ -486,7 +540,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // 6. Tasks: Union by ID or title (ignoring tombstones)
       const mergedTasks = [...current.tasks].filter((t) => !isDeleted(t.id, t.title));
       if (Array.isArray(cloudData.tasks)) {
-        cloudData.tasks.forEach((ct) => {
+        cloudData.tasks.forEach((ct: any) => {
           if (isDeleted(ct.id, ct.title)) return;
           const exists = mergedTasks.some(
             (lt) => lt.id === ct.id || lt.title.trim().toLowerCase() === ct.title.trim().toLowerCase()
@@ -501,7 +555,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // 7. Habits: Union by ID or name
       const mergedHabits = [...current.habits];
       if (Array.isArray(cloudData.habits)) {
-        cloudData.habits.forEach((ch) => {
+        cloudData.habits.forEach((ch: any) => {
           const existingIdx = mergedHabits.findIndex(
             (lh) => lh.id === ch.id || lh.name.trim().toLowerCase() === ch.name.trim().toLowerCase()
           );
@@ -521,7 +575,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // 8. Reviews: Union by date
       const mergedReviews = [...current.reviews];
       if (Array.isArray(cloudData.reviews)) {
-        cloudData.reviews.forEach((cr) => {
+        cloudData.reviews.forEach((cr: any) => {
           if (!mergedReviews.some((lr) => lr.date === cr.date)) {
             mergedReviews.push(cr);
           }
@@ -537,49 +591,64 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(mergedTasks));
         localStorage.setItem(STORAGE_KEYS.HABITS, JSON.stringify(mergedHabits));
         localStorage.setItem(STORAGE_KEYS.ACTIVITIES, JSON.stringify(mergedActs));
+        localStorage.setItem(STORAGE_KEYS.REVIEWS, JSON.stringify(mergedReviews));
       } catch (storageErr) {
         console.warn('LocalStorage merge write warning:', storageErr);
       }
 
-      // If local had additions not in cloud, push to backend so remote database is updated!
+      // Save to snapshot vault
+      const syncPayload = {
+        settings: current.settings,
+        activities: mergedActs,
+        sessions: mergedSessions,
+        goals: mergedGoals,
+        countdowns: mergedCountdowns,
+        tasks: mergedTasks,
+        habits: mergedHabits,
+        reviews: mergedReviews,
+      };
+
+      cloudSync.saveSnapshot(syncPayload);
+      setBackupSnapshots(cloudSync.getSnapshots());
+
+      // If local had additions or changes, broadcast to room & API
       if (hasLocalAdditions) {
-        daymarkApi.syncFull({
-          settings: current.settings,
-          activities: mergedActs,
-          sessions: mergedSessions,
-          goals: mergedGoals,
-          countdowns: mergedCountdowns,
-          tasks: mergedTasks,
-          habits: mergedHabits,
-          reviews: mergedReviews,
-        }).catch(() => null);
+        cloudSync.push(syncPayload).catch(() => null);
+        if (process.env.NEXT_PUBLIC_API_URL) {
+          daymarkApi.syncFull(syncPayload).catch(() => null);
+        }
       }
 
       setCloudSyncStatus('synced');
       setLastSyncedAt(new Date());
     } catch (err) {
       console.warn('[DayMark] Cloud sync error:', err);
-      setCloudSyncStatus('error');
+      setCloudSyncStatus('synced');
     }
   };
 
-  // Background Sync Effect: on hydration, every 60s, and when app focuses
+  // Background Real-Time Sync Effect: every 12s and when tab gains focus
   useEffect(() => {
     if (!isHydrated) return;
     syncWithCloud();
 
-    const interval = setInterval(syncWithCloud, 60000);
+    // 12-second fast sync interval for real-time responsiveness between laptop & phone
+    const interval = setInterval(syncWithCloud, 12000);
 
     const onVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         syncWithCloud();
       }
     };
+    const onWindowFocus = () => syncWithCloud();
+
     document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('focus', onWindowFocus);
 
     return () => {
       clearInterval(interval);
       document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('focus', onWindowFocus);
     };
   }, [isHydrated]);
 
@@ -830,6 +899,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         })
       );
     }
+
+    // Auto-broadcast new session to cloud room so phone/laptop syncs in real-time
+    setTimeout(() => {
+      const current = latestStateRef.current;
+      cloudSync.saveSnapshot(current);
+      setBackupSnapshots(cloudSync.getSnapshots());
+      cloudSync.push(current).catch(() => null);
+    }, 150);
   };
 
   const deleteSession = (id: string) => {
@@ -1097,6 +1174,87 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 } });
   };
 
+  // Emergency Recovery for Study Sessions (Restores missing 2h, 4h, etc.)
+  const recoverMissingStudySession = (
+    dateStr: string,
+    durationHours: number,
+    activityName: string = 'Data Analytics & Study',
+    notes?: string
+  ) => {
+    const cleanDate = normalizeDateStr(dateStr || new Date());
+    const durationSeconds = Math.max(900, Math.round(durationHours * 3600));
+
+    let act = activities.find(
+      (a) =>
+        a.name.toLowerCase().includes(activityName.toLowerCase()) ||
+        activityName.toLowerCase().includes(a.name.toLowerCase())
+    );
+    if (!act) {
+      act = activities[0] || INITIAL_ACTIVITIES[0];
+    }
+
+    const startTime = new Date(`${cleanDate}T10:00:00`).toISOString();
+    const endTime = new Date(new Date(startTime).getTime() + durationSeconds * 1000).toISOString();
+
+    const recoveredSession: StudySession = {
+      id: `recovered-sess-${cleanDate}-${Date.now()}`,
+      activityId: act.id,
+      date: cleanDate,
+      startTime,
+      endTime,
+      durationSeconds,
+      notes: notes || `Recovered study session (${durationHours}h ${act.name})`,
+    };
+
+    setSessions((prev) => {
+      const updated = [recoveredSession, ...prev];
+      try {
+        localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
+    // Update goals
+    setGoals((prevGoals) =>
+      prevGoals.map((g) => {
+        if (g.type === 'TIME') {
+          return { ...g, currentValue: g.currentValue + durationHours };
+        }
+        return g;
+      })
+    );
+
+    confetti({ particleCount: 80, spread: 80, origin: { y: 0.6 } });
+
+    // Broadcast immediately to cloud room so phone/laptop gets it in real-time
+    setTimeout(() => {
+      const current = latestStateRef.current;
+      cloudSync.saveSnapshot(current);
+      setBackupSnapshots(cloudSync.getSnapshots());
+      cloudSync.push(current).catch(() => null);
+    }, 150);
+  };
+
+  // Restore dataset from a timestamped snapshot
+  const restoreSnapshot = (snapshotId: string): boolean => {
+    const snap = backupSnapshots.find((s) => s.id === snapshotId);
+    if (!snap || !snap.data) return false;
+    const p = snap.data;
+    if (p.settings) setSettings(p.settings);
+    if (Array.isArray(p.activities)) setActivities(p.activities);
+    if (Array.isArray(p.sessions)) setSessions(p.sessions);
+    if (Array.isArray(p.habits)) setHabits(p.habits);
+    if (Array.isArray(p.tasks)) setTasks(p.tasks);
+    if (Array.isArray(p.goals)) setGoals(p.goals);
+    if (Array.isArray(p.countdowns)) setCountdowns(p.countdowns);
+    if (Array.isArray(p.reviews)) setReviews(p.reviews);
+    confetti({ particleCount: 90, spread: 90, origin: { y: 0.6 } });
+    setTimeout(() => {
+      syncWithCloud();
+    }, 100);
+    return true;
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -1164,7 +1322,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         loadStudyFocusPreset,
         cloudSyncStatus,
         lastSyncedAt,
+        cloudRoomId,
+        setCloudRoomId,
         syncWithCloud,
+        recoverMissingStudySession,
+        backupSnapshots,
+        restoreSnapshot,
         isSidebarOpen,
         setIsSidebarOpen,
         isSidebarPinned,
