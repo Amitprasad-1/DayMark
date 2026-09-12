@@ -200,18 +200,19 @@ export const YearDashboard: React.FC = () => {
     const hours = data.totalSeconds / 3600;
     const isDateToday = dateStr === todayStr;
 
-    // Today (styled with sleek interior; the infinite moving laser line will outline it):
+    // Today (highlighted with vivid colorful presence + moving rainbow laser):
     if (isDateToday) {
       if (hours >= 4) {
-        return 'bg-gradient-to-tr from-emerald-400 via-teal-300 to-cyan-400 text-slate-950 font-black scale-105 z-20 shadow-[0_0_20px_rgba(52,211,153,0.7)]';
+        return 'bg-gradient-to-tr from-emerald-400 via-teal-300 to-cyan-400 text-slate-950 font-black scale-110 z-20 shadow-[0_0_24px_rgba(52,211,153,0.85)]';
       }
       if (hours >= 2) {
-        return 'bg-gradient-to-tr from-cyan-500 via-blue-500 to-indigo-600 text-white font-black scale-105 z-20 shadow-[0_0_20px_rgba(6,182,212,0.7)]';
+        return 'bg-gradient-to-tr from-cyan-500 via-blue-500 to-indigo-600 text-white font-black scale-110 z-20 shadow-[0_0_24px_rgba(6,182,212,0.85)]';
       }
       if (hours > 0) {
-        return 'bg-gradient-to-tr from-indigo-800 via-purple-800 to-indigo-900 text-indigo-100 font-black scale-105 z-20 shadow-[0_0_18px_rgba(99,102,241,0.7)]';
+        return 'bg-gradient-to-tr from-indigo-800 via-purple-800 to-pink-800 text-white font-black scale-110 z-20 shadow-[0_0_22px_rgba(168,85,247,0.85)]';
       }
-      return 'bg-gradient-to-b from-slate-900 via-[#0a1128] to-[#030712] text-cyan-200 font-black scale-105 z-20 shadow-[0_0_16px_rgba(6,182,212,0.3)]';
+      // Highlighted luminous deep sapphire / cosmic purple interior with glowing white text
+      return 'bg-gradient-to-br from-indigo-950/95 via-[#0c122c] to-purple-950/95 text-white font-black scale-110 z-20 shadow-[0_0_22px_rgba(0,229,255,0.6),inset_0_0_14px_rgba(255,0,122,0.3)] border border-cyan-400/40';
     }
 
     // Target Milestone day: Golden Trophy / Amber Crown (same as previous)
@@ -857,22 +858,24 @@ export const YearDashboard: React.FC = () => {
             <span className="text-[10px] font-black text-amber-300">Target Milestone</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3.5 h-3.5 rounded-md bg-slate-900 border-2 border-cyan-400 relative shadow-[0_0_12px_rgba(56,189,248,0.7)] flex items-center justify-center">
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#38BDF8] animate-pulse" />
+            <div className="w-3.5 h-3.5 rounded-md bg-gradient-to-br from-indigo-950 to-purple-950 border-2 border-cyan-400 relative shadow-[0_0_12px_rgba(0,229,255,0.8)] flex items-center justify-center">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-300 shadow-[0_0_6px_#00E5FF] animate-pulse" />
             </div>
-            <span className="text-[10px] font-black text-cyan-300">Today (Moving Line)</span>
+            <span className="text-[10px] font-black text-cyan-300">Today (Rainbow Moving Line)</span>
           </div>
         </div>
 
-        {/* SVG Defs for Today's Infinite Moving Border Laser Beam */}
+        {/* SVG Defs for Today's Infinite Moving Rainbow Laser Border */}
         <svg className="w-0 h-0 absolute pointer-events-none" aria-hidden="true">
           <defs>
             <linearGradient id="todayInfiniteLaserBeam" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#38BDF8" />
-              <stop offset="25%" stopColor="#818CF8" />
-              <stop offset="50%" stopColor="#34D399" />
-              <stop offset="75%" stopColor="#06B6D4" />
-              <stop offset="100%" stopColor="#38BDF8" />
+              <stop offset="0%" stopColor="#FF007A" />
+              <stop offset="16%" stopColor="#FF7A00" />
+              <stop offset="33%" stopColor="#FFE600" />
+              <stop offset="50%" stopColor="#00FF9D" />
+              <stop offset="68%" stopColor="#00E5FF" />
+              <stop offset="84%" stopColor="#9D00FF" />
+              <stop offset="100%" stopColor="#FF007A" />
             </linearGradient>
           </defs>
         </svg>
@@ -979,29 +982,43 @@ export const YearDashboard: React.FC = () => {
                           isDateToday ? 'overflow-visible' : ''
                         }`}
                       >
-                        {/* INFINITE MOVING BORDER LASER BEAM (TODAY ACTIVE DATE) */}
+                        {/* INFINITE MOVING COLORFUL RAINBOW BORDER (TODAY ACTIVE DATE) */}
                         {isDateToday && (
-                          <svg
-                            className="absolute -inset-[3.5px] w-[calc(100%+7px)] h-[calc(100%+7px)] pointer-events-none z-30 overflow-visible"
-                            aria-hidden="true"
-                          >
-                            <rect
-                              x="1.5"
-                              y="1.5"
-                              width="calc(100% - 3px)"
-                              height="calc(100% - 3px)"
-                              rx="9"
-                              ry="9"
-                              fill="none"
-                              stroke="url(#todayInfiniteLaserBeam)"
-                              strokeWidth="2.5"
-                              strokeDasharray="20 12"
-                              className="animate-infinite-border-laser"
-                            />
-                          </svg>
+                          <>
+                            {/* Ambient colorful aura glow behind the cell */}
+                            <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-pink-500/35 via-cyan-400/35 to-amber-400/35 blur-md pointer-events-none animate-pulse z-0" />
+
+                            {/* Infinite Moving Colorful Laser Beam Border */}
+                            <svg
+                              className="absolute -inset-[3.5px] w-[calc(100%+7px)] h-[calc(100%+7px)] pointer-events-none z-30 overflow-visible"
+                              aria-hidden="true"
+                            >
+                              <rect
+                                x="1.5"
+                                y="1.5"
+                                width="calc(100% - 3px)"
+                                height="calc(100% - 3px)"
+                                rx="9"
+                                ry="9"
+                                fill="none"
+                                stroke="url(#todayInfiniteLaserBeam)"
+                                strokeWidth="3.2"
+                                strokeDasharray="16 8"
+                                className="animate-infinite-border-laser"
+                              />
+                            </svg>
+
+                            {/* Live Active Today Neon Beacon */}
+                            <span className="absolute -top-1 -left-1 flex h-2 w-2 z-30 pointer-events-none">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-90" />
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-300 border border-slate-950 shadow-[0_0_8px_#00E5FF]" />
+                            </span>
+                          </>
                         )}
 
-                        <span className="relative z-10">{dayNum}</span>
+                        <span className={`relative z-10 ${isDateToday ? 'text-white font-black drop-shadow-[0_0_8px_rgba(255,255,255,0.9)] scale-110' : ''}`}>
+                          {dayNum}
+                        </span>
 
                         {/* Strategic Milestone Jewel Badge (Golden Diamond) */}
                         {hasMilestone && (
