@@ -528,13 +528,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setActivities(mergedActs);
 
       // 3. Sessions: Union by ID or (cleanDate + duration + startTime), strictly excluding artificial dummy sessions
+      const validSeedDates = new Set(['2026-09-10', '2026-09-11']);
       const mergedSessions = [...current.sessions].filter(
-        (s) => s.id !== 'sess-today-morning' && !s.id.startsWith('sess-today-')
+        (s) => s.id !== 'sess-today-morning' && !s.id.startsWith('sess-today-') && !s.id.startsWith('seed-sess-') && !(s.id.startsWith('sess-real-') && !validSeedDates.has(s.date))
       );
       if (Array.isArray(cloudData.sessions)) {
         cloudData.sessions.forEach((cs: any) => {
           if (cs.id === 'sess-today-morning' || cs.id.startsWith('sess-today-')) return;
+          if (cs.id.startsWith('seed-sess-')) return;
+          if (cs.id.startsWith('sess-real-') && !validSeedDates.has(cs.date)) return;
           const csCleanDate = normalizeDateStr(cs.date || cs.startTime);
+          // Also check if artificial early September mock session
+          if (csCleanDate.startsWith('2026-09-') && parseInt(csCleanDate.split('-')[2], 10) < 10) return;
+
           const exists = mergedSessions.some((ls) => {
             if (ls.id === cs.id) return true;
             const lsCleanDate = normalizeDateStr(ls.date || ls.startTime);
@@ -606,13 +612,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const existingIdx = mergedHabits.findIndex(
             (lh) => lh.id === ch.id || lh.name.trim().toLowerCase() === ch.name.trim().toLowerCase()
           );
+          const combinedLogs = { ...(ch.logs || {}), ...(existingIdx !== -1 ? mergedHabits[existingIdx].logs || {} : {}) };
+          const cleanLogs: Record<string, boolean> = {};
+          Object.entries(combinedLogs).forEach(([dateStr, val]) => {
+            // Drop false habit marks for days 1-9
+            if (dateStr.startsWith('2026-09-') && parseInt(dateStr.split('-')[2], 10) < 10) return;
+            cleanLogs[dateStr] = Boolean(val);
+          });
+
           if (existingIdx === -1) {
-            mergedHabits.push(ch);
+            mergedHabits.push({ ...ch, logs: cleanLogs });
           } else {
             mergedHabits[existingIdx] = {
               ...mergedHabits[existingIdx],
               ...ch,
-              logs: { ...(ch.logs || {}), ...(mergedHabits[existingIdx].logs || {}) },
+              logs: cleanLogs,
             };
           }
         });
