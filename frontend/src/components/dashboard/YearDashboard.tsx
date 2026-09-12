@@ -200,45 +200,48 @@ export const YearDashboard: React.FC = () => {
     const hours = data.totalSeconds / 3600;
     const isDateToday = dateStr === todayStr;
 
-    // Today (clean, sharp, and 100% SHADOW-FREE):
+    // Today (highlighted with moving rainbow laser, crisp & ZERO HAZE):
     if (isDateToday) {
       if (hours >= 4) {
-        return 'bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 text-white font-black scale-105 z-20 border-2 border-emerald-400';
+        return 'bg-gradient-to-tr from-emerald-400 via-teal-300 to-cyan-400 text-slate-950 font-black z-20 shadow-md';
       }
       if (hours >= 2) {
-        return 'bg-gradient-to-br from-blue-600 via-indigo-600 to-cyan-700 text-white font-black scale-105 z-20 border-2 border-cyan-400';
+        return 'bg-gradient-to-tr from-cyan-600 via-blue-600 to-indigo-600 text-white font-black z-20 shadow-md';
+      }
+      if (hours >= 0.5) {
+        return 'bg-gradient-to-tr from-indigo-800 via-purple-800 to-indigo-900 text-white font-bold z-20 shadow-md';
       }
       if (hours > 0) {
-        return 'bg-gradient-to-br from-indigo-700 via-purple-700 to-indigo-800 text-white font-black scale-105 z-20 border-2 border-indigo-400';
+        return 'bg-indigo-950 border border-indigo-500/60 text-indigo-100 font-bold z-20 shadow-md';
       }
-      // Crisp, crystal clear dark interior with sharp contrast and zero shadow
-      return 'bg-slate-900 border border-white/20 text-white font-bold scale-105 z-20';
+      // Crisp, crystal clear dark interior with sharp contrast and zero haze
+      return 'bg-slate-900 border border-white/20 text-white font-bold z-20 shadow-md';
     }
 
     // Target Milestone day: Golden Trophy / Amber Crown (same as previous)
     if (hasMilestone) {
-      return 'bg-gradient-to-br from-amber-500/30 via-orange-600/20 to-amber-950/80 border-2 border-amber-400 text-amber-300 font-black ring-2 ring-amber-400/50 shadow-[0_0_14px_rgba(245,158,11,0.6)] hover:bg-amber-900/60 hover:border-amber-300 hover:text-white hover:scale-110 z-10';
+      return 'bg-gradient-to-br from-amber-500/30 via-orange-600/20 to-amber-950/80 border-2 border-amber-400 text-amber-300 font-black ring-2 ring-amber-400/50 shadow-[0_0_18px_rgba(245,158,11,0.7)] hover:bg-amber-900/60 hover:border-amber-300 hover:text-white hover:scale-110 z-10';
     }
 
     if (isFutureDate) {
       return 'bg-slate-950/50 border border-white/[0.06] text-slate-500 font-medium hover:border-indigo-400/50 hover:text-slate-200 hover:bg-slate-900';
     }
 
-    // Level 4 (>= 4 Hours): Deep Rich Luxury Emerald (Crystal Clear Dates, Zero Fuzzy Glow)
+    // Level 4 (>= 4 Hours): Electric Rolex Emerald & Cyan
     if (hours >= 4) {
-      return 'bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 border-2 border-emerald-400 text-white font-black';
+      return 'bg-gradient-to-tr from-emerald-400 via-teal-300 to-cyan-400 border-2 border-emerald-200 text-slate-950 font-black shadow-[0_0_18px_rgba(52,211,153,0.65)]';
     }
-    // Level 3 (>= 2 Hours): Electric Azure Blue
+    // Level 3 (>= 2 Hours): Electric Azure Cyan
     if (hours >= 2) {
-      return 'bg-gradient-to-br from-blue-600 via-indigo-600 to-cyan-700 border-2 border-cyan-400 text-white font-black';
+      return 'bg-gradient-to-tr from-cyan-600 via-blue-600 to-indigo-600 border-2 border-cyan-300 text-white font-black shadow-[0_0_14px_rgba(6,182,212,0.55)]';
     }
     // Level 2 (>= 0.5 Hours): Electric Violet Indigo
     if (hours >= 0.5) {
-      return 'bg-gradient-to-br from-indigo-700 via-purple-700 to-indigo-800 border-2 border-indigo-400 text-white font-bold';
+      return 'bg-gradient-to-tr from-indigo-800 via-purple-800 to-indigo-900 border-2 border-indigo-400/80 text-indigo-100 font-bold shadow-[0_0_10px_rgba(99,102,241,0.4)]';
     }
     // Level 1 (> 0 Hours): Deep Sapphire
     if (hours > 0) {
-      return 'bg-indigo-950/95 border border-indigo-500/70 text-indigo-100 font-semibold';
+      return 'bg-indigo-950/95 border border-indigo-500/70 text-indigo-200 font-semibold shadow-sm';
     }
 
     // Past day with 0 activity: clean contrast & crisp border definition
@@ -844,22 +847,22 @@ export const YearDashboard: React.FC = () => {
             <span className="text-[10px] text-indigo-200 font-bold">0.5h - 2h</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3.5 h-3.5 rounded-md bg-gradient-to-br from-indigo-700 via-purple-700 to-indigo-800 border-2 border-indigo-400" />
+            <div className="w-3.5 h-3.5 rounded-md bg-gradient-to-tr from-indigo-500 via-purple-500 to-indigo-600 border-2 border-indigo-300 shadow-[0_0_12px_rgba(99,102,241,0.4)]" />
             <span className="text-[10px] text-purple-200 font-black">2h - 4h</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3.5 h-3.5 rounded-md bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 border-2 border-emerald-400" />
+            <div className="w-3.5 h-3.5 rounded-md bg-gradient-to-tr from-emerald-400 via-teal-400 to-cyan-400 border-2 border-emerald-200 shadow-[0_0_14px_rgba(52,211,153,0.55)]" />
             <span className="text-[10px] font-black text-emerald-300">&gt;4h Deep Work</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3.5 h-3.5 rounded-md bg-gradient-to-br from-amber-500/40 to-orange-600/30 border-2 border-amber-400 shadow-[0_0_14px_rgba(245,158,11,0.6)] relative">
+            <div className="w-3.5 h-3.5 rounded-md bg-gradient-to-br from-amber-500/40 to-orange-600/30 border-2 border-amber-400 shadow-[0_0_14px_rgba(245,158,11,0.7)] relative">
               <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-400 border border-slate-950 shadow-[0_0_6px_#F59E0B]" />
             </div>
             <span className="text-[10px] font-black text-amber-300">Target Milestone</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3.5 h-3.5 rounded-md bg-slate-900 border-2 border-cyan-400 relative flex items-center justify-center">
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-300 animate-pulse" />
+            <div className="w-3.5 h-3.5 rounded-md bg-gradient-to-br from-indigo-950 to-purple-950 border-2 border-cyan-400 relative shadow-[0_0_12px_rgba(0,229,255,0.8)] flex items-center justify-center">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-300 shadow-[0_0_6px_#00E5FF] animate-pulse" />
             </div>
             <span className="text-[10px] font-black text-cyan-300">Today (Rainbow Moving Line)</span>
           </div>
