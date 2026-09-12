@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Bell, Circle } from 'lucide-react';
+import { Bell, Circle, Palette } from 'lucide-react';
 
 interface VintageAlarmClockProps {
   timerStatus: 'IDLE' | 'RUNNING' | 'PAUSED';
@@ -24,6 +24,7 @@ interface VintageAlarmClockProps {
 export type HandStyle = 'vintageSpade' | 'modernStudio';
 export type ClockFrameStyle = 'round' | 'twinBell';
 export type LuxuryFinish = 'noirChrome' | 'royalGold' | 'midnightSapphire' | 'racingEmerald';
+export type HandColorPreset = 'auto' | 'goldCyan' | 'emeraldGold' | 'rubyAmber' | 'sapphireCoral';
 
 interface FinishPalette {
   id: LuxuryFinish;
@@ -41,13 +42,15 @@ interface FinishPalette {
   dialGrad2: string;
   bezelTrim1: string;
   bezelTrim2: string;
-  // Distinct complementary colors for Hour Hand vs Minute Hand
+  // Distinct, non-white, richly saturated dual-tone colors
   hourHandLight: string;
   hourHandMid: string;
   hourHandDark: string;
+  hourSpine: string;
   minuteHandLight: string;
   minuteHandMid: string;
   minuteHandDark: string;
+  minuteSpine: string;
   secondHand: string;
   secondTip: string;
   nobeBallHighlight: string;
@@ -72,16 +75,18 @@ const LUXURY_FINISHES: Record<LuxuryFinish, FinishPalette> = {
     dialGrad2: '#04060A',
     bezelTrim1: '#FFFFFF',
     bezelTrim2: '#94A3B8',
-    // Distinct: Warm Sunburst Champagne Gold for Hour Hand
+    // Hour: 24K Rich Sunburst Gold (Warm & Prestigious)
     hourHandLight: '#FEF08A',
     hourHandMid: '#F59E0B',
     hourHandDark: '#B45309',
-    // Distinct: Diamond Ice Platinum Silver for Minute Hand
-    minuteHandLight: '#FFFFFF',
-    minuteHandMid: '#E2E8F0',
-    minuteHandDark: '#94A3B8',
-    secondHand: '#38BDF8',
-    secondTip: '#0284C7',
+    hourSpine: '#FEF9C3',
+    // Minute: Electric Cyan Blue (High-Contrast, Vivid, Zero White!)
+    minuteHandLight: '#7DD3FC',
+    minuteHandMid: '#0284C7',
+    minuteHandDark: '#0369A1',
+    minuteSpine: '#E0F2FE',
+    secondHand: '#FF3B30',
+    secondTip: '#DC2626',
     nobeBallHighlight: '#FFFFFF',
     nobeBallMid: '#CBD5E1',
     nobeBallShadow: '#334155',
@@ -102,16 +107,18 @@ const LUXURY_FINISHES: Record<LuxuryFinish, FinishPalette> = {
     dialGrad2: '#06070B',
     bezelTrim1: '#FDE68A',
     bezelTrim2: '#B45309',
-    // Distinct: 24K Royal Gold for Hour Hand
-    hourHandLight: '#FEF08A',
-    hourHandMid: '#F59E0B',
+    // Hour: Deep Bronzed 24K Gold
+    hourHandLight: '#FDE68A',
+    hourHandMid: '#D97706',
     hourHandDark: '#78350F',
-    // Distinct: Pure Pearl White for Minute Hand
-    minuteHandLight: '#FFFFFF',
-    minuteHandMid: '#F8FAFC',
-    minuteHandDark: '#CBD5E1',
-    secondHand: '#EF4444',
-    secondTip: '#DC2626',
+    hourSpine: '#FEF08A',
+    // Minute: Deep Royal Sapphire Blue
+    minuteHandLight: '#93C5FD',
+    minuteHandMid: '#3B82F6',
+    minuteHandDark: '#1D4ED8',
+    minuteSpine: '#DBEAFE',
+    secondHand: '#DC2626',
+    secondTip: '#991B1B',
     nobeBallHighlight: '#FFFBEB',
     nobeBallMid: '#FCD34D',
     nobeBallShadow: '#78350F',
@@ -132,16 +139,18 @@ const LUXURY_FINISHES: Record<LuxuryFinish, FinishPalette> = {
     dialGrad2: '#040711',
     bezelTrim1: '#E2E8F0',
     bezelTrim2: '#64748B',
-    // Distinct: Electric Sapphire Blue for Hour Hand
-    hourHandLight: '#BAE6FD',
-    hourHandMid: '#38BDF8',
-    hourHandDark: '#1D4ED8',
-    // Distinct: Diamond Ice White for Minute Hand
-    minuteHandLight: '#FFFFFF',
-    minuteHandMid: '#F1F5F9',
-    minuteHandDark: '#94A3B8',
-    secondHand: '#06B6D4',
-    secondTip: '#F43F5E',
+    // Hour: Electric Sapphire Azure Blue
+    hourHandLight: '#7DD3FC',
+    hourHandMid: '#0284C7',
+    hourHandDark: '#075985',
+    hourSpine: '#BAE6FD',
+    // Minute: Vivid Solar Sunset Orange
+    minuteHandLight: '#FED7AA',
+    minuteHandMid: '#F97316',
+    minuteHandDark: '#C2410C',
+    minuteSpine: '#FFEDD5',
+    secondHand: '#F43F5E',
+    secondTip: '#BE123C',
     nobeBallHighlight: '#FFFFFF',
     nobeBallMid: '#93C5FD',
     nobeBallShadow: '#1E3A8A',
@@ -162,19 +171,82 @@ const LUXURY_FINISHES: Record<LuxuryFinish, FinishPalette> = {
     dialGrad2: '#040907',
     bezelTrim1: '#FDE68A',
     bezelTrim2: '#047857',
-    // Distinct: Vivid Mint Emerald for Hour Hand
-    hourHandLight: '#A7F3D0',
+    // Hour: Deep Rich Emerald Green (Rich & Vivid, NOT washed-out!)
+    hourHandLight: '#6EE7B7',
     hourHandMid: '#10B981',
     hourHandDark: '#047857',
-    // Distinct: Diamond Ice White for Minute Hand
-    minuteHandLight: '#FFFFFF',
-    minuteHandMid: '#F1F5F9',
-    minuteHandDark: '#94A3B8',
-    secondHand: '#F59E0B',
-    secondTip: '#D97706',
+    hourSpine: '#A7F3D0',
+    // Minute: Radiant 24K Gold (Contrasts sharply with green hour hand and black dial!)
+    minuteHandLight: '#FEF08A',
+    minuteHandMid: '#F59E0B',
+    minuteHandDark: '#B45309',
+    minuteSpine: '#FEF9C3',
+    secondHand: '#FB923C',
+    secondTip: '#EA580C',
     nobeBallHighlight: '#FFFFFF',
     nobeBallMid: '#6EE7B7',
     nobeBallShadow: '#064E3B',
+  },
+};
+
+// Preset customizable hand pairings
+const HAND_COLOR_PRESETS: Record<
+  Exclude<HandColorPreset, 'auto'>,
+  {
+    label: string;
+    hourLight: string;
+    hourMid: string;
+    hourDark: string;
+    hourSpine: string;
+    minuteLight: string;
+    minuteMid: string;
+    minuteDark: string;
+    minuteSpine: string;
+  }
+> = {
+  goldCyan: {
+    label: 'Gold & Cyan',
+    hourLight: '#FEF08A',
+    hourMid: '#F59E0B',
+    hourDark: '#B45309',
+    hourSpine: '#FEF9C3',
+    minuteLight: '#7DD3FC',
+    minuteMid: '#0284C7',
+    minuteDark: '#0369A1',
+    minuteSpine: '#E0F2FE',
+  },
+  emeraldGold: {
+    label: 'Emerald & Gold',
+    hourLight: '#6EE7B7',
+    hourMid: '#10B981',
+    hourDark: '#047857',
+    hourSpine: '#A7F3D0',
+    minuteLight: '#FEF08A',
+    minuteMid: '#F59E0B',
+    minuteDark: '#B45309',
+    minuteSpine: '#FEF9C3',
+  },
+  rubyAmber: {
+    label: 'Ruby & Amber',
+    hourLight: '#FCA5A5',
+    hourMid: '#EF4444',
+    hourDark: '#991B1B',
+    hourSpine: '#FEE2E2',
+    minuteLight: '#FDE047',
+    minuteMid: '#F59E0B',
+    minuteDark: '#B45309',
+    minuteSpine: '#FEF9C3',
+  },
+  sapphireCoral: {
+    label: 'Sapphire & Coral',
+    hourLight: '#7DD3FC',
+    hourMid: '#2563EB',
+    hourDark: '#1E3A8A',
+    hourSpine: '#BAE6FD',
+    minuteLight: '#FDBA74',
+    minuteMid: '#F97316',
+    minuteDark: '#C2410C',
+    minuteSpine: '#FFEDD5',
   },
 };
 
@@ -192,8 +264,9 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
   const [showRinging, setShowRinging] = useState(false);
   const [handStyle, setHandStyle] = useState<HandStyle>('vintageSpade');
   const [frameStyle, setFrameStyle] = useState<ClockFrameStyle>('round');
+  const [handColorPreset, setHandColorPreset] = useState<HandColorPreset>('auto');
 
-  // Default to Studio Noir (matching user's reference images 2 & 3)
+  // Default to Studio Noir
   const defaultFinish: LuxuryFinish =
     selectedPomodoroPhase === 'shortBreak'
       ? 'racingEmerald'
@@ -208,6 +281,21 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
   }, [defaultFinish]);
 
   const activePal = LUXURY_FINISHES[luxuryFinish];
+
+  // Resolve active hand colors based on preset or theme auto
+  const resolvedHandColors =
+    handColorPreset === 'auto'
+      ? {
+          hourLight: activePal.hourHandLight,
+          hourMid: activePal.hourHandMid,
+          hourDark: activePal.hourHandDark,
+          hourSpine: activePal.hourSpine,
+          minuteLight: activePal.minuteHandLight,
+          minuteMid: activePal.minuteHandMid,
+          minuteDark: activePal.minuteHandDark,
+          minuteSpine: activePal.minuteSpine,
+        }
+      : HAND_COLOR_PRESETS[handColorPreset];
 
   // Update real-time clock smoothly
   useEffect(() => {
@@ -399,7 +487,6 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
   const startTimeStr = sessionStartTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const endTimeStr = sessionEndTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  // ViewBox adapts based on whether twin bells are shown
   const viewBoxStr = isWithBells ? '0 0 400 450' : '0 0 400 400';
 
   const svgSizeClass = isZen
@@ -408,8 +495,8 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
 
   return (
     <div className="relative flex flex-col items-center justify-center select-none z-10">
-      {/* Top Controls: Mode Badge, Finish Selector, Hand Style & Frame Style */}
-      <div className="mb-4 flex flex-wrap items-center justify-center gap-2 z-20 max-w-2xl px-2">
+      {/* Top Controls: Mode Badge, Finish Selector, Hand Style, Hand Color Adjuster & Frame Style */}
+      <div className="mb-4 flex flex-wrap items-center justify-center gap-2 z-20 max-w-3xl px-2">
         {/* Live Focus Session Badge */}
         <div className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-2xl bg-[#0B0E17]/90 border border-white/10 shadow-2xl backdrop-blur-xl">
           <span className="relative flex h-2 w-2">
@@ -458,7 +545,7 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
             title="Vintage Spade Hands (from Reference Image 3)"
           >
             <span>🗡️</span>
-            <span>Spade Hands</span>
+            <span>Spade</span>
           </button>
           <button
             type="button"
@@ -471,7 +558,63 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
             title="Modern Studio Baton Hands (from Reference Image 2)"
           >
             <span>⏱️</span>
-            <span>Studio Baton</span>
+            <span>Baton</span>
+          </button>
+        </div>
+
+        {/* ADJUSTABLE HAND ("NOBE") COLORS SELECTOR */}
+        <div className="flex items-center gap-1 p-1 rounded-2xl bg-[#0B0E17]/90 border border-white/10 shadow-2xl backdrop-blur-xl">
+          <Palette className="w-3 h-3 text-amber-400 ml-1 mr-0.5" />
+          <button
+            type="button"
+            onClick={() => setHandColorPreset('auto')}
+            className={`px-2 py-1 rounded-xl text-[10px] font-bold transition-all cursor-pointer ${
+              handColorPreset === 'auto'
+                ? 'bg-amber-500/30 text-amber-300 border border-amber-400/40 shadow-inner'
+                : 'text-slate-400 hover:text-white hover:bg-white/5'
+            }`}
+            title="Auto colors matching active theme"
+          >
+            Auto
+          </button>
+          <button
+            type="button"
+            onClick={() => setHandColorPreset('emeraldGold')}
+            className={`px-2 py-1 rounded-xl text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
+              handColorPreset === 'emeraldGold'
+                ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-400/40 shadow-inner'
+                : 'text-slate-400 hover:text-white hover:bg-white/5'
+            }`}
+            title="Emerald Hour & Gold Minute"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setHandColorPreset('goldCyan')}
+            className={`px-2 py-1 rounded-xl text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
+              handColorPreset === 'goldCyan'
+                ? 'bg-cyan-500/30 text-cyan-300 border border-cyan-400/40 shadow-inner'
+                : 'text-slate-400 hover:text-white hover:bg-white/5'
+            }`}
+            title="Gold Hour & Cyan Minute"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />
+            <span className="w-1.5 h-1.5 rounded-full bg-sky-400 inline-block" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setHandColorPreset('rubyAmber')}
+            className={`px-2 py-1 rounded-xl text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
+              handColorPreset === 'rubyAmber'
+                ? 'bg-rose-500/30 text-rose-300 border border-rose-400/40 shadow-inner'
+                : 'text-slate-400 hover:text-white hover:bg-white/5'
+            }`}
+            title="Ruby Hour & Amber Minute"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-400 inline-block" />
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />
           </button>
         </div>
 
@@ -565,22 +708,20 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
               <stop offset="70%" stopColor="#FFFFFF" stopOpacity="0" />
             </linearGradient>
 
-            {/* 1. DISTINCT HOUR HAND METALLIC GRADIENT (Warm Champagne / Sunburst Gold) */}
+            {/* 1. DISTINCT RICH HOUR HAND METALLIC GRADIENT (Zero Washed-Out White!) */}
             <linearGradient id="vluxHourHandMetalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#FFFFFF" />
-              <stop offset="25%" stopColor={activePal.hourHandLight} />
-              <stop offset="65%" stopColor={activePal.hourHandMid} />
-              <stop offset="95%" stopColor={activePal.hourHandDark} />
-              <stop offset="100%" stopColor="#581C87" stopOpacity="0.8" />
+              <stop offset="0%" stopColor={resolvedHandColors.hourLight} />
+              <stop offset="45%" stopColor={resolvedHandColors.hourMid} />
+              <stop offset="90%" stopColor={resolvedHandColors.hourDark} />
+              <stop offset="100%" stopColor="#0B0F19" stopOpacity="0.6" />
             </linearGradient>
 
-            {/* 2. DISTINCT MINUTE HAND METALLIC GRADIENT (Diamond Ice Platinum Silver) */}
+            {/* 2. DISTINCT CONTRASTING MINUTE HAND METALLIC GRADIENT (Zero Washed-Out White!) */}
             <linearGradient id="vluxMinuteHandMetalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#FFFFFF" />
-              <stop offset="25%" stopColor={activePal.minuteHandLight} />
-              <stop offset="65%" stopColor={activePal.minuteHandMid} />
-              <stop offset="95%" stopColor={activePal.minuteHandDark} />
-              <stop offset="100%" stopColor="#334155" />
+              <stop offset="0%" stopColor={resolvedHandColors.minuteLight} />
+              <stop offset="45%" stopColor={resolvedHandColors.minuteMid} />
+              <stop offset="90%" stopColor={resolvedHandColors.minuteDark} />
+              <stop offset="100%" stopColor="#0B0F19" stopOpacity="0.6" />
             </linearGradient>
 
             {/* 3D SPHERICAL POLISHED CHROME DOME KNOB ("NOBE") GRADIENT (Image 3) */}
@@ -888,18 +1029,18 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
           {handStyle === 'vintageSpade' ? (
             /* =====================================================================
                STYLE A: VINTAGE SPADE HANDS (Reference Image 3)
-               - Distinct Hour Hand: Radiant 24K Champagne Sunburst Gold
-               - Distinct Minute Hand: Diamond Polished Ice Platinum Silver
+               - Distinct Hour Hand: Richly Saturated Hue (Zero Plain White!)
+               - Distinct Minute Hand: Contrasting Saturated Hue (Zero Plain White!)
                ===================================================================== */
             <g filter="url(#vluxHandDropShadow)">
-              {/* --- HOUR HAND (DISTINCT SUNBURST CHAMPAGNE GOLD) --- */}
+              {/* --- HOUR HAND (DISTINCT COLOR 1) --- */}
               <g transform={`translate(${cx}, ${cy}) rotate(${hourHandAngle})`}>
                 {/* Counterweight Tail */}
                 <path
                   d="M -1.8,0 L -1.5,16 C -1.5,19.5 0,21 0,21 C 0,21 1.5,19.5 1.5,16 L 1.8,0 Z"
                   fill="url(#vluxHourHandMetalGrad)"
-                  stroke="rgba(0,0,0,0.45)"
-                  strokeWidth="0.6"
+                  stroke="rgba(0,0,0,0.6)"
+                  strokeWidth="0.8"
                 />
 
                 {/* Main Vintage Spade Body: Slender stem -> teardrop pear bulb -> spear tip */}
@@ -915,22 +1056,22 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
                      C 5.6,-44 1.2,-41 1.2,-36
                      L 1.2,-6 Z"
                   fill="url(#vluxHourHandMetalGrad)"
-                  stroke="rgba(0, 0, 0, 0.45)"
-                  strokeWidth="0.7"
+                  stroke="rgba(0, 0, 0, 0.65)"
+                  strokeWidth="0.8"
                 />
 
-                {/* Radiant specular centerline spine */}
-                <line x1="0" y1="-8" x2="0" y2="-66" stroke="#FFFFFF" strokeWidth="0.8" strokeOpacity="0.9" />
+                {/* Coordinated specular spine */}
+                <line x1="0" y1="-8" x2="0" y2="-66" stroke={resolvedHandColors.hourSpine} strokeWidth="0.8" strokeOpacity="0.85" />
               </g>
 
-              {/* --- MINUTE HAND (DISTINCT DIAMOND ICE PLATINUM SILVER) --- */}
+              {/* --- MINUTE HAND (DISTINCT COLOR 2 - CONTRASTING & NON-WHITE!) --- */}
               <g transform={`translate(${cx}, ${cy}) rotate(${minuteHandAngle})`}>
                 {/* Counterweight Tail */}
                 <path
                   d="M -1.8,0 L -1.5,20 C -1.5,24 0,25.5 0,25.5 C 0,25.5 1.5,24 1.5,20 L 1.8,0 Z"
                   fill="url(#vluxMinuteHandMetalGrad)"
-                  stroke="rgba(0,0,0,0.4)"
-                  strokeWidth="0.6"
+                  stroke="rgba(0,0,0,0.6)"
+                  strokeWidth="0.8"
                 />
 
                 {/* Main Vintage Spade Body: Long slender stem -> teardrop pear bulb -> spear tip */}
@@ -946,15 +1087,15 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
                      C 5.8,-78 1.2,-75 1.2,-70
                      L 1.2,-6 Z"
                   fill="url(#vluxMinuteHandMetalGrad)"
-                  stroke="rgba(0, 0, 0, 0.45)"
-                  strokeWidth="0.7"
+                  stroke="rgba(0, 0, 0, 0.65)"
+                  strokeWidth="0.8"
                 />
 
-                {/* Specular centerline spine */}
-                <line x1="0" y1="-8" x2="0" y2="-106" stroke="#FFFFFF" strokeWidth="0.8" strokeOpacity="0.85" />
+                {/* Coordinated specular spine */}
+                <line x1="0" y1="-8" x2="0" y2="-106" stroke={resolvedHandColors.minuteSpine} strokeWidth="0.8" strokeOpacity="0.85" />
               </g>
 
-              {/* --- SECOND HAND (SLENDER NEEDLE - CYAN BLUE) --- */}
+              {/* --- SECOND HAND (SLENDER NEEDLE) --- */}
               <g transform={`translate(${cx}, ${cy}) rotate(${secondHandAngle})`}>
                 {/* Slender polished needle shaft */}
                 <line x1="0" y1="28" x2="0" y2="-116" stroke={activePal.secondHand} strokeWidth="1.6" strokeLinecap="round" />
@@ -967,17 +1108,17 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
           ) : (
             /* =====================================================================
                STYLE B: MODERN STUDIO BATON HANDS (Reference Image 2)
-               - Distinct Hour Hand: Warm Champagne Gold Baton
-               - Distinct Minute Hand: Pure Ice White Baton
+               - Distinct Hour Hand: Rich Color 1 Baton
+               - Distinct Minute Hand: Rich Color 2 Baton
                - Second Hand: Electric Blue Needle with Center Ring
                ===================================================================== */
             <g filter="url(#vluxHandDropShadow)">
-              {/* Hour Hand (Warm Gold Rounded Baton) */}
+              {/* Hour Hand (Color 1 Baton) */}
               <g transform={`translate(${cx}, ${cy}) rotate(${hourHandAngle})`}>
                 <rect x="-4" y="-72" width="8" height="84" rx="4" fill="url(#vluxHourHandMetalGrad)" stroke="#0A0E17" strokeWidth="1.2" />
               </g>
 
-              {/* Minute Hand (Pure Ice White Rounded Baton) */}
+              {/* Minute Hand (Color 2 Baton - Non-White!) */}
               <g transform={`translate(${cx}, ${cy}) rotate(${minuteHandAngle})`}>
                 <rect x="-3.5" y="-112" width="7" height="126" rx="3.5" fill="url(#vluxMinuteHandMetalGrad)" stroke="#0A0E17" strokeWidth="1.2" />
               </g>
@@ -1002,12 +1143,12 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
 
           {/* =========================================================================
               THE "NOBE" (CENTER KNOB / ARBOR CAP) - IMAGE 3
-              Polished 3D chrome sphere dome nut with stepped gold/silver collar washer
+              Polished 3D chrome sphere dome nut with stepped collar washer
               ========================================================================= */}
           <g filter="url(#vluxNobeShadow)">
-            {/* Stepped Metallic Collar Washer Ring (Warm Gold/Chrome accent) */}
+            {/* Stepped Metallic Collar Washer Ring */}
             <circle cx={cx} cy={cy} r="8.5" fill="url(#vluxCollarGrad)" stroke="#111827" strokeWidth="1" />
-            <circle cx={cx} cy={cy} r="6.8" fill="url(#vluxHourHandMetalGrad)" stroke="#475569" strokeWidth="0.6" strokeOpacity="0.8" />
+            <circle cx={cx} cy={cy} r="6.8" fill="url(#vluxHourHandMetalGrad)" stroke="#1F2937" strokeWidth="0.6" strokeOpacity="0.85" />
 
             {/* 3D Chrome Spherical Dome Nut ("Nobe") */}
             <circle cx={cx} cy={cy} r="5.2" fill="url(#vluxChromeSphereNobe)" stroke="#1E293B" strokeWidth="0.6" />
