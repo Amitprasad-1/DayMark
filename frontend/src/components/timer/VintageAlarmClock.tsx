@@ -41,9 +41,13 @@ interface FinishPalette {
   dialGrad2: string;
   bezelTrim1: string;
   bezelTrim2: string;
-  handMetalLight: string;
-  handMetalMid: string;
-  handMetalDark: string;
+  // Distinct complementary colors for Hour Hand vs Minute Hand
+  hourHandLight: string;
+  hourHandMid: string;
+  hourHandDark: string;
+  minuteHandLight: string;
+  minuteHandMid: string;
+  minuteHandDark: string;
   secondHand: string;
   secondTip: string;
   nobeBallHighlight: string;
@@ -64,13 +68,18 @@ const LUXURY_FINISHES: Record<LuxuryFinish, FinishPalette> = {
     caseGrad1: '#1E2430',
     caseGrad2: '#0F131C',
     caseGrad3: '#05070B',
-    dialGrad1: '#0F1219',
-    dialGrad2: '#06080D',
+    dialGrad1: '#0E1118',
+    dialGrad2: '#04060A',
     bezelTrim1: '#FFFFFF',
     bezelTrim2: '#94A3B8',
-    handMetalLight: '#FFFFFF',
-    handMetalMid: '#E2E8F0',
-    handMetalDark: '#94A3B8',
+    // Distinct: Warm Sunburst Champagne Gold for Hour Hand
+    hourHandLight: '#FEF08A',
+    hourHandMid: '#F59E0B',
+    hourHandDark: '#B45309',
+    // Distinct: Diamond Ice Platinum Silver for Minute Hand
+    minuteHandLight: '#FFFFFF',
+    minuteHandMid: '#E2E8F0',
+    minuteHandDark: '#94A3B8',
     secondHand: '#38BDF8',
     secondTip: '#0284C7',
     nobeBallHighlight: '#FFFFFF',
@@ -93,11 +102,16 @@ const LUXURY_FINISHES: Record<LuxuryFinish, FinishPalette> = {
     dialGrad2: '#06070B',
     bezelTrim1: '#FDE68A',
     bezelTrim2: '#B45309',
-    handMetalLight: '#FEF9C3',
-    handMetalMid: '#FDE047',
-    handMetalDark: '#CA8A04',
-    secondHand: '#FDE047',
-    secondTip: '#EF4444',
+    // Distinct: 24K Royal Gold for Hour Hand
+    hourHandLight: '#FEF08A',
+    hourHandMid: '#F59E0B',
+    hourHandDark: '#78350F',
+    // Distinct: Pure Pearl White for Minute Hand
+    minuteHandLight: '#FFFFFF',
+    minuteHandMid: '#F8FAFC',
+    minuteHandDark: '#CBD5E1',
+    secondHand: '#EF4444',
+    secondTip: '#DC2626',
     nobeBallHighlight: '#FFFBEB',
     nobeBallMid: '#FCD34D',
     nobeBallShadow: '#78350F',
@@ -118,10 +132,15 @@ const LUXURY_FINISHES: Record<LuxuryFinish, FinishPalette> = {
     dialGrad2: '#040711',
     bezelTrim1: '#E2E8F0',
     bezelTrim2: '#64748B',
-    handMetalLight: '#FFFFFF',
-    handMetalMid: '#E0F2FE',
-    handMetalDark: '#94A3B8',
-    secondHand: '#38BDF8',
+    // Distinct: Electric Sapphire Blue for Hour Hand
+    hourHandLight: '#BAE6FD',
+    hourHandMid: '#38BDF8',
+    hourHandDark: '#1D4ED8',
+    // Distinct: Diamond Ice White for Minute Hand
+    minuteHandLight: '#FFFFFF',
+    minuteHandMid: '#F1F5F9',
+    minuteHandDark: '#94A3B8',
+    secondHand: '#06B6D4',
     secondTip: '#F43F5E',
     nobeBallHighlight: '#FFFFFF',
     nobeBallMid: '#93C5FD',
@@ -143,11 +162,16 @@ const LUXURY_FINISHES: Record<LuxuryFinish, FinishPalette> = {
     dialGrad2: '#040907',
     bezelTrim1: '#FDE68A',
     bezelTrim2: '#047857',
-    handMetalLight: '#ECFDF5',
-    handMetalMid: '#A7F3D0',
-    handMetalDark: '#059669',
-    secondHand: '#34D399',
-    secondTip: '#F59E0B',
+    // Distinct: Vivid Mint Emerald for Hour Hand
+    hourHandLight: '#A7F3D0',
+    hourHandMid: '#10B981',
+    hourHandDark: '#047857',
+    // Distinct: Diamond Ice White for Minute Hand
+    minuteHandLight: '#FFFFFF',
+    minuteHandMid: '#F1F5F9',
+    minuteHandDark: '#94A3B8',
+    secondHand: '#F59E0B',
+    secondTip: '#D97706',
     nobeBallHighlight: '#FFFFFF',
     nobeBallMid: '#6EE7B7',
     nobeBallShadow: '#064E3B',
@@ -207,7 +231,7 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
   // Geometry configuration
   const cx = 200;
   const cy = isWithBells ? 245 : 200;
-  const dialRadius = 150;
+  const dialRadius = 152;
 
   // Helper for formatting time HH:MM:SS or MM:SS
   const formatTime = (sec: number) => {
@@ -295,12 +319,12 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
   const endX = cx + sectorR * Math.cos(endRad);
   const endY = cy + sectorR * Math.sin(endRad);
 
-  const focusSectorPath = createArcSector(activeStartDeg, activeEndDeg, dialRadius - 4);
-  const focusArcPath = createArcPath(activeStartDeg, activeEndDeg, dialRadius - 4);
+  const focusSectorPath = createArcSector(activeStartDeg, activeEndDeg, dialRadius - 2);
+  const focusArcPath = createArcPath(activeStartDeg, activeEndDeg, dialRadius - 2);
 
   // Elapsed Progress Wedge
   const elapsedEndDeg = minuteToCartesianDeg(Math.min(endMinute, Math.max(startMinute, currentRealMinute)));
-  const elapsedSectorPath = createArcSector(activeStartDeg, elapsedEndDeg, dialRadius - 4);
+  const elapsedSectorPath = createArcSector(activeStartDeg, elapsedEndDeg, dialRadius - 2);
 
   // Clockwise Hands Angles (0° = 12 o'clock, 90° = 3 o'clock)
   const rtHours = realTime.getHours() % 12;
@@ -337,7 +361,7 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
   };
 
   // 12 Bold Rounded Numerals matching Reference Image 2
-  const numeralRadius = 106;
+  const numeralRadius = 108;
   const numerals = Array.from({ length: 12 }).map((_, i) => {
     const num = i === 0 ? 12 : i;
     const angleDeg = i * 30 - 90;
@@ -351,9 +375,9 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
   });
 
   // 60 Perimeter Tick Marks matching Reference Image 2
-  const tickOuterRadius = dialRadius - 6; // 144
-  const majorTickInnerRadius = dialRadius - 19; // 131 (length 13px)
-  const minorTickInnerRadius = dialRadius - 14; // 136 (length 8px)
+  const tickOuterRadius = dialRadius - 6; // 146
+  const majorTickInnerRadius = dialRadius - 20; // 132 (length 14px)
+  const minorTickInnerRadius = dialRadius - 14; // 138 (length 8px)
 
   const ticks = Array.from({ length: 60 }).map((_, i) => {
     const isMajor = i % 5 === 0;
@@ -375,6 +399,7 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
   const startTimeStr = sessionStartTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const endTimeStr = sessionEndTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+  // ViewBox adapts based on whether twin bells are shown
   const viewBoxStr = isWithBells ? '0 0 400 450' : '0 0 400 400';
 
   const svgSizeClass = isZen
@@ -509,11 +534,11 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
       <div className="relative flex items-center justify-center">
         <svg viewBox={viewBoxStr} className={svgSizeClass}>
           <defs>
-            {/* Outer Bezel Case Gradient */}
-            <radialGradient id="vluxCaseGrad" cx="35%" cy="30%" r="80%">
-              <stop offset="0%" stopColor={activePal.caseGrad1} />
-              <stop offset="45%" stopColor={activePal.caseGrad2} />
-              <stop offset="100%" stopColor={activePal.caseGrad3} />
+            {/* Deep Velvet Matte Black Dial Face Gradient (Image 2) */}
+            <radialGradient id="vluxDialGrad" cx="50%" cy="50%" r="68%">
+              <stop offset="0%" stopColor={activePal.dialGrad1} />
+              <stop offset="65%" stopColor={activePal.dialGrad2} />
+              <stop offset="100%" stopColor="#010204" />
             </radialGradient>
 
             {/* Polished Metallic Bezel Rim Gradient */}
@@ -525,36 +550,37 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
               <stop offset="100%" stopColor={activePal.bezelTrim2} />
             </linearGradient>
 
-            {/* Deep Velvet Matte Black Dial Face Gradient (Image 2) */}
-            <radialGradient id="vluxDialGrad" cx="50%" cy="50%" r="68%">
-              <stop offset="0%" stopColor={activePal.dialGrad1} />
-              <stop offset="65%" stopColor={activePal.dialGrad2} />
-              <stop offset="100%" stopColor="#020306" />
-            </radialGradient>
-
-            {/* Active Focus Session Sector Glow Fluid Gradient */}
+            {/* Subtle, Non-Intrusive Focus Session Sector Gradient */}
             <radialGradient id="vluxFocusFluidGrad" cx={cx} cy={cy} r={dialRadius} gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor={activePal.accentGrad1} stopOpacity="0.45" />
-              <stop offset="60%" stopColor={activePal.accentGrad2} stopOpacity="0.32" />
-              <stop offset="85%" stopColor={activePal.accentGrad3} stopOpacity="0.2" />
-              <stop offset="100%" stopColor={activePal.accent} stopOpacity="0.12" />
+              <stop offset="0%" stopColor={activePal.accentGrad1} stopOpacity="0.22" />
+              <stop offset="60%" stopColor={activePal.accentGrad2} stopOpacity="0.14" />
+              <stop offset="90%" stopColor={activePal.accentGrad3} stopOpacity="0.08" />
+              <stop offset="100%" stopColor={activePal.accent} stopOpacity="0.03" />
             </radialGradient>
 
             {/* Crystal Glare Gradient */}
             <linearGradient id="vluxCrystalGlare" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.12" />
-              <stop offset="35%" stopColor="#FFFFFF" stopOpacity="0.03" />
+              <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.10" />
+              <stop offset="35%" stopColor="#FFFFFF" stopOpacity="0.02" />
               <stop offset="70%" stopColor="#FFFFFF" stopOpacity="0" />
             </linearGradient>
 
-            {/* HIGH-PRECISION POLISHED HAND METALLIC GRADIENT (Image 3) */}
-            {/* Pure, smooth, radiant metallic gradient giving authentic depth */}
-            <linearGradient id="vluxHandMetalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            {/* 1. DISTINCT HOUR HAND METALLIC GRADIENT (Warm Champagne / Sunburst Gold) */}
+            <linearGradient id="vluxHourHandMetalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#FFFFFF" />
-              <stop offset="20%" stopColor={activePal.handMetalLight} />
-              <stop offset="60%" stopColor={activePal.handMetalMid} />
-              <stop offset="90%" stopColor={activePal.handMetalDark} />
-              <stop offset="100%" stopColor="#475569" />
+              <stop offset="25%" stopColor={activePal.hourHandLight} />
+              <stop offset="65%" stopColor={activePal.hourHandMid} />
+              <stop offset="95%" stopColor={activePal.hourHandDark} />
+              <stop offset="100%" stopColor="#581C87" stopOpacity="0.8" />
+            </linearGradient>
+
+            {/* 2. DISTINCT MINUTE HAND METALLIC GRADIENT (Diamond Ice Platinum Silver) */}
+            <linearGradient id="vluxMinuteHandMetalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#FFFFFF" />
+              <stop offset="25%" stopColor={activePal.minuteHandLight} />
+              <stop offset="65%" stopColor={activePal.minuteHandMid} />
+              <stop offset="95%" stopColor={activePal.minuteHandDark} />
+              <stop offset="100%" stopColor="#334155" />
             </linearGradient>
 
             {/* 3D SPHERICAL POLISHED CHROME DOME KNOB ("NOBE") GRADIENT (Image 3) */}
@@ -585,17 +611,17 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
 
             {/* Hand Realistic Drop Shadow */}
             <filter id="vluxHandDropShadow" x="-30%" y="-30%" width="160%" height="160%">
-              <feDropShadow dx="1" dy="3.5" stdDeviation="3" floodColor="#000000" floodOpacity="0.85" />
+              <feDropShadow dx="1" dy="3" stdDeviation="2.8" floodColor="#000000" floodOpacity="0.85" />
             </filter>
 
             {/* Volumetric Clock Shadow */}
             <filter id="vluxClockVolumetricShadow" x="-30%" y="-30%" width="160%" height="160%">
-              <feDropShadow dx="0" dy="8" stdDeviation="10" floodColor="#000000" floodOpacity="0.9" />
+              <feDropShadow dx="0" dy="6" stdDeviation="8" floodColor="#000000" floodOpacity="0.8" />
             </filter>
 
             {/* Nobe Drop Shadow */}
             <filter id="vluxNobeShadow" x="-30%" y="-30%" width="160%" height="160%">
-              <feDropShadow dx="0.5" dy="2" stdDeviation="1.8" floodColor="#000000" floodOpacity="0.8" />
+              <feDropShadow dx="0.5" dy="1.8" stdDeviation="1.5" floodColor="#000000" floodOpacity="0.8" />
             </filter>
           </defs>
 
@@ -654,7 +680,7 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
                 <circle cx="96" cy="89" r="6" fill="url(#vluxBezelRimGrad)" />
                 <path
                   d="M 50 115 C 42 63, 126 37, 144 89 C 148 99, 139 113, 125 115 Z"
-                  fill="url(#vluxCaseGrad)"
+                  fill="#111827"
                   stroke="#090D14"
                   strokeWidth="3"
                 />
@@ -672,7 +698,7 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
                 <circle cx="304" cy="89" r="6" fill="url(#vluxBezelRimGrad)" />
                 <path
                   d="M 350 115 C 358 63, 274 37, 256 89 C 252 99, 261 113, 275 115 Z"
-                  fill="url(#vluxCaseGrad)"
+                  fill="#111827"
                   stroke="#090D14"
                   strokeWidth="3"
                 />
@@ -682,26 +708,20 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
           )}
 
           {/* =========================================================================
-              MAIN CIRCULAR CLOCK CASING & BEZEL (Reference Image 2)
+              CLEAN SINGLE SLIM LUXURY BEZEL & DIAL (The 2 heavy outer borders removed!)
               ========================================================================= */}
           <g filter="url(#vluxClockVolumetricShadow)">
-            {/* Outer Deep Slate / Obsidian Bezel Ring */}
-            <circle cx={cx} cy={cy} r={dialRadius + 22} fill="url(#vluxCaseGrad)" stroke="#040609" strokeWidth="4" />
+            {/* Slim Brushed Titanium Outer Rim (Replaces the 2 heavy thick borders) */}
+            <circle cx={cx} cy={cy} r={dialRadius + 3.5} fill="#141822" stroke="#2D3748" strokeWidth="2" />
 
-            {/* Specular Polished Chrome Outer Bevel */}
-            <circle cx={cx} cy={cy} r={dialRadius + 21} fill="none" stroke="url(#vluxBezelRimGrad)" strokeWidth="2" strokeOpacity="0.9" />
+            {/* Delicate Diamond-Cut Specular Chamfer Line */}
+            <circle cx={cx} cy={cy} r={dialRadius + 2.5} fill="none" stroke="url(#vluxBezelRimGrad)" strokeWidth="1.2" strokeOpacity="0.85" />
 
-            {/* Inset Precision Step */}
-            <circle cx={cx} cy={cy} r={dialRadius + 8} fill="#090C14" stroke="#000000" strokeWidth="1.5" />
-
-            {/* Inner Bezel Rim */}
-            <circle cx={cx} cy={cy} r={dialRadius + 6} fill="none" stroke="url(#vluxBezelRimGrad)" strokeWidth="2.5" strokeOpacity="0.8" />
-
-            {/* Pure Matte Black Watch Face Dial (Image 2) */}
+            {/* Pure Matte Black Velvet Watch Dial Face (Image 2) */}
             <circle cx={cx} cy={cy} r={dialRadius} fill="url(#vluxDialGrad)" />
 
-            {/* Inner Dial Edge Highlight */}
-            <circle cx={cx} cy={cy} r={dialRadius - 1} fill="none" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="1.2" />
+            {/* Subtle Inner Dial Edge Line */}
+            <circle cx={cx} cy={cy} r={dialRadius - 0.5} fill="none" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="1" />
           </g>
 
           {/* =========================================================================
@@ -721,7 +741,7 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
                 <path
                   d={elapsedSectorPath}
                   fill={activePal.accent}
-                  fillOpacity="0.22"
+                  fillOpacity="0.14"
                 />
               )}
 
@@ -732,9 +752,9 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
                 x2={startX}
                 y2={startY}
                 stroke={activePal.accent}
-                strokeWidth="2"
+                strokeWidth="1.8"
                 strokeDasharray="4 2"
-                strokeOpacity="0.85"
+                strokeOpacity="0.8"
               />
               <line
                 x1={cx}
@@ -742,7 +762,7 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
                 x2={endX}
                 y2={endY}
                 stroke={activePal.accent}
-                strokeWidth="2.5"
+                strokeWidth="2.2"
                 strokeOpacity="0.95"
               />
 
@@ -751,7 +771,7 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
                 d={focusArcPath}
                 fill="none"
                 stroke={activePal.accent}
-                strokeWidth="4"
+                strokeWidth="3.5"
                 strokeLinecap="round"
                 filter="url(#vluxLaserGlow)"
               />
@@ -759,14 +779,14 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
                 d={focusArcPath}
                 fill="none"
                 stroke="#FFFFFF"
-                strokeWidth="1.6"
+                strokeWidth="1.4"
                 strokeLinecap="round"
                 strokeOpacity="0.9"
               />
 
               {/* Start & End Luminous Beacons */}
-              <circle cx={startX} cy={startY} r="4" fill="#FFFFFF" stroke={activePal.accent} strokeWidth="2" filter="url(#vluxLaserGlow)" />
-              <circle cx={endX} cy={endY} r="5" fill="#FFFFFF" stroke={activePal.accent} strokeWidth="2" filter="url(#vluxLaserGlow)" />
+              <circle cx={startX} cy={startY} r="3.5" fill="#FFFFFF" stroke={activePal.accent} strokeWidth="1.8" filter="url(#vluxLaserGlow)" />
+              <circle cx={endX} cy={endY} r="4.5" fill="#FFFFFF" stroke={activePal.accent} strokeWidth="2.2" filter="url(#vluxLaserGlow)" />
             </g>
           )}
 
@@ -805,24 +825,13 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
 
           {/* =========================================================================
               12 BOLD ROUNDED NUMERALS 1 THROUGH 12 (Reference Image 2)
-              Rendered in chunky, curved, bold rounded typography ('Fredoka')
+              High-contrast, crisp typography without muddy circular halo blobs
               ========================================================================= */}
           <g>
             {numerals.map((num) => {
               const isLit = num.isInFocus;
               return (
                 <g key={`num-${num.num}`}>
-                  {/* Glowing backlight halo behind in-focus numbers */}
-                  {isLit && !isStopwatchReady && (
-                    <circle
-                      cx={num.x}
-                      cy={num.y}
-                      r="18"
-                      fill={activePal.accent}
-                      fillOpacity="0.22"
-                      className="transition-opacity duration-300"
-                    />
-                  )}
                   <text
                     x={num.x}
                     y={num.y + (num.num === 12 ? 1 : 2)}
@@ -843,7 +852,7 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
                       textShadow: isStopwatchReady
                         ? '0 0 10px rgba(255,255,255,0.4), 0 2px 4px rgba(0,0,0,0.95)'
                         : isLit
-                        ? `0 0 18px ${activePal.glow}, 0 0 6px #FFFFFF, 0 2px 4px rgba(0,0,0,0.95)`
+                        ? `0 0 16px ${activePal.glow}, 0 0 5px #FFFFFF, 0 2px 4px rgba(0,0,0,0.95)`
                         : '0 2px 4px rgba(0,0,0,0.95)',
                     }}
                   >
@@ -874,22 +883,22 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
           )}
 
           {/* =========================================================================
-              HANDS RENDERING (Vintage Spade - Image 3 vs Modern Studio - Image 2)
+              HANDS RENDERING WITH DISTINCT COLORS (Hour vs Minute Node Color)
               ========================================================================= */}
           {handStyle === 'vintageSpade' ? (
             /* =====================================================================
-               STYLE A: AUTHENTIC VINTAGE SPADE / POIRE HANDS (Reference Image 3)
-               Curved pear/spade teardrop silhouettes with slender spear needle tips
-               and pristine polished silver metallic finish
+               STYLE A: VINTAGE SPADE HANDS (Reference Image 3)
+               - Distinct Hour Hand: Radiant 24K Champagne Sunburst Gold
+               - Distinct Minute Hand: Diamond Polished Ice Platinum Silver
                ===================================================================== */
             <g filter="url(#vluxHandDropShadow)">
-              {/* --- HOUR HAND (VINTAGE SPADE - IMAGE 3) --- */}
+              {/* --- HOUR HAND (DISTINCT SUNBURST CHAMPAGNE GOLD) --- */}
               <g transform={`translate(${cx}, ${cy}) rotate(${hourHandAngle})`}>
                 {/* Counterweight Tail */}
                 <path
                   d="M -1.8,0 L -1.5,16 C -1.5,19.5 0,21 0,21 C 0,21 1.5,19.5 1.5,16 L 1.8,0 Z"
-                  fill="url(#vluxHandMetalGrad)"
-                  stroke="rgba(0,0,0,0.4)"
+                  fill="url(#vluxHourHandMetalGrad)"
+                  stroke="rgba(0,0,0,0.45)"
                   strokeWidth="0.6"
                 />
 
@@ -905,21 +914,21 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
                      C 3.0,-57 5.6,-54 5.6,-49
                      C 5.6,-44 1.2,-41 1.2,-36
                      L 1.2,-6 Z"
-                  fill="url(#vluxHandMetalGrad)"
+                  fill="url(#vluxHourHandMetalGrad)"
                   stroke="rgba(0, 0, 0, 0.45)"
                   strokeWidth="0.7"
                 />
 
-                {/* Subtle polished specular centerline spine for authentic 3D horology reflection */}
-                <line x1="0" y1="-8" x2="0" y2="-66" stroke="#FFFFFF" strokeWidth="0.8" strokeOpacity="0.8" />
+                {/* Radiant specular centerline spine */}
+                <line x1="0" y1="-8" x2="0" y2="-66" stroke="#FFFFFF" strokeWidth="0.8" strokeOpacity="0.9" />
               </g>
 
-              {/* --- MINUTE HAND (VINTAGE SPADE - IMAGE 3) --- */}
+              {/* --- MINUTE HAND (DISTINCT DIAMOND ICE PLATINUM SILVER) --- */}
               <g transform={`translate(${cx}, ${cy}) rotate(${minuteHandAngle})`}>
                 {/* Counterweight Tail */}
                 <path
                   d="M -1.8,0 L -1.5,20 C -1.5,24 0,25.5 0,25.5 C 0,25.5 1.5,24 1.5,20 L 1.8,0 Z"
-                  fill="url(#vluxHandMetalGrad)"
+                  fill="url(#vluxMinuteHandMetalGrad)"
                   stroke="rgba(0,0,0,0.4)"
                   strokeWidth="0.6"
                 />
@@ -936,7 +945,7 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
                      C 3.2,-91 5.8,-88 5.8,-83
                      C 5.8,-78 1.2,-75 1.2,-70
                      L 1.2,-6 Z"
-                  fill="url(#vluxHandMetalGrad)"
+                  fill="url(#vluxMinuteHandMetalGrad)"
                   stroke="rgba(0, 0, 0, 0.45)"
                   strokeWidth="0.7"
                 />
@@ -945,7 +954,7 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
                 <line x1="0" y1="-8" x2="0" y2="-106" stroke="#FFFFFF" strokeWidth="0.8" strokeOpacity="0.85" />
               </g>
 
-              {/* --- SECOND HAND (SLENDER NEEDLE - IMAGE 3) --- */}
+              {/* --- SECOND HAND (SLENDER NEEDLE - CYAN BLUE) --- */}
               <g transform={`translate(${cx}, ${cy}) rotate(${secondHandAngle})`}>
                 {/* Slender polished needle shaft */}
                 <line x1="0" y1="28" x2="0" y2="-116" stroke={activePal.secondHand} strokeWidth="1.6" strokeLinecap="round" />
@@ -958,24 +967,25 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
           ) : (
             /* =====================================================================
                STYLE B: MODERN STUDIO BATON HANDS (Reference Image 2)
-               Pure white rounded capsules with electric blue second hand & center ring
+               - Distinct Hour Hand: Warm Champagne Gold Baton
+               - Distinct Minute Hand: Pure Ice White Baton
+               - Second Hand: Electric Blue Needle with Center Ring
                ===================================================================== */
             <g filter="url(#vluxHandDropShadow)">
-              {/* Hour Hand (Thick Rounded White Baton - Image 2) */}
+              {/* Hour Hand (Warm Gold Rounded Baton) */}
               <g transform={`translate(${cx}, ${cy}) rotate(${hourHandAngle})`}>
-                <rect x="-4" y="-72" width="8" height="84" rx="4" fill="#FFFFFF" stroke="#0A0E17" strokeWidth="1.2" />
+                <rect x="-4" y="-72" width="8" height="84" rx="4" fill="url(#vluxHourHandMetalGrad)" stroke="#0A0E17" strokeWidth="1.2" />
               </g>
 
-              {/* Minute Hand (Longer Thick Rounded White Baton - Image 2) */}
+              {/* Minute Hand (Pure Ice White Rounded Baton) */}
               <g transform={`translate(${cx}, ${cy}) rotate(${minuteHandAngle})`}>
-                <rect x="-3.5" y="-112" width="7" height="126" rx="3.5" fill="#FFFFFF" stroke="#0A0E17" strokeWidth="1.2" />
+                <rect x="-3.5" y="-112" width="7" height="126" rx="3.5" fill="url(#vluxMinuteHandMetalGrad)" stroke="#0A0E17" strokeWidth="1.2" />
               </g>
 
               {/* Second Hand (Vibrant Electric Blue Hand with Center Ring - Image 2) */}
               <g transform={`translate(${cx}, ${cy}) rotate(${secondHandAngle})`}>
                 <line x1="0" y1="34" x2="0" y2="-118" stroke="#0284C7" strokeWidth="2.8" strokeLinecap="round" />
                 <line x1="0" y1="34" x2="0" y2="-118" stroke="#38BDF8" strokeWidth="2" strokeLinecap="round" />
-                {/* Open Center Ring (Doughnut) around Hub - Image 2 */}
                 <circle cx="0" cy="0" r="7.5" fill="none" stroke="#38BDF8" strokeWidth="2.4" />
               </g>
             </g>
@@ -991,18 +1001,18 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
           />
 
           {/* =========================================================================
-              THE "NOBE" (CENTER KNOB / ARBOR CAP) EXACTLY MATCHING REFERENCE IMAGE 3!
-              Realistic compact 3D chrome sphere dome nut with stepped collar washer
+              THE "NOBE" (CENTER KNOB / ARBOR CAP) - IMAGE 3
+              Polished 3D chrome sphere dome nut with stepped gold/silver collar washer
               ========================================================================= */}
           <g filter="url(#vluxNobeShadow)">
-            {/* Stepped Metallic Collar Washer Ring */}
+            {/* Stepped Metallic Collar Washer Ring (Warm Gold/Chrome accent) */}
             <circle cx={cx} cy={cy} r="8.5" fill="url(#vluxCollarGrad)" stroke="#111827" strokeWidth="1" />
-            <circle cx={cx} cy={cy} r="6.8" fill="#E2E8F0" stroke="#475569" strokeWidth="0.6" strokeOpacity="0.8" />
+            <circle cx={cx} cy={cy} r="6.8" fill="url(#vluxHourHandMetalGrad)" stroke="#475569" strokeWidth="0.6" strokeOpacity="0.8" />
 
-            {/* 3D Chrome Spherical Dome Nut ("Nobe") - Image 3 */}
+            {/* 3D Chrome Spherical Dome Nut ("Nobe") */}
             <circle cx={cx} cy={cy} r="5.2" fill="url(#vluxChromeSphereNobe)" stroke="#1E293B" strokeWidth="0.6" />
 
-            {/* Specular Highlight Glint on Upper Left of Dome Sphere */}
+            {/* Specular Highlight Glint on Upper Left */}
             <ellipse
               cx={cx - 1.5}
               cy={cy - 1.6}
