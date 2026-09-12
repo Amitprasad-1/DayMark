@@ -214,9 +214,9 @@ export const YearDashboard: React.FC = () => {
       return 'bg-slate-950/50 border border-white/[0.06] text-slate-500 font-medium hover:border-indigo-400/50 hover:text-slate-200 hover:bg-slate-900';
     }
 
-    // Level 4 (>= 4 Hours): Electric Rolex Emerald & Cyan
+    // Level 4 (>= 4 Hours): Master Deep Work - Rich Midnight Emerald & Teal base with luminous neon emerald border & glow for crystal-clear date contrast
     if (hours >= 4) {
-      return 'bg-gradient-to-tr from-emerald-400 via-teal-300 to-cyan-400 border-2 border-emerald-200 text-slate-950 font-black shadow-[0_0_18px_rgba(52,211,153,0.65)]';
+      return 'bg-gradient-to-tr from-emerald-950 via-emerald-900 to-teal-800 border-2 border-emerald-400 text-white font-black shadow-[0_0_16px_rgba(52,211,153,0.55)]';
     }
     // Level 3 (>= 2 Hours): Electric Azure Cyan
     if (hours >= 2) {
@@ -838,8 +838,8 @@ export const YearDashboard: React.FC = () => {
             <span className="text-[10px] text-cyan-200 font-black">2h - 4h</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3.5 h-3.5 rounded-md bg-gradient-to-tr from-emerald-400 via-teal-300 to-cyan-400 border-2 border-emerald-200 shadow-[0_0_14px_rgba(52,211,153,0.55)]" />
-            <span className="text-[10px] font-black text-emerald-300">&gt;4h Deep Work</span>
+            <div className="w-3.5 h-3.5 rounded-md bg-gradient-to-tr from-emerald-950 via-emerald-900 to-teal-800 border-2 border-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.5)]" />
+            <span className="text-[10px] font-black text-emerald-400">&gt;4h Deep Work</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-3.5 h-3.5 rounded-md bg-gradient-to-br from-amber-500/40 to-orange-600/30 border-2 border-amber-400 shadow-[0_0_14px_rgba(245,158,11,0.7)] relative">
@@ -994,7 +994,7 @@ export const YearDashboard: React.FC = () => {
                           </svg>
                         )}
 
-                        <span className="relative z-10 text-white font-bold">{dayNum}</span>
+                        <span className="relative z-10 text-white font-black text-[10px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">{dayNum}</span>
 
                         {/* Strategic Milestone Jewel Badge (Golden Diamond) */}
                         {hasMilestone && (
