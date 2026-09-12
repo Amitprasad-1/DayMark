@@ -324,6 +324,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 
 .animate-infinite-border-laser {
   animation: infiniteBorderLaser 1.8s linear infinite;
+  filter: drop-shadow(0 0 2px rgba(0, 229, 255, 0.7));
 }
 
 

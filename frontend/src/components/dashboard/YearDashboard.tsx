@@ -195,27 +195,23 @@ export const YearDashboard: React.FC = () => {
   };
 
   // Color helper for heatmap cells with luminous depth & punchy contrast
-  const getCellIntensityStyle = (dateStr: string, isFutureDate: boolean, hasMilestone: boolean = false) => {
+  const getCellIntensityStyle = (dateStr: string, isFutureDate: boolean, hasMilestone: boolean = false, isDateToday: boolean = false) => {
     const data = getDayActivityData(dateStr);
     const hours = data.totalSeconds / 3600;
-    const isDateToday = dateStr === todayStr;
 
-    // Today (highlighted with moving rainbow laser, crisp & ZERO HAZE):
+    // Current Date (Today) - dynamically applied to today's date with zero blur/haze:
     if (isDateToday) {
       if (hours >= 4) {
-        return 'bg-gradient-to-tr from-emerald-400 via-teal-300 to-cyan-400 text-slate-950 font-black z-20 shadow-md';
+        return 'bg-gradient-to-tr from-emerald-500 to-teal-400 text-slate-950 font-black scale-105 z-20 border border-emerald-300';
       }
       if (hours >= 2) {
-        return 'bg-gradient-to-tr from-cyan-600 via-blue-600 to-indigo-600 text-white font-black z-20 shadow-md';
-      }
-      if (hours >= 0.5) {
-        return 'bg-gradient-to-tr from-indigo-800 via-purple-800 to-indigo-900 text-white font-bold z-20 shadow-md';
+        return 'bg-gradient-to-tr from-cyan-600 to-blue-500 text-white font-black scale-105 z-20 border border-cyan-300';
       }
       if (hours > 0) {
-        return 'bg-indigo-950 border border-indigo-500/60 text-indigo-100 font-bold z-20 shadow-md';
+        return 'bg-gradient-to-tr from-indigo-700 to-purple-600 text-white font-black scale-105 z-20 border border-indigo-300';
       }
-      // Crisp, crystal clear dark interior with sharp contrast and zero haze
-      return 'bg-slate-900 border border-white/20 text-white font-bold z-20 shadow-md';
+      // Crisp, crystal clear dark slate interior with sharp contrast and 100% zero haze
+      return 'bg-slate-900 border border-white/20 text-white font-bold scale-105 z-20';
     }
 
     // Target Milestone day: Golden Trophy / Amber Crown (same as previous)
@@ -960,12 +956,12 @@ export const YearDashboard: React.FC = () => {
                     const dateObj = new Date(currentYear, monthIdx, dayNum);
                     const dateStr = format(dateObj, 'yyyy-MM-dd');
                     const isFutureDate = isAfter(dateObj, now) && !isSameDay(dateObj, now);
-                    const isDateToday = dateStr === todayStr;
+                    const isDateToday = isSameDay(dateObj, now);
                     const dayMilestones = allMilestones.filter((m) =>
                       isSameCalendarDay(m.targetDate, undefined, dateStr)
                     );
                     const hasMilestone = dayMilestones.length > 0;
-                    const intensityClass = getCellIntensityStyle(dateStr, isFutureDate, hasMilestone);
+                    const intensityClass = getCellIntensityStyle(dateStr, isFutureDate, hasMilestone, isDateToday);
                     const data = getDayActivityData(dateStr);
 
                     return (
