@@ -136,6 +136,34 @@ app.post('/api/activities', async (req: Request, res: Response) => {
   res.status(201).json(newAct);
 });
 
+app.put('/api/activities/:id', async (req: Request, res: Response) => {
+  const id = getId(req);
+  try {
+    if (isDbConnected()) {
+      const updated = await prisma.activity.update({
+        where: { id },
+        data: {
+          ...(req.body.name ? { name: req.body.name } : {}),
+          ...(req.body.category ? { category: req.body.category } : {}),
+          ...(req.body.icon ? { icon: req.body.icon } : {}),
+          ...(req.body.color ? { color: req.body.color } : {}),
+          ...(req.body.dailyTargetMinutes !== undefined ? { dailyTargetMinutes: req.body.dailyTargetMinutes } : {}),
+          ...(req.body.isActive !== undefined ? { isActive: req.body.isActive } : {}),
+        },
+      });
+      return res.json(updated);
+    }
+  } catch (e: any) {
+    console.error('Activity update fallback:', e.message);
+  }
+  const act = inMemoryStore.activities.find((a) => a.id === id);
+  if (act) {
+    Object.assign(act, req.body);
+    return res.json(act);
+  }
+  res.status(404).json({ error: 'Activity not found' });
+});
+
 app.delete('/api/activities/:id', async (req: Request, res: Response) => {
   const id = getId(req);
   try {
@@ -214,6 +242,32 @@ app.post('/api/sessions', async (req: Request, res: Response) => {
   const newSession = { ...req.body, id: `sess-${Date.now()}` };
   inMemoryStore.sessions.unshift(newSession);
   res.status(201).json(newSession);
+});
+
+app.put('/api/sessions/:id', async (req: Request, res: Response) => {
+  const id = getId(req);
+  try {
+    if (isDbConnected()) {
+      const updated = await prisma.studySession.update({
+        where: { id },
+        data: {
+          ...(req.body.notes !== undefined ? { notes: req.body.notes } : {}),
+          ...(req.body.durationSeconds !== undefined ? { durationSeconds: req.body.durationSeconds } : {}),
+          ...(req.body.date ? { date: req.body.date } : {}),
+          ...(req.body.activityId ? { activityId: req.body.activityId } : {}),
+        },
+      });
+      return res.json(updated);
+    }
+  } catch (e: any) {
+    console.error('Session update fallback:', e.message);
+  }
+  const session = inMemoryStore.sessions.find((s) => s.id === id);
+  if (session) {
+    Object.assign(session, req.body);
+    return res.json(session);
+  }
+  res.status(404).json({ error: 'Session not found' });
 });
 
 app.delete('/api/sessions/:id', async (req: Request, res: Response) => {
@@ -440,6 +494,34 @@ app.post('/api/tasks/:id/toggle', async (req: Request, res: Response) => {
   res.json(task);
 });
 
+app.put('/api/tasks/:id', async (req: Request, res: Response) => {
+  const id = getId(req);
+  try {
+    if (isDbConnected()) {
+      const updated = await prisma.task.update({
+        where: { id },
+        data: {
+          ...(req.body.title ? { title: req.body.title } : {}),
+          ...(req.body.description !== undefined ? { description: req.body.description } : {}),
+          ...(req.body.priority ? { priority: req.body.priority } : {}),
+          ...(req.body.category ? { category: req.body.category } : {}),
+          ...(req.body.dueDate !== undefined ? { dueDate: req.body.dueDate } : {}),
+          ...(req.body.completed !== undefined ? { completed: req.body.completed } : {}),
+        },
+      });
+      return res.json(updated);
+    }
+  } catch (e: any) {
+    console.error('Task update fallback:', e.message);
+  }
+  const task = inMemoryStore.tasks.find((t) => t.id === id);
+  if (task) {
+    Object.assign(task, req.body);
+    return res.json(task);
+  }
+  res.status(404).json({ error: 'Task not found' });
+});
+
 app.delete('/api/tasks/:id', async (req: Request, res: Response) => {
   const id = getId(req);
   const title = (req.query.title as string) || '';
@@ -529,6 +611,36 @@ app.post('/api/goals/:id/progress', async (req: Request, res: Response) => {
   res.status(404).json({ error: 'Goal not found' });
 });
 
+app.put('/api/goals/:id', async (req: Request, res: Response) => {
+  const id = getId(req);
+  try {
+    if (isDbConnected()) {
+      const updated = await prisma.goal.update({
+        where: { id },
+        data: {
+          ...(req.body.title ? { title: req.body.title } : {}),
+          ...(req.body.description !== undefined ? { description: req.body.description } : {}),
+          ...(req.body.type ? { type: req.body.type } : {}),
+          ...(req.body.targetValue !== undefined ? { targetValue: req.body.targetValue } : {}),
+          ...(req.body.currentValue !== undefined ? { currentValue: req.body.currentValue } : {}),
+          ...(req.body.targetDate !== undefined ? { targetDate: req.body.targetDate } : {}),
+          ...(req.body.category ? { category: req.body.category } : {}),
+          ...(req.body.color ? { color: req.body.color } : {}),
+        },
+      });
+      return res.json(updated);
+    }
+  } catch (e: any) {
+    console.error('Goal update fallback:', e.message);
+  }
+  const goal = inMemoryStore.goals.find((g) => g.id === id);
+  if (goal) {
+    Object.assign(goal, req.body);
+    return res.json(goal);
+  }
+  res.status(404).json({ error: 'Goal not found' });
+});
+
 app.delete('/api/goals/:id', async (req: Request, res: Response) => {
   const id = getId(req);
   const title = (req.query.title as string) || '';
@@ -588,6 +700,33 @@ app.post('/api/countdowns', async (req: Request, res: Response) => {
   const newCd = { ...req.body, id: req.body.id || `cd-${Date.now()}` };
   inMemoryStore.countdowns.push(newCd);
   res.status(201).json(newCd);
+});
+
+app.put('/api/countdowns/:id', async (req: Request, res: Response) => {
+  const id = getId(req);
+  try {
+    if (isDbConnected()) {
+      const updated = await prisma.customCountdown.update({
+        where: { id },
+        data: {
+          ...(req.body.title ? { title: req.body.title } : {}),
+          ...(req.body.targetDate ? { targetDate: req.body.targetDate } : {}),
+          ...(req.body.category ? { category: req.body.category } : {}),
+          ...(req.body.color ? { color: req.body.color } : {}),
+          ...(req.body.icon ? { icon: req.body.icon } : {}),
+        },
+      });
+      return res.json(updated);
+    }
+  } catch (e: any) {
+    console.error('Countdown update fallback:', e.message);
+  }
+  const cd = inMemoryStore.countdowns.find((c) => c.id === id);
+  if (cd) {
+    Object.assign(cd, req.body);
+    return res.json(cd);
+  }
+  res.status(404).json({ error: 'Countdown not found' });
 });
 
 app.delete('/api/countdowns/:id', async (req: Request, res: Response) => {
@@ -727,7 +866,15 @@ app.post('/api/sync/full', async (req: Request, res: Response) => {
         }).catch(() => null);
       }
 
-      if (Array.isArray(activities) && activities.length > 0) {
+      if (Array.isArray(activities)) {
+        const currentActIds = activities.map((a) => a.id).filter(Boolean);
+        await prisma.activity.deleteMany({
+          where: {
+            userId: 'default-user',
+            id: { notIn: currentActIds },
+          },
+        }).catch(() => null);
+
         for (const act of activities) {
           if (!act.id || !act.name) continue;
           await prisma.activity.upsert({
@@ -754,7 +901,15 @@ app.post('/api/sync/full', async (req: Request, res: Response) => {
         }
       }
 
-      if (Array.isArray(sessions) && sessions.length > 0) {
+      if (Array.isArray(sessions)) {
+        const currentSessIds = sessions.map((s) => s.id).filter(Boolean);
+        await prisma.studySession.deleteMany({
+          where: {
+            userId: 'default-user',
+            id: { notIn: currentSessIds },
+          },
+        }).catch(() => null);
+
         for (const s of sessions) {
           if (!s.id || !s.startTime) continue;
           let actId = s.activityId;

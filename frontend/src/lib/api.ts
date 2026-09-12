@@ -115,6 +115,12 @@ export const daymarkApi = {
       body: JSON.stringify(activity),
     });
   },
+  async updateActivity(id: string, updates: Partial<Activity>): Promise<Activity | null> {
+    return request<Activity>(`/api/activities/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+  },
   async deleteActivity(id: string): Promise<boolean> {
     const res = await request(`/api/activities/${id}`, { method: 'DELETE' });
     return res !== null;
@@ -128,6 +134,12 @@ export const daymarkApi = {
     return request<StudySession>('/api/sessions', {
       method: 'POST',
       body: JSON.stringify(session),
+    });
+  },
+  async updateSession(id: string, updates: Partial<StudySession>): Promise<StudySession | null> {
+    return request<StudySession>(`/api/sessions/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
     });
   },
   async deleteSession(id: string): Promise<boolean> {
@@ -176,6 +188,12 @@ export const daymarkApi = {
   async toggleTask(id: string): Promise<Task | null> {
     return request<Task>(`/api/tasks/${id}/toggle`, { method: 'POST' });
   },
+  async updateTask(id: string, updates: Partial<Task>): Promise<Task | null> {
+    return request<Task>(`/api/tasks/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+  },
   async deleteTask(id: string, title?: string): Promise<boolean> {
     const q = title ? `?title=${encodeURIComponent(title)}` : '';
     const res = await request(`/api/tasks/${id}${q}`, { method: 'DELETE' });
@@ -190,6 +208,12 @@ export const daymarkApi = {
     return request<Goal>('/api/goals', {
       method: 'POST',
       body: JSON.stringify(goal),
+    });
+  },
+  async updateGoal(id: string, updates: Partial<Goal>): Promise<Goal | null> {
+    return request<Goal>(`/api/goals/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
     });
   },
   async updateGoalProgress(id: string, delta: number): Promise<Goal | null> {
@@ -212,6 +236,12 @@ export const daymarkApi = {
     return request<CustomCountdown>('/api/countdowns', {
       method: 'POST',
       body: JSON.stringify(countdown),
+    });
+  },
+  async updateCountdown(id: string, updates: Partial<CustomCountdown>): Promise<CustomCountdown | null> {
+    return request<CustomCountdown>(`/api/countdowns/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
     });
   },
   async deleteCountdown(id: string, title?: string): Promise<boolean> {
