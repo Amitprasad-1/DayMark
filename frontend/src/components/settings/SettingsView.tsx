@@ -595,10 +595,10 @@ export const SettingsView: React.FC = () => {
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <Zap className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span className="text-xs font-bold text-white">Taskbar App Logo Badging</span>
+                <span className="text-xs font-bold text-white">Taskbar &amp; App Icon Blinking Red Dot</span>
               </div>
               <p className="text-[11px] text-slate-400 leading-relaxed">
-                Shows a live minutes badge on the DayMark app icon in the Windows taskbar, pulsating on alert.
+                Blinks a glowing red indicator dot on the DayMark taskbar app logo while the clock is running (instead of minutes).
               </p>
             </div>
             <motion.button

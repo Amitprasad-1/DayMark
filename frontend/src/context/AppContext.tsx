@@ -37,6 +37,8 @@ import {
   clearTaskbarBadge,
   startTaskbarBlink,
   stopTaskbarBlink,
+  startRunningRedDotBlink,
+  stopRunningRedDotBlink,
   setWindowTitle,
   restoreWindowTitle,
   startTitleBlink,
@@ -916,18 +918,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           );
           setTimerSecondsRemaining(remainingSec);
 
-          // Update live title and taskbar badge
+          // Update live title and blinking red dot on taskbar & favicon
           const m = Math.floor(remainingSec / 60);
           const s = remainingSec % 60;
           const timeStr = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
           setWindowTitle(`⏱️ [${timeStr}] ${activityLabel} — DayMark`);
           if (settings.taskbarBadgingEnabled) {
-            setTaskbarBadge(m || 1);
+            startRunningRedDotBlink(true);
           }
-          setFaviconLiveDot('running');
 
           if (remainingSec <= 0) {
             // Completed!
+            stopRunningRedDotBlink();
             setTimerStatus('IDLE');
             timerTargetTimestampRef.current = null;
             if (settings.soundEnabled) soundEngine.playCompletionChime();
@@ -965,7 +967,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const elapsed = Math.round((nowMs - stopwatchStartTimestampRef.current) / 1000);
           setStopwatchElapsed(elapsed);
 
-          // Update live title and taskbar badge
+          // Update live title and blinking red dot on taskbar & favicon
           const h = Math.floor(elapsed / 3600);
           const m = Math.floor((elapsed % 3600) / 60);
           const s = elapsed % 60;
@@ -976,13 +978,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
           setWindowTitle(`⏱️ [${timeStr}] ${activityLabel} — DayMark`);
           if (settings.taskbarBadgingEnabled) {
-            setTaskbarBadge(m || 1);
+            startRunningRedDotBlink(true);
           }
-          setFaviconLiveDot('running');
 
           // 1. Safety Max-Cap Auto-Pause Check (e.g. 120 mins)
           const maxCapMinutes = settings.stopwatchMaxCapMinutes ?? 120;
           if (maxCapMinutes > 0 && elapsed >= maxCapMinutes * 60) {
+            stopRunningRedDotBlink();
             setTimerStatus('PAUSED');
             timerTargetTimestampRef.current = null;
             stopwatchStartTimestampRef.current = null;
@@ -1058,6 +1060,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     timerTargetTimestampRef.current = null;
     stopwatchStartTimestampRef.current = null;
     lastNudgeMilestoneRef.current = 0;
+    stopRunningRedDotBlink();
     stopAlertBlinks();
     clearTaskbarBadge();
     restoreWindowTitle();
@@ -1095,6 +1098,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setTimerStatus('PAUSED');
     timerTargetTimestampRef.current = null;
     stopwatchStartTimestampRef.current = null;
+    stopRunningRedDotBlink();
     stopAlertBlinks();
     clearTaskbarBadge();
     restoreWindowTitle();
@@ -1106,6 +1110,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     timerTargetTimestampRef.current = null;
     stopwatchStartTimestampRef.current = null;
     lastNudgeMilestoneRef.current = 0;
+    stopRunningRedDotBlink();
     stopAlertBlinks();
     clearTaskbarBadge();
     restoreWindowTitle();
@@ -1125,6 +1130,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setSelectedPomodoroPhase(phase);
     setTimerStatus('IDLE');
     timerTargetTimestampRef.current = null;
+    stopRunningRedDotBlink();
     stopAlertBlinks();
     clearTaskbarBadge();
     restoreWindowTitle();
@@ -1143,6 +1149,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     timerTargetTimestampRef.current = null;
     stopwatchStartTimestampRef.current = null;
     lastNudgeMilestoneRef.current = 0;
+    stopRunningRedDotBlink();
     stopAlertBlinks();
     clearTaskbarBadge();
     restoreWindowTitle();

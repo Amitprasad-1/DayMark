@@ -131,6 +131,113 @@ export const stopTaskbarBlink = (): void => {
   isBlinkingBadge = false;
 };
 
+// 4.1 Running Clock Red Dot Blinking Loop (Taskbar Dot + Red Glowing Favicon Dot)
+let redDotCanvasUrl: string | null = null;
+let baseCanvasUrl: string | null = null;
+let runningRedDotInterval: NodeJS.Timeout | null = null;
+let isRedDotBlinking = false;
+
+const initRedDotIcons = (): Promise<void> => {
+  if (typeof window === 'undefined' || redDotCanvasUrl) return Promise.resolve();
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 64;
+        canvas.height = 64;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve();
+          return;
+        }
+
+        // Draw Base Icon
+        ctx.drawImage(img, 0, 0, 64, 64);
+        baseCanvasUrl = canvas.toDataURL('image/png');
+
+        // Draw Glowing Radiant Red Dot in top-right corner
+        // 1. Soft Outer Radiant Halo
+        const halo = ctx.createRadialGradient(50, 14, 0, 50, 14, 13);
+        halo.addColorStop(0, 'rgba(239, 68, 68, 0.95)');
+        halo.addColorStop(0.45, 'rgba(239, 68, 68, 0.5)');
+        halo.addColorStop(1, 'rgba(239, 68, 68, 0)');
+        ctx.beginPath();
+        ctx.arc(50, 14, 13, 0, 2 * Math.PI);
+        ctx.fillStyle = halo;
+        ctx.fill();
+
+        // 2. Solid Red Core Dot
+        ctx.beginPath();
+        ctx.arc(50, 14, 8, 0, 2 * Math.PI);
+        ctx.fillStyle = '#EF4444';
+        ctx.fill();
+
+        // 3. Crisp Dark Outer Ring for high contrast
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = '#050811';
+        ctx.stroke();
+
+        // 4. Specular White Highlight
+        ctx.beginPath();
+        ctx.arc(48, 11, 2.5, 0, 2 * Math.PI);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+        ctx.fill();
+
+        redDotCanvasUrl = canvas.toDataURL('image/png');
+      } catch (err) {
+        console.warn('Canvas icon generation notice:', err);
+      }
+      resolve();
+    };
+    img.onerror = () => resolve();
+    img.src = '/logo.png';
+  });
+};
+
+export const startRunningRedDotBlink = (enabled = true): void => {
+  if (!enabled || typeof window === 'undefined') return;
+  if (isRedDotBlinking) return;
+  isRedDotBlinking = true;
+
+  initRedDotIcons().then(() => {
+    let show = true;
+    const update = (state: boolean) => {
+      const link = (document.querySelector("link[rel*='icon']") as HTMLLinkElement) || null;
+      if (state) {
+        setTaskbarBadge(); // Shows dot badge (NO numbers)
+        if (link && redDotCanvasUrl) link.href = redDotCanvasUrl;
+      } else {
+        clearTaskbarBadge(); // Blinks dot off
+        if (link && baseCanvasUrl) link.href = baseCanvasUrl;
+      }
+    };
+
+    update(true);
+
+    if (runningRedDotInterval) clearInterval(runningRedDotInterval);
+    runningRedDotInterval = setInterval(() => {
+      show = !show;
+      update(show);
+    }, 850);
+  });
+};
+
+export const stopRunningRedDotBlink = (): void => {
+  if (runningRedDotInterval) {
+    clearInterval(runningRedDotInterval);
+    runningRedDotInterval = null;
+  }
+  isRedDotBlinking = false;
+  clearTaskbarBadge();
+  const link = (document.querySelector("link[rel*='icon']") as HTMLLinkElement) || null;
+  if (link) {
+    link.href = '/logo.png';
+  }
+};
+
 // 5. Dynamic Window Title Updates & Blinking Alerts
 export const setWindowTitle = (title: string): void => {
   if (typeof document === 'undefined' || isBlinkingTitle) return;
