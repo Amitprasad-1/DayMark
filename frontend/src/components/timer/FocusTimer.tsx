@@ -16,12 +16,15 @@ import {
   Flame,
   Clock,
   X,
+  Bell,
+  ShieldAlert,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { isSameCalendarDay } from '@/lib/dateUtils';
 import { VintageAlarmClock } from './VintageAlarmClock';
 import { MovingQuoteBanner } from '@/components/dashboard/MovingQuoteBanner';
+import { getNotificationPermission, requestNotificationPermission } from '@/lib/notifications';
 
 export const FocusTimer: React.FC = () => {
   const {
@@ -51,6 +54,38 @@ export const FocusTimer: React.FC = () => {
   const [sessionNotes, setSessionNotes] = useState('');
   const [isAddingTrack, setIsAddingTrack] = useState(false);
   const [newTrackName, setNewTrackName] = useState('');
+
+  const [notifPermission, setNotifPermission] = useState<'granted' | 'denied' | 'default' | 'unsupported'>('default');
+
+  useEffect(() => {
+    setNotifPermission(getNotificationPermission());
+  }, []);
+
+  const cycleNudge = () => {
+    const current = settings.stopwatchNudgeMinutes ?? 45;
+    const sequence = [0, 15, 30, 45, 60];
+    const nextIdx = (sequence.indexOf(current) + 1) % sequence.length;
+    updateSettings({ stopwatchNudgeMinutes: sequence[nextIdx] });
+  };
+
+  const cycleMaxCap = () => {
+    const current = settings.stopwatchMaxCapMinutes ?? 120;
+    const sequence = [0, 60, 90, 120, 180];
+    const nextIdx = (sequence.indexOf(current) + 1) % sequence.length;
+    updateSettings({ stopwatchMaxCapMinutes: sequence[nextIdx] });
+  };
+
+  const handleRequestDesktopAlerts = async () => {
+    if (notifPermission !== 'granted') {
+      const granted = await requestNotificationPermission();
+      setNotifPermission(granted ? 'granted' : 'denied');
+      if (granted) {
+        updateSettings({ desktopNotificationsEnabled: true });
+      }
+    } else {
+      updateSettings({ desktopNotificationsEnabled: !settings.desktopNotificationsEnabled });
+    }
+  };
 
   const toggleFullscreen = () => {
     const next = !isFullscreen;
@@ -740,6 +775,62 @@ export const FocusTimer: React.FC = () => {
               )}
               <Clock className="w-3.5 h-3.5 relative z-10" />
               <span className="relative z-10">Vintage Bell</span>
+            </button>
+          </div>
+
+          {/* Smart Alerts & Safety Caps Quick Controls */}
+          <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-950/80 border border-white/10 shadow-inner">
+            {/* Desktop Notification Indicator / Permission Prompt */}
+            <button
+              type="button"
+              onClick={handleRequestDesktopAlerts}
+              className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                notifPermission === 'granted' && settings.desktopNotificationsEnabled
+                  ? 'text-amber-300 hover:text-amber-200 bg-amber-500/10 border border-amber-500/20'
+                  : notifPermission === 'denied'
+                  ? 'text-rose-400 bg-rose-500/10'
+                  : 'text-slate-400 hover:text-white bg-white/[0.04]'
+              }`}
+              title={
+                notifPermission === 'granted'
+                  ? 'Windows Desktop & Taskbar Alerts Active (Click to toggle on/off)'
+                  : 'Click to enable Windows Desktop Notifications & Taskbar Flashing'
+              }
+            >
+              <Bell
+                className={`w-3.5 h-3.5 ${
+                  notifPermission === 'granted' && settings.desktopNotificationsEnabled
+                    ? 'fill-amber-400 text-amber-400 animate-pulse'
+                    : ''
+                }`}
+              />
+              <span className="hidden sm:inline text-[11px]">
+                {notifPermission === 'granted' && settings.desktopNotificationsEnabled
+                  ? 'Taskbar Alerts'
+                  : 'Enable Alerts'}
+              </span>
+            </button>
+
+            {/* Stopwatch Nudge Quick Toggle */}
+            <button
+              type="button"
+              onClick={cycleNudge}
+              className="px-2.5 py-2 rounded-xl text-[11px] font-bold text-cyan-300 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] transition cursor-pointer flex items-center gap-1 border border-white/5"
+              title="Stopwatch Periodic Nudge: Click to change (Off, 15m, 30m, 45m, 60m)"
+            >
+              <Clock className="w-3 h-3 text-cyan-400" />
+              <span>Nudge: {(settings.stopwatchNudgeMinutes ?? 45) === 0 ? 'Off' : `${settings.stopwatchNudgeMinutes ?? 45}m`}</span>
+            </button>
+
+            {/* Safety Max Cap Quick Toggle */}
+            <button
+              type="button"
+              onClick={cycleMaxCap}
+              className="px-2.5 py-2 rounded-xl text-[11px] font-bold text-rose-300 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] transition cursor-pointer flex items-center gap-1 border border-white/5"
+              title="Safety Max-Cap Auto-Pause: Click to change (Off, 1h, 1.5h, 2h, 3h)"
+            >
+              <ShieldAlert className="w-3 h-3 text-rose-400" />
+              <span>Cap: {(settings.stopwatchMaxCapMinutes ?? 120) === 0 ? 'Off' : `${Math.round((settings.stopwatchMaxCapMinutes ?? 120) / 60)}h`}</span>
             </button>
           </div>
 

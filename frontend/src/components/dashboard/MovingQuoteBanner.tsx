@@ -294,7 +294,7 @@ export const MovingQuoteBanner: React.FC<MovingQuoteBannerProps> = ({ className 
 
   return (
     <>
-      <div className={`w-full relative group ${className} z-30`}>
+      <div className={`w-full relative group ${className} z-10`}>
         {/* Subtle Ambient Backlight Glow */}
         <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-indigo-500/20 rounded-2xl sm:rounded-3xl blur-md opacity-40 group-hover:opacity-75 transition duration-500 pointer-events-none" />
 

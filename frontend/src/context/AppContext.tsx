@@ -31,6 +31,19 @@ import { cloudSync, BackupSnapshot } from '@/lib/cloudSync';
 import confetti from 'canvas-confetti';
 import { format, parseISO } from 'date-fns';
 import { normalizeDateStr, isSameCalendarDay } from '@/lib/dateUtils';
+import {
+  showDesktopNotification,
+  setTaskbarBadge,
+  clearTaskbarBadge,
+  startTaskbarBlink,
+  stopTaskbarBlink,
+  setWindowTitle,
+  restoreWindowTitle,
+  startTitleBlink,
+  stopAlertBlinks,
+  setFaviconLiveDot,
+  requestNotificationPermission,
+} from '@/lib/notifications';
 
 interface AppContextType {
   // Navigation State
@@ -129,6 +142,7 @@ interface AppContextType {
   importDataJSON: (jsonStr: string) => boolean;
   resetAllData: () => void;
   loadStudyFocusPreset: () => void;
+  requestNotificationPermission: () => Promise<boolean>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -215,6 +229,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Timestamp refs for background resilience
   const timerTargetTimestampRef = useRef<number | null>(null);
   const stopwatchStartTimestampRef = useRef<number | null>(null);
+  const lastNudgeMilestoneRef = useRef<number>(0);
 
   // Cloud Sync & Room Pairing State
   const [cloudSyncStatus, setCloudSyncStatus] = useState<'synced' | 'syncing' | 'offline' | 'error'>('synced');
@@ -873,10 +888,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     isHydrated,
   ]);
 
+  // Window Focus Listener to dismiss alert blinks when user returns to DayMark
+  useEffect(() => {
+    const handleDismissAlert = () => {
+      stopAlertBlinks();
+    };
+    window.addEventListener('focus', handleDismissAlert);
+    return () => {
+      window.removeEventListener('focus', handleDismissAlert);
+    };
+  }, []);
+
   // GLOBAL BACKGROUND TIMER INTERVAL ENGINE (Runs continuously across all views!)
   useEffect(() => {
     const handleTick = () => {
       if (timerStatus !== 'RUNNING') return;
+
+      const currentActivity = activities.find((a) => a.id === activeActivityId);
+      const activityLabel = currentActivity ? currentActivity.name : 'Focus Session';
 
       if (timerMode === 'POMODORO') {
         if (timerTargetTimestampRef.current) {
@@ -887,12 +916,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           );
           setTimerSecondsRemaining(remainingSec);
 
+          // Update live title and taskbar badge
+          const m = Math.floor(remainingSec / 60);
+          const s = remainingSec % 60;
+          const timeStr = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+          setWindowTitle(`⏱️ [${timeStr}] ${activityLabel} — DayMark`);
+          if (settings.taskbarBadgingEnabled) {
+            setTaskbarBadge(m || 1);
+          }
+          setFaviconLiveDot('running');
+
           if (remainingSec <= 0) {
             // Completed!
             setTimerStatus('IDLE');
             timerTargetTimestampRef.current = null;
             if (settings.soundEnabled) soundEngine.playCompletionChime();
             confetti({ particleCount: 80, spread: 80, origin: { y: 0.6 } });
+
+            // Desktop notification + taskbar flash + title/badge blink
+            if (settings.desktopNotificationsEnabled) {
+              showDesktopNotification(
+                '🎉 Focus Session Complete!',
+                `Awesome job completing your ${settings.workIntervalMinutes}m session on "${activityLabel}". Time for a well-deserved break!`,
+                { tag: 'pomodoro-complete', requireInteraction: true }
+              );
+            }
+            startTaskbarBlink(25000);
+            startTitleBlink('🔴 [TIME UP! STOP CLOCK] DayMark', 'DayMark — Focus Tracker');
+            setFaviconLiveDot('alert');
 
             if (selectedPomodoroPhase === 'work') {
               const duration = settings.workIntervalMinutes * 60;
@@ -913,6 +964,64 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const nowMs = Date.now();
           const elapsed = Math.round((nowMs - stopwatchStartTimestampRef.current) / 1000);
           setStopwatchElapsed(elapsed);
+
+          // Update live title and taskbar badge
+          const h = Math.floor(elapsed / 3600);
+          const m = Math.floor((elapsed % 3600) / 60);
+          const s = elapsed % 60;
+          const timeStr =
+            h > 0
+              ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+              : `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+
+          setWindowTitle(`⏱️ [${timeStr}] ${activityLabel} — DayMark`);
+          if (settings.taskbarBadgingEnabled) {
+            setTaskbarBadge(m || 1);
+          }
+          setFaviconLiveDot('running');
+
+          // 1. Safety Max-Cap Auto-Pause Check (e.g. 120 mins)
+          const maxCapMinutes = settings.stopwatchMaxCapMinutes ?? 120;
+          if (maxCapMinutes > 0 && elapsed >= maxCapMinutes * 60) {
+            setTimerStatus('PAUSED');
+            timerTargetTimestampRef.current = null;
+            stopwatchStartTimestampRef.current = null;
+
+            if (settings.soundEnabled) soundEngine.playUrgentAlertChime();
+            if (settings.desktopNotificationsEnabled) {
+              showDesktopNotification(
+                `⚠️ Stopwatch Auto-Paused (${maxCapMinutes}m Cap)`,
+                `Max focus cap reached on "${activityLabel}". Stopped automatically to protect your focus analytics. Click to review and log.`,
+                { tag: 'stopwatch-max-cap', requireInteraction: true }
+              );
+            }
+            startTaskbarBlink(30000);
+            startTitleBlink(`⚠️ [AUTO-PAUSED: ${maxCapMinutes}m CAP] DayMark`, 'DayMark — Focus Tracker');
+            setFaviconLiveDot('alert');
+            return;
+          }
+
+          // 2. Periodic Milestone Nudge Check (e.g. every 45 mins)
+          const nudgeMinutes = settings.stopwatchNudgeMinutes ?? 45;
+          if (nudgeMinutes > 0) {
+            const nudgeThresholdSec = nudgeMinutes * 60;
+            const currentMilestone = Math.floor(elapsed / nudgeThresholdSec);
+            if (currentMilestone > lastNudgeMilestoneRef.current && currentMilestone > 0) {
+              lastNudgeMilestoneRef.current = currentMilestone;
+
+              if (settings.soundEnabled) soundEngine.playGentleNudgeChime();
+              if (settings.desktopNotificationsEnabled) {
+                showDesktopNotification(
+                  `⏱️ Stopwatch Milestone: ${currentMilestone * nudgeMinutes} Minutes!`,
+                  `Still studying "${activityLabel}"? Remember to take a break or stop the clock when finished.`,
+                  { tag: 'stopwatch-nudge', requireInteraction: false }
+                );
+              }
+              startTaskbarBlink(15000);
+              startTitleBlink(`🔔 [STILL STUDYING? ${currentMilestone * nudgeMinutes}m] DayMark`, 'DayMark — Focus Tracker');
+              setFaviconLiveDot('alert');
+            }
+          }
         }
       }
     };
@@ -939,6 +1048,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     selectedPomodoroPhase,
     settings,
     activeActivityId,
+    activities,
   ]);
 
   // Global Timer Action Controls
@@ -947,6 +1057,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setTimerStatus('IDLE');
     timerTargetTimestampRef.current = null;
     stopwatchStartTimestampRef.current = null;
+    lastNudgeMilestoneRef.current = 0;
+    stopAlertBlinks();
+    clearTaskbarBadge();
+    restoreWindowTitle();
+    setFaviconLiveDot('idle');
     if (newMode === 'STOPWATCH') {
       setStopwatchElapsed(0);
     } else {
@@ -959,6 +1074,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const startTimer = () => {
+    stopAlertBlinks();
     if (timerMode === 'POMODORO') {
       const nowMs = Date.now();
       const currentRemaining =
@@ -967,6 +1083,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setTimerStatus('RUNNING');
     } else {
       const nowMs = Date.now();
+      if (stopwatchElapsed === 0) {
+        lastNudgeMilestoneRef.current = 0;
+      }
       stopwatchStartTimestampRef.current = nowMs - stopwatchElapsed * 1000;
       setTimerStatus('RUNNING');
     }
@@ -976,12 +1095,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setTimerStatus('PAUSED');
     timerTargetTimestampRef.current = null;
     stopwatchStartTimestampRef.current = null;
+    stopAlertBlinks();
+    clearTaskbarBadge();
+    restoreWindowTitle();
+    setFaviconLiveDot('idle');
   };
 
   const resetTimer = () => {
     setTimerStatus('IDLE');
     timerTargetTimestampRef.current = null;
     stopwatchStartTimestampRef.current = null;
+    lastNudgeMilestoneRef.current = 0;
+    stopAlertBlinks();
+    clearTaskbarBadge();
+    restoreWindowTitle();
+    setFaviconLiveDot('idle');
     if (timerMode === 'STOPWATCH') {
       setStopwatchElapsed(0);
     } else {
@@ -997,6 +1125,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setSelectedPomodoroPhase(phase);
     setTimerStatus('IDLE');
     timerTargetTimestampRef.current = null;
+    stopAlertBlinks();
+    clearTaskbarBadge();
+    restoreWindowTitle();
+    setFaviconLiveDot('idle');
     let durationSec = settings.workIntervalMinutes * 60;
     if (phase === 'shortBreak') durationSec = settings.shortBreakMinutes * 60;
     if (phase === 'longBreak') durationSec = settings.longBreakMinutes * 60;
@@ -1010,6 +1142,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setTimerStatus('IDLE');
     timerTargetTimestampRef.current = null;
     stopwatchStartTimestampRef.current = null;
+    lastNudgeMilestoneRef.current = 0;
+    stopAlertBlinks();
+    clearTaskbarBadge();
+    restoreWindowTitle();
+    setFaviconLiveDot('idle');
     if (settings.soundEnabled) soundEngine.playCompletionChime();
     confetti({ particleCount: 60, spread: 70 });
 
@@ -1678,6 +1815,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         importDataJSON,
         resetAllData,
         loadStudyFocusPreset,
+        requestNotificationPermission,
         cloudSyncStatus,
         lastSyncedAt,
         cloudRoomId,

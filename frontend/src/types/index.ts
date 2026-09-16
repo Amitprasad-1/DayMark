@@ -92,6 +92,10 @@ export interface UserSettings {
   ambientSound: 'none' | 'rain' | 'white-noise' | 'forest' | 'waves';
   clockStyle?: 'digital' | 'vintage';
   vintageClockMode?: 'focus' | 'realtime';
+  desktopNotificationsEnabled?: boolean;
+  taskbarBadgingEnabled?: boolean;
+  stopwatchNudgeMinutes?: number; // 0 for off, or 15, 30, 45, 60
+  stopwatchMaxCapMinutes?: number; // 0 for off, or 60, 90, 120, 180
 }
 
 export interface DayActivityData {

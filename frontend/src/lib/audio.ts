@@ -49,6 +49,70 @@ class SoundEngine {
     }
   }
 
+  // Play a soft, pleasant milestone nudge chime (E5 -> G#5 -> B5)
+  public playGentleNudgeChime() {
+    try {
+      this.initCtx();
+      if (!this.ctx) return;
+
+      const now = this.ctx.currentTime;
+      const notes = [659.25, 830.61, 987.77]; // Warm major triad E5, G#5, B5
+
+      notes.forEach((freq, index) => {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + index * 0.14);
+
+        gain.gain.setValueAtTime(0.0001, now + index * 0.14);
+        gain.gain.exponentialRampToValueAtTime(0.12, now + index * 0.14 + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + index * 0.14 + 0.9);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now + index * 0.14);
+        osc.stop(now + index * 0.14 + 1.0);
+      });
+    } catch (e) {
+      console.warn('Audio playback not permitted yet:', e);
+    }
+  }
+
+  // Play an urgent/distinct double-bell chime for safety auto-pause
+  public playUrgentAlertChime() {
+    try {
+      this.initCtx();
+      if (!this.ctx) return;
+
+      const now = this.ctx.currentTime;
+      const notes = [880.00, 1108.73, 880.00, 1108.73]; // A5 -> C#6 repeated
+
+      notes.forEach((freq, index) => {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, now + index * 0.15);
+
+        gain.gain.setValueAtTime(0.001, now + index * 0.15);
+        gain.gain.exponentialRampToValueAtTime(0.22, now + index * 0.15 + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + index * 0.15 + 0.7);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now + index * 0.15);
+        osc.stop(now + index * 0.15 + 0.8);
+      });
+    } catch (e) {
+      console.warn('Audio playback not permitted yet:', e);
+    }
+  }
+
   // Synthesize ambient sounds using pink/white noise filters
   public setAmbientSound(type: 'none' | 'rain' | 'white-noise' | 'forest' | 'waves', volume: number = 0.15) {
     this.stopAmbient();

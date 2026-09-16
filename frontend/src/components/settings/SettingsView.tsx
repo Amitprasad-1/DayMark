@@ -23,10 +23,19 @@ import {
   Calendar,
   ShieldCheck,
   Zap,
+  Bell,
+  AppWindow,
+  ShieldAlert,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cloudSync } from '@/lib/cloudSync';
 import { format, subDays } from 'date-fns';
+import {
+  getNotificationPermission,
+  requestNotificationPermission,
+  showDesktopNotification,
+  startTaskbarBlink,
+} from '@/lib/notifications';
 
 export const SettingsView: React.FC = () => {
   const {
@@ -61,6 +70,36 @@ export const SettingsView: React.FC = () => {
   const [recoveryActivity, setRecoveryActivity] = useState<string>('Data Analytics & Study');
   const [recoveryNotes, setRecoveryNotes] = useState<string>('');
   const [recoverySuccessMsg, setRecoverySuccessMsg] = useState<string>('');
+
+  // Notification and Taskbar Alert State
+  const [notifPermission, setNotifPermission] = useState<'granted' | 'denied' | 'default' | 'unsupported'>('default');
+
+  useEffect(() => {
+    setNotifPermission(getNotificationPermission());
+  }, []);
+
+  const handleRequestPermission = async () => {
+    const granted = await requestNotificationPermission();
+    setNotifPermission(granted ? 'granted' : 'denied');
+    if (granted) {
+      updateSettings({ desktopNotificationsEnabled: true });
+      showDesktopNotification(
+        '🔔 Desktop Alerts Active!',
+        'Windows taskbar flashing and study reminders are now enabled for DayMark.',
+        { tag: 'daymark-welcome' }
+      );
+      startTaskbarBlink(5000);
+    }
+  };
+
+  const handleTestAlert = () => {
+    showDesktopNotification(
+      '⏱️ DayMark Alert Test',
+      'This is how your taskbar flashes and desktop reminders appear when studying!',
+      { tag: 'daymark-test-alert' }
+    );
+    startTaskbarBlink(8000);
+  };
 
   useEffect(() => {
     setInputRoomId(cloudRoomId);
@@ -460,7 +499,202 @@ export const SettingsView: React.FC = () => {
       </div>
 
       {/* =========================================================================
-          SECTION 3: STANDARD TIMER SETTINGS & DATA PORTABILITY
+          SECTION 3: SMART STUDY REMINDERS & WINDOWS TASKBAR ALERTS
+          ========================================================================= */}
+      <div className="glass-panel-luxury p-6 lg:p-8 rounded-3xl border border-amber-500/20 space-y-6 shadow-2xl bg-gradient-to-br from-[#090E1C]/90 via-[#0D1326]/80 to-amber-950/15 relative overflow-hidden">
+        {/* Subtle Ambient Gold Glow */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+
+        {/* Section Header */}
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/[0.08] pb-4 relative z-10">
+          <div className="space-y-1">
+            <h3 className="text-base font-black text-white flex items-center gap-2 tracking-tight">
+              <div className="p-1.5 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                <Bell className="w-4 h-4" />
+              </div>
+              <span>Smart Study Reminders &amp; Windows Taskbar Alerts</span>
+            </h3>
+            <p className="text-xs text-slate-400 max-w-2xl">
+              Never forget a running clock while studying. Triggers Windows taskbar flashing, desktop toast alerts, periodic milestone nudges, and auto-pause safety caps.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {notifPermission === 'granted' ? (
+              <span className="px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-bold flex items-center gap-1.5 shadow-sm">
+                <Check className="w-3.5 h-3.5" />
+                <span>Windows Alerts Active</span>
+              </span>
+            ) : notifPermission === 'denied' ? (
+              <span className="px-3 py-1.5 rounded-xl bg-rose-500/20 text-rose-300 border border-rose-500/40 text-xs font-bold flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5" />
+                <span>Blocked in Browser</span>
+              </span>
+            ) : (
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                type="button"
+                onClick={handleRequestPermission}
+                className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black text-xs cursor-pointer shadow-[0_0_15px_rgba(245,158,11,0.4)] flex items-center gap-1.5 transition-all"
+              >
+                <Bell className="w-3.5 h-3.5 fill-current" />
+                <span>Enable Desktop &amp; Taskbar Alerts</span>
+              </motion.button>
+            )}
+
+            {notifPermission === 'granted' && (
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                type="button"
+                onClick={handleTestAlert}
+                className="px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/10 text-xs font-bold cursor-pointer transition-all"
+                title="Test how Windows flashes the taskbar icon"
+              >
+                Test Alert
+              </motion.button>
+            )}
+          </div>
+        </div>
+
+        {/* 2x2 Grid of Alert Controls */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 relative z-10">
+          {/* 1. Desktop Notification & Taskbar Flash */}
+          <div className="p-4 rounded-2xl bg-slate-950/60 border border-white/[0.06] flex items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <AppWindow className="w-4 h-4 text-amber-400 shrink-0" />
+                <span className="text-xs font-bold text-white">Desktop Notifications &amp; Taskbar Flash</span>
+              </div>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                Windows toast popup &amp; glowing taskbar icon blink whenever sessions finish or reminders fire.
+              </p>
+            </div>
+            <motion.button
+              whileTap={{ scale: 0.92 }}
+              type="button"
+              onClick={() => {
+                if (notifPermission !== 'granted') {
+                  handleRequestPermission();
+                } else {
+                  updateSettings({ desktopNotificationsEnabled: !settings.desktopNotificationsEnabled });
+                }
+              }}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer shrink-0 ${
+                settings.desktopNotificationsEnabled && notifPermission === 'granted'
+                  ? 'bg-amber-500 text-slate-950 shadow-[0_0_12px_rgba(245,158,11,0.4)]'
+                  : 'bg-slate-800 text-slate-400 border border-white/5'
+              }`}
+            >
+              {settings.desktopNotificationsEnabled && notifPermission === 'granted' ? 'Enabled' : 'Disabled'}
+            </motion.button>
+          </div>
+
+          {/* 2. Taskbar App Logo Badging */}
+          <div className="p-4 rounded-2xl bg-slate-950/60 border border-white/[0.06] flex items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Zap className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span className="text-xs font-bold text-white">Taskbar App Logo Badging</span>
+              </div>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                Shows a live minutes badge on the DayMark app icon in the Windows taskbar, pulsating on alert.
+              </p>
+            </div>
+            <motion.button
+              whileTap={{ scale: 0.92 }}
+              type="button"
+              onClick={() => updateSettings({ taskbarBadgingEnabled: !settings.taskbarBadgingEnabled })}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer shrink-0 ${
+                settings.taskbarBadgingEnabled
+                  ? 'bg-emerald-500 text-slate-950 shadow-[0_0_12px_rgba(16,185,129,0.4)]'
+                  : 'bg-slate-800 text-slate-400 border border-white/5'
+              }`}
+            >
+              {settings.taskbarBadgingEnabled ? 'Enabled' : 'Disabled'}
+            </motion.button>
+          </div>
+
+          {/* 3. Stopwatch Milestone Nudge */}
+          <div className="p-4 rounded-2xl bg-slate-950/60 border border-white/[0.06] space-y-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-cyan-400 shrink-0" />
+                <span className="text-xs font-bold text-white">Stopwatch Periodic Nudge</span>
+              </div>
+              <span className="text-[10px] font-mono font-bold text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-lg border border-cyan-500/20">
+                {(settings.stopwatchNudgeMinutes ?? 45) === 0 ? 'Off' : `Every ${settings.stopwatchNudgeMinutes ?? 45}m`}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              Plays a soft acoustic chime and alerts the taskbar: "Still studying? Remember to take a break or stop your clock."
+            </p>
+            <div className="grid grid-cols-5 gap-1.5 pt-1">
+              {[
+                { label: 'Off', val: 0 },
+                { label: '15m', val: 15 },
+                { label: '30m', val: 30 },
+                { label: '45m', val: 45 },
+                { label: '60m', val: 60 },
+              ].map((opt) => (
+                <button
+                  key={opt.val}
+                  type="button"
+                  onClick={() => updateSettings({ stopwatchNudgeMinutes: opt.val })}
+                  className={`py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                    (settings.stopwatchNudgeMinutes ?? 45) === opt.val
+                      ? 'bg-cyan-500 text-slate-950 font-black shadow-[0_0_10px_rgba(6,182,212,0.4)]'
+                      : 'bg-white/[0.04] text-slate-400 hover:text-white hover:bg-white/[0.08] border border-white/5'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 4. Stopwatch Safety Max-Cap */}
+          <div className="p-4 rounded-2xl bg-slate-950/60 border border-white/[0.06] space-y-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0" />
+                <span className="text-xs font-bold text-white">Stopwatch Safety Max-Cap</span>
+              </div>
+              <span className="text-[10px] font-mono font-bold text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-lg border border-rose-500/20">
+                {(settings.stopwatchMaxCapMinutes ?? 120) === 0 ? 'Off' : `Auto-Pause @ ${settings.stopwatchMaxCapMinutes ?? 120}m`}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              Auto-pauses runaway sessions if you step away, so you never accidentally record 8 hours of study.
+            </p>
+            <div className="grid grid-cols-5 gap-1.5 pt-1">
+              {[
+                { label: 'Off', val: 0 },
+                { label: '1h', val: 60 },
+                { label: '1.5h', val: 90 },
+                { label: '2h', val: 120 },
+                { label: '3h', val: 180 },
+              ].map((opt) => (
+                <button
+                  key={opt.val}
+                  type="button"
+                  onClick={() => updateSettings({ stopwatchMaxCapMinutes: opt.val })}
+                  className={`py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                    (settings.stopwatchMaxCapMinutes ?? 120) === opt.val
+                      ? 'bg-rose-500 text-white font-black shadow-[0_0_10px_rgba(244,63,94,0.4)]'
+                      : 'bg-white/[0.04] text-slate-400 hover:text-white hover:bg-white/[0.08] border border-white/5'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* =========================================================================
+          SECTION 4: STANDARD TIMER SETTINGS & DATA PORTABILITY
           ========================================================================= */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Left Column: Focus Timer Defaults */}

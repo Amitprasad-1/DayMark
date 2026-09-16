@@ -194,7 +194,9 @@ export const Sidebar: React.FC = () => {
     <div
       className={`hidden md:block ${
         isPinned ? 'w-64' : 'w-[68px]'
-      } shrink-0 sticky top-[68px] h-[calc(100vh-68px)] relative transition-[width] duration-200 z-30`}
+      } shrink-0 sticky top-[68px] h-[calc(100vh-68px)] transition-[width] duration-200 ${
+        isExpanded ? 'z-40' : 'z-30'
+      }`}
     >
       <motion.aside
         initial={false}
@@ -207,7 +209,7 @@ export const Sidebar: React.FC = () => {
         transition={{ type: 'spring', stiffness: 450, damping: 32 }}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        className="absolute top-0 left-0 bottom-0 flex flex-col glass-panel-luxury border-r border-white/[0.08] p-2.5 space-y-3 overflow-hidden bg-[#050811]/95 backdrop-blur-3xl h-full select-none"
+        className="absolute top-0 left-0 bottom-0 flex flex-col glass-panel-luxury border-r border-white/[0.08] p-2.5 space-y-3 overflow-hidden bg-[#050811]/95 backdrop-blur-3xl h-full select-none z-40"
       >
         {/* Top Header Row with Pin / Expand Toggle */}
         <div className="h-9 flex items-center justify-between px-1 pb-1 border-b border-white/[0.06] shrink-0 overflow-hidden">

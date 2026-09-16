@@ -13,6 +13,10 @@ export const INITIAL_SETTINGS: UserSettings = {
   ambientSound: 'none',
   clockStyle: 'digital',
   vintageClockMode: 'focus',
+  desktopNotificationsEnabled: true,
+  taskbarBadgingEnabled: true,
+  stopwatchNudgeMinutes: 45, // Gentle nudge every 45 mins
+  stopwatchMaxCapMinutes: 120, // 2-hour auto-pause safety cap
 };
 
 export const INITIAL_ACTIVITIES: Activity[] = [
