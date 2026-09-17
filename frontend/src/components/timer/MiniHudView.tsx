@@ -86,10 +86,6 @@ export const MiniHudView: React.FC<MiniHudViewProps> = ({
         <div className="hud-time-column">
           <div className="hud-digits">{formattedTime}</div>
           <div className="hud-time-sub">
-            <span className={`hud-status-indicator ${isRunning ? 'is-flow' : 'is-paused'}`}>
-              {isRunning ? 'FLOW STATE' : 'PAUSED'}
-            </span>
-            <span className="hud-dot-sep">•</span>
             <span>Today: {todayFocusMinutes}m</span>
           </div>
         </div>
@@ -312,19 +308,7 @@ export const MINI_HUD_STYLES = `
     color: #94A3B8;
     margin-top: 4px;
     font-weight: 600;
-  }
-  .hud-status-indicator.is-flow {
-    color: #34D399;
-    font-weight: 800;
-    letter-spacing: 0.5px;
-  }
-  .hud-status-indicator.is-paused {
-    color: #FBBF24;
-    font-weight: 800;
-    letter-spacing: 0.5px;
-  }
-  .hud-dot-sep {
-    opacity: 0.4;
+    white-space: nowrap;
   }
 
   /* Controls */

@@ -102,8 +102,8 @@ export const FocusRecordingBeacon: React.FC = () => {
 
       if (pipApi) {
         const pipWin = await pipApi.requestWindow({
-          width: 420,
-          height: 200,
+          width: 290,
+          height: 180,
         });
 
         pipWin.document.title = `DayMark — Mini HUD [${activityLabel}]`;
