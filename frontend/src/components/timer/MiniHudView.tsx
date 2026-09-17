@@ -135,6 +135,8 @@ export const MiniHudView: React.FC<MiniHudViewProps> = ({
 };
 
 export const MINI_HUD_STYLES = `
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700;800&family=JetBrains+Mono:wght@700;800;900&family=Plus+Jakarta+Sans:wght@600;700;800;900&display=swap');
+
   * {
     box-sizing: border-box;
     margin: 0;
@@ -144,7 +146,7 @@ export const MINI_HUD_STYLES = `
   html, body {
     background-color: #060913;
     color: #F8FAFC;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     height: 100vh;
     width: 100vw;
     overflow: hidden;
@@ -155,7 +157,7 @@ export const MINI_HUD_STYLES = `
     justify-content: space-between;
     height: 100vh;
     width: 100vw;
-    padding: 10px 12px;
+    padding: 8px 12px;
     background: radial-gradient(circle at 50% 0%, #151D33 0%, #060913 75%);
     border: 2px solid rgba(239, 68, 68, 0.7);
     box-shadow: inset 0 0 35px rgba(239, 68, 68, 0.2), 0 0 20px rgba(0, 0, 0, 0.8);
@@ -210,7 +212,7 @@ export const MINI_HUD_STYLES = `
   }
   .hud-rec-tag {
     font-size: 9px;
-    font-family: monospace;
+    font-family: 'JetBrains Mono', monospace;
     font-weight: 900;
     letter-spacing: 1px;
     color: #FCA5A5;
@@ -262,21 +264,29 @@ export const MINI_HUD_STYLES = `
     flex-shrink: 0;
   }
 
-  /* Body: Radar + Digits */
+  /* Body: Exact Vintage Horology Clock + Big Atomic Digits */
   .hud-body {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin: 4px 0;
+    gap: 14px;
+    margin: 2px 0;
+    min-height: 84px;
   }
   .hud-radar-wrap {
     position: relative;
-    width: 74px;
-    height: 74px;
+    width: 84px;
+    height: 84px;
     flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
+    background: transparent;
+  }
+  .hud-radar-wrap svg {
+    display: block;
+    width: 84px;
+    height: 84px;
+    overflow: visible;
   }
   .hud-time-column {
     display: flex;
@@ -286,12 +296,12 @@ export const MINI_HUD_STYLES = `
     flex: 1;
   }
   .hud-digits {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    font-size: 32px;
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 34px;
     font-weight: 900;
     line-height: 1;
     color: #FFFFFF;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
     text-shadow: 0 0 16px rgba(239, 68, 68, 0.75), 0 2px 4px rgba(0, 0, 0, 0.9);
   }
   .hud-time-sub {

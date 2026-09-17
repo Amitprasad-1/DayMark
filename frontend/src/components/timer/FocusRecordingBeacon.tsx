@@ -67,13 +67,22 @@ export const FocusRecordingBeacon: React.FC = () => {
     todaySessions.reduce((acc, s) => acc + s.durationSeconds, 0) / 60
   );
 
+  // Calculate total phase seconds to match FocusTimer
+  let totalPhaseSeconds = 25 * 60;
+  if (selectedPomodoroPhase === 'work') {
+    totalPhaseSeconds = (settings.workIntervalMinutes || 25) * 60;
+  } else if (selectedPomodoroPhase === 'shortBreak') {
+    totalPhaseSeconds = (settings.shortBreakMinutes || 5) * 60;
+  } else if (selectedPomodoroPhase === 'longBreak') {
+    totalPhaseSeconds = (settings.longBreakMinutes || 15) * 60;
+  }
+  totalPhaseSeconds = Math.max(1, totalPhaseSeconds);
+
   // Progress fraction for gauge
   const progressFraction =
-    timerMode === 'POMODORO'
-      ? settings.workIntervalMinutes > 0
-        ? 1 - timerSecondsRemaining / (settings.workIntervalMinutes * 60)
-        : 0
-      : (totalSeconds % 60) / 60;
+    timerMode === 'STOPWATCH'
+      ? (stopwatchElapsed % 3600) / 3600
+      : Math.max(0, Math.min(1, (totalPhaseSeconds - timerSecondsRemaining) / totalPhaseSeconds));
 
   const openPictureInPicture = async () => {
     if (typeof window === 'undefined') return;
@@ -93,11 +102,20 @@ export const FocusRecordingBeacon: React.FC = () => {
 
       if (pipApi) {
         const pipWin = await pipApi.requestWindow({
-          width: 400,
-          height: 195,
+          width: 420,
+          height: 200,
         });
 
         pipWin.document.title = `DayMark — Mini HUD [${activityLabel}]`;
+
+        // Copy all stylesheets from main window to PiP window
+        try {
+          document.querySelectorAll('style, link[rel="stylesheet"]').forEach((node) => {
+            pipWin.document.head.appendChild(node.cloneNode(true));
+          });
+        } catch (e) {
+          console.warn('Stylesheet copy to PiP skipped:', e);
+        }
 
         // Inject high-precision cyber styling
         const styleEl = pipWin.document.createElement('style');
@@ -254,7 +272,7 @@ export const FocusRecordingBeacon: React.FC = () => {
           activityLabel={activityLabel}
           progressFraction={progressFraction}
           totalSeconds={totalSeconds}
-          totalPhaseSeconds={timerMode === 'POMODORO' ? settings.workIntervalMinutes * 60 : 0}
+          totalPhaseSeconds={totalPhaseSeconds}
           selectedPomodoroPhase={selectedPomodoroPhase}
           todayFocusMinutes={todayFocusMinutes}
           onPause={pauseTimer}

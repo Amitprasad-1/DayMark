@@ -501,42 +501,88 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
   const [showCustomizer, setShowCustomizer] = useState(false);
   const [activeCustomizerTab, setActiveCustomizerTab] = useState<'hands' | 'colors' | 'nobe' | 'dial'>('colors');
 
-  // Persist preferences
+  // Persist preferences & dispatch broadcast for real-time synchronization across instances (e.g. Mini HUD)
+  const broadcastSync = () => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('daymark-clock-customization-changed'));
+    }
+  };
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('daymark_clock_hand_style', handStyle);
+      broadcastSync();
     }
   }, [handStyle]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('daymark_clock_center_nobe', centerNobeStyle);
+      broadcastSync();
     }
   }, [centerNobeStyle]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('daymark_clock_hand_color', handColorPreset);
+      broadcastSync();
     }
   }, [handColorPreset]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('daymark_clock_hour_color', hourHandColor);
+      broadcastSync();
     }
   }, [hourHandColor]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('daymark_clock_minute_color', minuteHandColor);
+      broadcastSync();
     }
   }, [minuteHandColor]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('daymark_clock_hand_glow', String(handGlowEnabled));
+      broadcastSync();
     }
   }, [handGlowEnabled]);
+
+  // Real-time synchronization across multiple clock instances (e.g. Main Screen & Mini HUD PiP)
+  useEffect(() => {
+    const handleSync = () => {
+      if (typeof window !== 'undefined') {
+        const savedHand = localStorage.getItem('daymark_clock_hand_style') as HandStyle;
+        if (savedHand && savedHand !== handStyle) setHandStyle(savedHand);
+
+        const savedNobe = localStorage.getItem('daymark_clock_center_nobe') as CenterNobeStyle;
+        if (savedNobe && savedNobe !== centerNobeStyle) setCenterNobeStyle(savedNobe);
+
+        const savedHandColor = localStorage.getItem('daymark_clock_hand_color') as HandColorPreset;
+        if (savedHandColor && savedHandColor !== handColorPreset) setHandColorPreset(savedHandColor);
+
+        const savedHour = localStorage.getItem('daymark_clock_hour_color');
+        if (savedHour && savedHour !== hourHandColor) setHourHandColor(savedHour);
+
+        const savedMin = localStorage.getItem('daymark_clock_minute_color');
+        if (savedMin && savedMin !== minuteHandColor) setMinuteHandColor(savedMin);
+
+        const savedGlow = localStorage.getItem('daymark_clock_hand_glow');
+        if (savedGlow !== null && (savedGlow === 'true') !== handGlowEnabled) {
+          setHandGlowEnabled(savedGlow === 'true');
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleSync);
+    window.addEventListener('daymark-clock-customization-changed', handleSync);
+    return () => {
+      window.removeEventListener('storage', handleSync);
+      window.removeEventListener('daymark-clock-customization-changed', handleSync);
+    };
+  }, [handStyle, centerNobeStyle, handColorPreset, hourHandColor, minuteHandColor, handGlowEnabled]);
 
   // Default to Studio Noir
   const defaultFinish: LuxuryFinish =
@@ -759,10 +805,14 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
   const startTimeStr = sessionStartTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const endTimeStr = sessionEndTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  const viewBoxStr = isWithBells ? '0 0 400 450' : '0 0 400 400';
+  const viewBoxStr = isMini
+    ? '38 38 324 324'
+    : isWithBells
+    ? '0 0 400 450'
+    : '0 0 400 400';
 
   const svgSizeClass = isMini
-    ? 'w-[74px] h-[74px] overflow-visible drop-shadow-[0_4px_14px_rgba(0,0,0,0.9)]'
+    ? 'w-[84px] h-[84px] overflow-visible drop-shadow-[0_4px_14px_rgba(0,0,0,0.9)]'
     : isZen
     ? 'w-[320px] h-[320px] sm:w-[440px] sm:h-[440px] md:w-[490px] md:h-[490px] lg:w-[530px] lg:h-[530px] overflow-visible drop-shadow-[0_25px_70px_rgba(0,0,0,0.95)]'
     : 'w-[290px] h-[290px] sm:w-[350px] sm:h-[350px] md:w-[390px] md:h-[390px] overflow-visible drop-shadow-[0_20px_50px_rgba(0,0,0,0.9)]';
@@ -1126,7 +1176,10 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
   };
 
   return (
-    <div className={isMini ? 'relative flex items-center justify-center select-none' : 'relative flex flex-col items-center justify-center select-none z-10'}>
+    <div
+      className={isMini ? 'relative flex items-center justify-center select-none' : 'relative flex flex-col items-center justify-center select-none z-10'}
+      style={isMini ? { width: '84px', height: '84px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', flexShrink: 0 } : undefined}
+    >
       {/* =========================================================================
           TOP INTERACTIVE QUICK-CONTROLS STRIP (Always visible, deeply interactive!)
           ========================================================================= */}
@@ -1546,8 +1599,27 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
           Clean circular dial, edge-to-edge titanium rim, bold rounded numerals (Fredoka),
           60 perimeter ticks, and exact photo spade/poire hands
           ========================================================================= */}
-      <div className="relative flex items-center justify-center">
-        <svg viewBox={viewBoxStr} className={svgSizeClass}>
+      <div
+        className="relative flex items-center justify-center"
+        style={isMini ? { width: '84px', height: '84px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', flexShrink: 0 } : undefined}
+      >
+        <svg
+          viewBox={viewBoxStr}
+          className={svgSizeClass}
+          style={
+            isMini
+              ? {
+                  width: '84px',
+                  height: '84px',
+                  minWidth: '84px',
+                  minHeight: '84px',
+                  display: 'block',
+                  overflow: 'visible',
+                  filter: 'drop-shadow(0 4px 14px rgba(0,0,0,0.95))',
+                }
+              : undefined
+          }
+        >
           <defs>
             {/* Deep Velvet Matte Black Dial Face Gradient (Image 2) */}
             <radialGradient id="vluxDialGrad" cx="50%" cy="50%" r="68%">
