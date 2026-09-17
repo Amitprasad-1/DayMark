@@ -15,6 +15,7 @@ import { DailyReviewView } from '@/components/review/DailyReviewView';
 import { SettingsView } from '@/components/settings/SettingsView';
 import { DayDetailModal } from '@/components/modals/DayDetailModal';
 import { KeyboardShortcutsModal } from '@/components/modals/KeyboardShortcutsModal';
+import { FocusRecordingBeacon } from '@/components/timer/FocusRecordingBeacon';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ActiveTab } from '@/types';
 
@@ -113,6 +114,9 @@ export const AppShell: React.FC = () => {
           </AnimatePresence>
         </main>
       </div>
+
+      {/* Ambient Glowing Red Focus Beacon (Desktop & Mobile) */}
+      <FocusRecordingBeacon />
 
       {/* Bottom Navigation (Mobile) */}
       <MobileNav />

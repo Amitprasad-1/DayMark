@@ -124,13 +124,21 @@ export const Header: React.FC<HeaderProps> = ({ onOpenShortcuts }) => {
               whileTap={{ scale: 0.96 }}
               type="button"
               onClick={() => setActiveTab('timer')}
-              className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500/25 via-teal-500/20 to-emerald-500/25 border border-emerald-400/50 text-emerald-300 text-xs font-mono font-bold cursor-pointer shadow-[0_0_20px_rgba(16,185,129,0.3)]"
-              title="Focus Session Active — Click to View"
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-red-500/25 via-rose-500/20 to-red-500/25 border border-red-500/50 text-red-300 text-xs font-mono font-bold cursor-pointer shadow-[0_0_20px_rgba(239,68,68,0.4)] hover:shadow-[0_0_25px_rgba(239,68,68,0.6)] transition-all"
+              title="Focus Session Active & Recording — Click to View"
             >
-              <Clock className="w-3.5 h-3.5 text-emerald-400 animate-spin" style={{ animationDuration: '4s' }} />
-              <span className="tracking-wider">
-                {Math.floor((timerMode === 'STOPWATCH' ? stopwatchElapsed : timerSecondsRemaining) / 60)}:
-                {String((timerMode === 'STOPWATCH' ? stopwatchElapsed : timerSecondsRemaining) % 60).padStart(2, '0')}
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-80" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 shadow-[0_0_8px_rgba(239,68,68,1)]" />
+              </span>
+              <span className="tracking-wider flex items-center gap-1.5">
+                <span className="text-[10px] uppercase font-black tracking-widest text-red-400 bg-red-500/20 px-1.5 py-0.5 rounded border border-red-500/30">
+                  REC
+                </span>
+                <span className="font-extrabold text-white">
+                  {Math.floor((timerMode === 'STOPWATCH' ? stopwatchElapsed : timerSecondsRemaining) / 60)}:
+                  {String((timerMode === 'STOPWATCH' ? stopwatchElapsed : timerSecondsRemaining) % 60).padStart(2, '0')}
+                </span>
               </span>
             </motion.button>
           )}

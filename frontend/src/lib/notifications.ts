@@ -197,9 +197,22 @@ const initRedDotIcons = (): Promise<void> => {
   });
 };
 
-export const startRunningRedDotBlink = (enabled = true): void => {
+let currentBadgeMinutes: number | undefined = undefined;
+
+export const startRunningRedDotBlink = (enabled = true, minuteCount?: number): void => {
   if (!enabled || typeof window === 'undefined') return;
-  if (isRedDotBlinking) return;
+
+  if (minuteCount !== undefined && minuteCount > 0) {
+    currentBadgeMinutes = minuteCount;
+  }
+
+  if (isRedDotBlinking) {
+    // If loop is already active, update the badge number directly
+    if (currentBadgeMinutes !== undefined && currentBadgeMinutes > 0) {
+      setTaskbarBadge(currentBadgeMinutes);
+    }
+    return;
+  }
   isRedDotBlinking = true;
 
   initRedDotIcons().then(() => {
@@ -207,7 +220,11 @@ export const startRunningRedDotBlink = (enabled = true): void => {
     const update = (state: boolean) => {
       const link = (document.querySelector("link[rel*='icon']") as HTMLLinkElement) || null;
       if (state) {
-        setTaskbarBadge(); // Shows dot badge (NO numbers)
+        if (currentBadgeMinutes !== undefined && currentBadgeMinutes > 0) {
+          setTaskbarBadge(currentBadgeMinutes);
+        } else {
+          setTaskbarBadge(); // Displays clean badge dot
+        }
         if (link && redDotCanvasUrl) link.href = redDotCanvasUrl;
       } else {
         clearTaskbarBadge(); // Blinks dot off
@@ -231,6 +248,7 @@ export const stopRunningRedDotBlink = (): void => {
     runningRedDotInterval = null;
   }
   isRedDotBlinking = false;
+  currentBadgeMinutes = undefined;
   clearTaskbarBadge();
   const link = (document.querySelector("link[rel*='icon']") as HTMLLinkElement) || null;
   if (link) {

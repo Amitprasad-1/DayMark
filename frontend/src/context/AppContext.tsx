@@ -922,9 +922,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const m = Math.floor(remainingSec / 60);
           const s = remainingSec % 60;
           const timeStr = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-          setWindowTitle(`⏱️ [${timeStr}] ${activityLabel} — DayMark`);
+          setWindowTitle(`🔴 REC [${timeStr}] • ${activityLabel} — DayMark`);
           if (settings.taskbarBadgingEnabled) {
-            startRunningRedDotBlink(true);
+            startRunningRedDotBlink(true, m || 1);
           }
 
           if (remainingSec <= 0) {
@@ -976,9 +976,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
               : `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 
-          setWindowTitle(`⏱️ [${timeStr}] ${activityLabel} — DayMark`);
+          setWindowTitle(`🔴 REC [${timeStr}] • ${activityLabel} — DayMark`);
           if (settings.taskbarBadgingEnabled) {
-            startRunningRedDotBlink(true);
+            const elapsedMins = Math.floor(elapsed / 60);
+            startRunningRedDotBlink(true, elapsedMins > 0 ? elapsedMins : 1);
           }
 
           // 1. Safety Max-Cap Auto-Pause Check (e.g. 120 mins)
