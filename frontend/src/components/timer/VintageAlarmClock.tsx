@@ -4,14 +4,14 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, Circle, Palette, Sparkles, SlidersHorizontal, Check, Disc3, ShieldAlert, Compass, CircleDot } from 'lucide-react';
 
-interface VintageAlarmClockProps {
+export interface VintageAlarmClockProps {
   timerStatus: 'IDLE' | 'RUNNING' | 'PAUSED';
   timerMode: 'POMODORO' | 'STOPWATCH' | 'COUNTDOWN';
   displaySeconds: number;
-  totalPhaseSeconds: number;
-  progressFraction: number;
-  selectedPomodoroPhase: 'work' | 'shortBreak' | 'longBreak';
-  theme: {
+  totalPhaseSeconds?: number;
+  progressFraction?: number;
+  selectedPomodoroPhase?: 'work' | 'shortBreak' | 'longBreak';
+  theme?: {
     c1: string;
     c2: string;
     c3: string;
@@ -19,6 +19,7 @@ interface VintageAlarmClockProps {
     textAccent: string;
   };
   isZen?: boolean;
+  isMini?: boolean;
 }
 
 export type HandStyle =
@@ -431,11 +432,18 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
   timerStatus,
   timerMode,
   displaySeconds,
-  totalPhaseSeconds,
-  progressFraction,
-  selectedPomodoroPhase,
-  theme,
+  totalPhaseSeconds = 25 * 60,
+  progressFraction = 0,
+  selectedPomodoroPhase = 'work',
+  theme = {
+    c1: '#6366F1',
+    c2: '#8B5CF6',
+    c3: '#EC4899',
+    glow: 'rgba(99, 102, 241, 0.5)',
+    textAccent: '#818CF8',
+  },
   isZen = false,
+  isMini = false,
 }) => {
   const [realTime, setRealTime] = useState(() => new Date());
   const [showRinging, setShowRinging] = useState(false);
@@ -753,7 +761,9 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
 
   const viewBoxStr = isWithBells ? '0 0 400 450' : '0 0 400 400';
 
-  const svgSizeClass = isZen
+  const svgSizeClass = isMini
+    ? 'w-[74px] h-[74px] overflow-visible drop-shadow-[0_4px_14px_rgba(0,0,0,0.9)]'
+    : isZen
     ? 'w-[320px] h-[320px] sm:w-[440px] sm:h-[440px] md:w-[490px] md:h-[490px] lg:w-[530px] lg:h-[530px] overflow-visible drop-shadow-[0_25px_70px_rgba(0,0,0,0.95)]'
     : 'w-[290px] h-[290px] sm:w-[350px] sm:h-[350px] md:w-[390px] md:h-[390px] overflow-visible drop-shadow-[0_20px_50px_rgba(0,0,0,0.9)]';
 
@@ -1116,11 +1126,13 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
   };
 
   return (
-    <div className="relative flex flex-col items-center justify-center select-none z-10">
+    <div className={isMini ? 'relative flex items-center justify-center select-none' : 'relative flex flex-col items-center justify-center select-none z-10'}>
       {/* =========================================================================
           TOP INTERACTIVE QUICK-CONTROLS STRIP (Always visible, deeply interactive!)
           ========================================================================= */}
-      <div className="mb-2 flex flex-wrap items-center justify-center gap-2 z-20 max-w-4xl px-2">
+      {!isMini && (
+        <>
+          <div className="mb-2 flex flex-wrap items-center justify-center gap-2 z-20 max-w-4xl px-2">
         {/* Live Focus Session Status Badge */}
         <div className="flex items-center gap-2 px-3 py-1 rounded-2xl bg-[#0B0E17]/90 border border-white/10 shadow-xl backdrop-blur-xl">
           <span className="relative flex h-2 w-2">
@@ -1526,6 +1538,8 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
           </motion.div>
         )}
       </AnimatePresence>
+      </>
+    )}
 
       {/* =========================================================================
           SVG CLOCK DIAL MASTERPIECE
@@ -1892,48 +1906,50 @@ export const VintageAlarmClock: React.FC<VintageAlarmClockProps> = ({
       {/* =========================================================================
           INTERACTIVE DOCK UNDER CLOCK: DIGITAL READOUT & STATUS
           ========================================================================= */}
-      <div className="mt-4 flex flex-col items-center justify-center text-center w-full max-w-lg px-2 gap-2">
-        {/* Digital Precision Readout */}
-        <div className="flex items-center gap-2.5 px-5 py-2 rounded-2xl bg-[#0B0E17]/90 border border-white/10 shadow-2xl backdrop-blur-xl">
-          <span className="font-mono text-2xl sm:text-3xl font-black tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]">
-            {formatTime(displaySeconds)}
-          </span>
-          <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-xl bg-white/10 border border-white/10 text-slate-200">
-            {timerStatus === 'RUNNING' ? 'Flowing' : isStopwatchReady ? 'Ready' : 'Paused'}
-          </span>
-        </div>
+      {!isMini && (
+        <div className="mt-4 flex flex-col items-center justify-center text-center w-full max-w-lg px-2 gap-2">
+          {/* Digital Precision Readout */}
+          <div className="flex items-center gap-2.5 px-5 py-2 rounded-2xl bg-[#0B0E17]/90 border border-white/10 shadow-2xl backdrop-blur-xl">
+            <span className="font-mono text-2xl sm:text-3xl font-black tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]">
+              {formatTime(displaySeconds)}
+            </span>
+            <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-xl bg-white/10 border border-white/10 text-slate-200">
+              {timerStatus === 'RUNNING' ? 'Flowing' : isStopwatchReady ? 'Ready' : 'Paused'}
+            </span>
+          </div>
 
-        {/* Real-time Focus Interval Tagline */}
-        <div className="text-xs font-semibold text-slate-400 flex items-center gap-2">
-          {isStopwatch ? (
-            isStopwatchReady ? (
-              <span>Stopwatch Mode • Click Start to record study hours</span>
+          {/* Real-time Focus Interval Tagline */}
+          <div className="text-xs font-semibold text-slate-400 flex items-center gap-2">
+            {isStopwatch ? (
+              isStopwatchReady ? (
+                <span>Stopwatch Mode • Click Start to record study hours</span>
+              ) : (
+                <>
+                  <span>Study Tracked</span>
+                  <span>•</span>
+                  <span className="font-mono font-bold" style={{ color: activePal.accent }}>
+                    Started {startTimeStr} ({Math.floor(elapsedSeconds / 3600) > 0 ? `${Math.floor(elapsedSeconds / 3600)}h ${Math.floor((elapsedSeconds % 3600) / 60)}m` : `${Math.floor(elapsedSeconds / 60)}m ${elapsedSeconds % 60}s`})
+                  </span>
+                </>
+              )
             ) : (
               <>
-                <span>Study Tracked</span>
+                <span>
+                  {selectedPomodoroPhase === 'work'
+                    ? 'Focus Interval'
+                    : selectedPomodoroPhase === 'shortBreak'
+                    ? 'Short Break'
+                    : 'Long Break'}
+                </span>
                 <span>•</span>
                 <span className="font-mono font-bold" style={{ color: activePal.accent }}>
-                  Started {startTimeStr} ({Math.floor(elapsedSeconds / 3600) > 0 ? `${Math.floor(elapsedSeconds / 3600)}h ${Math.floor((elapsedSeconds % 3600) / 60)}m` : `${Math.floor(elapsedSeconds / 60)}m ${elapsedSeconds % 60}s`})
+                  {startTimeStr} → {endTimeStr} ({sessionMinutes}m)
                 </span>
               </>
-            )
-          ) : (
-            <>
-              <span>
-                {selectedPomodoroPhase === 'work'
-                  ? 'Focus Interval'
-                  : selectedPomodoroPhase === 'shortBreak'
-                  ? 'Short Break'
-                  : 'Long Break'}
-              </span>
-              <span>•</span>
-              <span className="font-mono font-bold" style={{ color: activePal.accent }}>
-                {startTimeStr} → {endTimeStr} ({sessionMinutes}m)
-              </span>
-            </>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

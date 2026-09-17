@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { VintageAlarmClock } from './VintageAlarmClock';
 
 export interface MiniHudViewProps {
   timerStatus: 'IDLE' | 'RUNNING' | 'PAUSED';
@@ -9,6 +10,8 @@ export interface MiniHudViewProps {
   activityLabel: string;
   progressFraction: number;
   totalSeconds: number;
+  totalPhaseSeconds?: number;
+  selectedPomodoroPhase?: 'work' | 'shortBreak' | 'longBreak';
   todayFocusMinutes: number;
   onPause: () => void;
   onResume: () => void;
@@ -23,6 +26,8 @@ export const MiniHudView: React.FC<MiniHudViewProps> = ({
   activityLabel,
   progressFraction,
   totalSeconds,
+  totalPhaseSeconds = 25 * 60,
+  selectedPomodoroPhase = 'work',
   todayFocusMinutes,
   onPause,
   onResume,
@@ -30,16 +35,6 @@ export const MiniHudView: React.FC<MiniHudViewProps> = ({
   onFocusApp,
 }) => {
   const isRunning = timerStatus === 'RUNNING';
-
-  // Horology Radar calculations
-  const secondAngle = (totalSeconds % 60) * 6;
-  const minuteAngle = ((totalSeconds / 60) % 60) * 6;
-
-  // Radar ring geometry
-  const radius = 24;
-  const circumference = 2 * Math.PI * radius;
-  const progressPercent = Math.min(1, Math.max(0, progressFraction));
-  const strokeDashoffset = circumference - progressPercent * circumference;
 
   return (
     <div className="mini-hud-root">
@@ -72,74 +67,19 @@ export const MiniHudView: React.FC<MiniHudViewProps> = ({
         <span className="hud-mode-pill">{timerMode}</span>
       </div>
 
-      {/* Center Section: Horology Radar + Big Atomic Digits */}
+      {/* Center Section: Exact Vintage Alarm Clock Replica + Big Atomic Digits */}
       <div className="hud-body">
-        {/* Horology Circular Radar */}
+        {/* Exact same Horology Watch Face in miniature with real-time sync */}
         <div className="hud-radar-wrap">
-          <svg className="hud-radar-svg" width="62" height="62" viewBox="0 0 62 62">
-            {/* Background Dial Track */}
-            <circle cx="31" cy="31" r="28" fill="#0A0E1A" stroke="rgba(255,255,255,0.12)" strokeWidth="1.5" />
-
-            {/* In Pomodoro: Circular Progress Ring */}
-            {timerMode === 'POMODORO' && (
-              <circle
-                cx="31"
-                cy="31"
-                r={radius}
-                fill="none"
-                stroke="#EF4444"
-                strokeWidth="3.5"
-                strokeDasharray={circumference}
-                strokeDashoffset={strokeDashoffset}
-                strokeLinecap="round"
-                transform="rotate(-90 31 31)"
-                style={{ filter: 'drop-shadow(0 0 6px rgba(239,68,68,0.85))', transition: 'stroke-dashoffset 0.4s ease' }}
-              />
-            )}
-
-            {/* In Stopwatch: 12 Tick Dots */}
-            {Array.from({ length: 12 }).map((_, i) => {
-              const angle = (i * 30 * Math.PI) / 180;
-              const tx = 31 + 24 * Math.sin(angle);
-              const ty = 31 - 24 * Math.cos(angle);
-              const isCardinal = i % 3 === 0;
-              return (
-                <circle
-                  key={i}
-                  cx={tx}
-                  cy={ty}
-                  r={isCardinal ? 1.4 : 0.8}
-                  fill={isCardinal ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.25)'}
-                />
-              );
-            })}
-
-            {/* Moving Minute Hand */}
-            <line
-              x1="31"
-              y1="31"
-              x2={31 + 17 * Math.sin((minuteAngle * Math.PI) / 180)}
-              y2={31 - 17 * Math.cos((minuteAngle * Math.PI) / 180)}
-              stroke="#FCA5A5"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-
-            {/* Moving Second Needle with Glow Tip */}
-            <line
-              x1="31"
-              y1="31"
-              x2={31 + 23 * Math.sin((secondAngle * Math.PI) / 180)}
-              y2={31 - 23 * Math.cos((secondAngle * Math.PI) / 180)}
-              stroke="#EF4444"
-              strokeWidth="1.2"
-              strokeLinecap="round"
-              style={{ filter: 'drop-shadow(0 0 3px rgba(239,68,68,1))' }}
-            />
-
-            {/* Center Ruby Arbor Cap */}
-            <circle cx="31" cy="31" r="3.2" fill="#EF4444" stroke="#FFFFFF" strokeWidth="0.8" />
-          </svg>
+          <VintageAlarmClock
+            timerStatus={timerStatus}
+            timerMode={timerMode}
+            displaySeconds={totalSeconds}
+            totalPhaseSeconds={totalPhaseSeconds}
+            progressFraction={progressFraction}
+            selectedPomodoroPhase={selectedPomodoroPhase}
+            isMini={true}
+          />
         </div>
 
         {/* Digital Time & Subtitle */}
@@ -331,9 +271,12 @@ export const MINI_HUD_STYLES = `
   }
   .hud-radar-wrap {
     position: relative;
-    width: 62px;
-    height: 62px;
+    width: 74px;
+    height: 74px;
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   .hud-time-column {
     display: flex;

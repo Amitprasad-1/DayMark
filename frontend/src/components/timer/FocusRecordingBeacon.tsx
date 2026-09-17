@@ -20,6 +20,7 @@ export const FocusRecordingBeacon: React.FC = () => {
     startTimer,
     resetTimer,
     setActiveTab,
+    selectedPomodoroPhase,
     sessions,
     settings,
   } = useApp();
@@ -92,8 +93,8 @@ export const FocusRecordingBeacon: React.FC = () => {
 
       if (pipApi) {
         const pipWin = await pipApi.requestWindow({
-          width: 380,
-          height: 180,
+          width: 400,
+          height: 195,
         });
 
         pipWin.document.title = `DayMark — Mini HUD [${activityLabel}]`;
@@ -253,6 +254,8 @@ export const FocusRecordingBeacon: React.FC = () => {
           activityLabel={activityLabel}
           progressFraction={progressFraction}
           totalSeconds={totalSeconds}
+          totalPhaseSeconds={timerMode === 'POMODORO' ? settings.workIntervalMinutes * 60 : 0}
+          selectedPomodoroPhase={selectedPomodoroPhase}
           todayFocusMinutes={todayFocusMinutes}
           onPause={pauseTimer}
           onResume={startTimer}
