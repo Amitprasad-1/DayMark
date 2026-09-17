@@ -1,9 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useApp } from '@/context/AppContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Pause, Play, Square, Maximize2, ExternalLink, Activity } from 'lucide-react';
+import { format } from 'date-fns';
+import { MiniHudView, MINI_HUD_STYLES } from './MiniHudView';
 
 export const FocusRecordingBeacon: React.FC = () => {
   const {
@@ -17,15 +20,27 @@ export const FocusRecordingBeacon: React.FC = () => {
     startTimer,
     resetTimer,
     setActiveTab,
+    sessions,
+    settings,
   } = useApp();
 
   const [hasPipSupport, setHasPipSupport] = useState(false);
+  const [pipWindow, setPipWindow] = useState<Window | null>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && 'documentPictureInPicture' in window) {
       setHasPipSupport(true);
     }
   }, []);
+
+  // Cleanup PiP window if focus beacon unmounts
+  useEffect(() => {
+    return () => {
+      if (pipWindow && !pipWindow.closed) {
+        pipWindow.close();
+      }
+    };
+  }, [pipWindow]);
 
   if (timerStatus !== 'RUNNING' && timerStatus !== 'PAUSED') {
     return null;
@@ -44,47 +59,55 @@ export const FocusRecordingBeacon: React.FC = () => {
       ? `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
       : `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
+  // Today's total focus minutes calculation
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const todaySessions = sessions.filter((s) => s.date === todayStr);
+  const todayFocusMinutes = Math.round(
+    todaySessions.reduce((acc, s) => acc + s.durationSeconds, 0) / 60
+  );
+
+  // Progress fraction for gauge
+  const progressFraction =
+    timerMode === 'POMODORO'
+      ? settings.workIntervalMinutes > 0
+        ? 1 - timerSecondsRemaining / (settings.workIntervalMinutes * 60)
+        : 0
+      : (totalSeconds % 60) / 60;
+
   const openPictureInPicture = async () => {
     if (typeof window === 'undefined') return;
+
+    // If PiP window is already active, bring it to front
+    if (pipWindow && !pipWindow.closed) {
+      pipWindow.focus();
+      return;
+    }
+
     try {
-      const pipApi = (window as unknown as { documentPictureInPicture?: { requestWindow: (opts: { width: number; height: number }) => Promise<Window> } }).documentPictureInPicture;
+      const pipApi = (window as unknown as {
+        documentPictureInPicture?: {
+          requestWindow: (opts: { width: number; height: number }) => Promise<Window>;
+        };
+      }).documentPictureInPicture;
+
       if (pipApi) {
         const pipWin = await pipApi.requestWindow({
-          width: 340,
-          height: 130,
+          width: 380,
+          height: 180,
         });
 
-        pipWin.document.body.style.margin = '0';
-        pipWin.document.body.style.backgroundColor = '#070A12';
-        pipWin.document.body.style.color = '#F8FAFC';
-        pipWin.document.body.style.fontFamily = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-        pipWin.document.body.style.display = 'flex';
-        pipWin.document.body.style.flexDirection = 'column';
-        pipWin.document.body.style.alignItems = 'center';
-        pipWin.document.body.style.justifyContent = 'center';
-        pipWin.document.body.style.height = '100vh';
-        pipWin.document.body.style.border = '2px solid rgba(239, 68, 68, 0.8)';
-        pipWin.document.body.style.boxShadow = 'inset 0 0 25px rgba(239, 68, 68, 0.35)';
+        pipWin.document.title = `DayMark — Mini HUD [${activityLabel}]`;
 
-        const renderPipContent = () => {
-          if (!pipWin.document.body) return;
-          pipWin.document.body.innerHTML = `
-            <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
-              <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#EF4444; box-shadow:0 0 12px #EF4444;"></span>
-              <span style="font-size:11px; font-weight:800; letter-spacing:1.5px; color:#FCA5A5; text-transform:uppercase;">🔴 REC • ${activityLabel}</span>
-            </div>
-            <div style="font-family:monospace, monospace; font-size:36px; font-weight:900; color:#FFFFFF; text-shadow:0 0 16px rgba(239,68,68,0.85); letter-spacing:1px;">
-              ${formattedTime}
-            </div>
-            <div style="font-size:10px; color:#94A3B8; margin-top:4px; font-weight:600; letter-spacing:0.5px;">
-              ${timerStatus === 'RUNNING' ? 'RECORDING IN PROGRESS' : 'PAUSED'}
-            </div>
-          `;
-        };
+        // Inject high-precision cyber styling
+        const styleEl = pipWin.document.createElement('style');
+        styleEl.textContent = MINI_HUD_STYLES;
+        pipWin.document.head.appendChild(styleEl);
 
-        renderPipContent();
-        const pipInterval = setInterval(renderPipContent, 500);
-        pipWin.addEventListener('pagehide', () => clearInterval(pipInterval));
+        pipWin.addEventListener('pagehide', () => {
+          setPipWindow(null);
+        });
+
+        setPipWindow(pipWin);
       }
     } catch (e) {
       console.warn('PiP activation notice:', e);
@@ -92,7 +115,8 @@ export const FocusRecordingBeacon: React.FC = () => {
   };
 
   return (
-    <AnimatePresence>
+    <>
+      <AnimatePresence>
       <motion.aside
         initial={{ y: 80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -216,5 +240,32 @@ export const FocusRecordingBeacon: React.FC = () => {
         </div>
       </motion.aside>
     </AnimatePresence>
+
+    {/* Fully Synchronized Live Reactive Mini HUD inside Picture-in-Picture Window */}
+    {pipWindow &&
+      pipWindow.document &&
+      pipWindow.document.body &&
+      createPortal(
+        <MiniHudView
+          timerStatus={timerStatus}
+          timerMode={timerMode}
+          formattedTime={formattedTime}
+          activityLabel={activityLabel}
+          progressFraction={progressFraction}
+          totalSeconds={totalSeconds}
+          todayFocusMinutes={todayFocusMinutes}
+          onPause={pauseTimer}
+          onResume={startTimer}
+          onStop={resetTimer}
+          onFocusApp={() => {
+            window.focus();
+            if (pipWindow && !pipWindow.closed) {
+              pipWindow.focus();
+            }
+          }}
+        />,
+        pipWindow.document.body
+      )}
+    </>
   );
 };
